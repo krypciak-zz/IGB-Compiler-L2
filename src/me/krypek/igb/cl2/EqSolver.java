@@ -1,7 +1,6 @@
 package me.krypek.igb.cl2;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
@@ -61,13 +60,11 @@ class EqSolver {
 				return new Field(stringToField(str.substring(1, str.length() - 1)));
 			else if(str.contains("(")) {
 				int index = str.indexOf('(');
-				String funcName = str.substring(0, index);
+				String funcName = str.substring(0, index).stripTrailing();
 
 				String[] args = Utils.getArrayElementsFromString(str.substring(index), '(', ')', ",");
 
-				Field[] fa = new Field[args.length];
-				for (int i = 0; i < args.length; i++)
-					fa[i] = stringToField(args[i]);
+				Field[] fa = stringArrayToFieldArray(args);
 
 				return new Field(new FunctionCall(fa, funcs.getFunction(funcName, args.length)));
 			} else
@@ -75,7 +72,21 @@ class EqSolver {
 		}
 
 		if(str.endsWith("]") && str.contains("[")) {
-			String arrName = "";
+			int index = str.indexOf('[');
+			String arrName = str.substring(0, index).stripTrailing();
+
+			String[] dimsS = Utils.getArrayElementsFromString(str, '[', ']', new IGB_CL2_Exception("Array syntax error"));
+
+			Field[] fa = stringArrayToFieldArray(dimsS);
+
+			Array arr = ram.getArray(arrName);
+			if(arr == null)
+				throw new IGB_CL2_Exception("Array: \"" + arrName + "\" doesn't exist.");
+
+			if(fa.length != arr.size.length)
+				throw new IGB_CL2_Exception("Array: \"" + arrName + "\" Expected " + arr.size.length + " dimensions, got " + fa.length + ".");
+
+			return new Field(new ArrayAccess(arrName, fa));
 		}
 
 		v = ram.finalVars.get(str);
@@ -88,6 +99,14 @@ class EqSolver {
 
 		throw new IGB_CL2_Exception("Syntax error.");
 	}
+
+	private Field[] stringArrayToFieldArray(String[] arr) {
+		Field[] fa = new Field[arr.length];
+		for (int i = 0; i < arr.length; i++)
+			fa[i] = stringToField(arr[i]);
+		return fa;
+	}
+
 }
 
 class Equation {

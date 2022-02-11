@@ -76,10 +76,17 @@ class RAM {
 		return var.cell;
 	}
 
-	public int allocateArray(String name, int[] size) {
+	public int newArray(String name, int[] size) {
 		checkName(name);
 		int totalSize = calcArraySize(size);
 		int cell = allocateSpace(totalSize);
+		arrayStack.peek().put(name, new Array(cell, size, totalSize));
+		return cell;
+	}
+
+	public int newArray(String name, int[] size, int cell) {
+		checkName(name);
+		int totalSize = calcArraySize(size);
 		arrayStack.peek().put(name, new Array(cell, size, totalSize));
 		return cell;
 	}
@@ -120,7 +127,17 @@ class RAM {
 				return var.cell;
 		}
 		return -1;
-		///throw new IGB_CL2_Exception("Variable \"" + name + "\" doesn't exist.");
+		/// throw new IGB_CL2_Exception("Variable \"" + name + "\" doesn't exist.");
+	}
+
+	Array getArray(String name) {
+		for (int i = arrayStack.size() - 1; i >= 0; i--) {
+			Array var = arrayStack.elementAt(i).get(name);
+			if(var != null)
+				return var;
+		}
+		return null;
+		/// throw new IGB_CL2_Exception("Variable \"" + name + "\" doesn't exist.");
 	}
 
 	void nextStack() {

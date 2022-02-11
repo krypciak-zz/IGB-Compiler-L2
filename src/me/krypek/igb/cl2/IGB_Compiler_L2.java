@@ -80,9 +80,6 @@ public class IGB_Compiler_L2 {
 
 	RAM getRAM() { return ram; }
 
-	@Deprecated
-	void setRAM(RAM ram) { this.ram = ram; }
-
 	public IGB_Compiler_L2() { IGB_CL2_Exception.igb_cl2 = this; }
 
 	public IGB_L1[] compile(String[] inputs, String[] fileNames) {
@@ -104,8 +101,9 @@ public class IGB_Compiler_L2 {
 
 		ram.finalVars.put("finalvar", -2137d);
 		ram.newVar("testvar", new Variable(2137));
+		ram.newArray("arrat", new int[] { 2, 3 });
 
-		String eq = "testvar + 1 + finalvar + a(53478)";
+		String eq = "arrat[5][6]";
 		EqSolver es = new EqSolver();
 		ArrayList<Instruction> solved = es.solve(eq, ram, functions);
 		System.out.println(solved);
