@@ -14,12 +14,15 @@ class EqSolver {
 		this.ram = ram;
 		this.funcs = funcs;
 		Equation eq = getFieldListFromString(eqS);
-		System.out.println(eq);
-		return null;
+		ArrayList<Instruction> instructionList = getInstructionListFromEq(eq);
+
+		return instructionList;
 	}
 
 	private RAM ram;
 	private Functions funcs;
+
+	private ArrayList<Instruction> getInstructionListFromEq(Equation eq) { return null; }
 
 	private Equation getFieldListFromString(final String str) {
 		ArrayList<Character> operatorList = new ArrayList<>();
@@ -135,6 +138,11 @@ class Equation {
 
 		}
 		return sb.toString();
+	}
+
+	public static Equation simplyfy(Equation eq) {
+
+		return null;
 	}
 }
 

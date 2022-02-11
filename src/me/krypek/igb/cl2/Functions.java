@@ -66,7 +66,6 @@ class Functions {
 				if(spaceIndex == -1)
 					spaceIndex = cmd.length();
 				String first = cmd.substring(0, spaceIndex);
-				System.out.println(cmd);
 				if(first.equals("void")) {
 					initFunction(false, cmd.substring(spaceIndex + 1), true, i, x);
 				} else if(IGB_Compiler_L2.varStr.contains(first)) {
