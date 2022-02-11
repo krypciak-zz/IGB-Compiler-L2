@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.List;
 
 import me.krypek.igb.cl1.Instruction;
+import me.krypek.igb.cl2.EqSolver.Field;
 import me.krypek.utils.Utils;
 
 class Functions {

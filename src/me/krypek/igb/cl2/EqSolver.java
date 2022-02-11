@@ -1,5 +1,11 @@
 package me.krypek.igb.cl2;
 
+import static me.krypek.igb.cl2.EqSolver.Field.FieldType.Array;
+import static me.krypek.igb.cl2.EqSolver.Field.FieldType.Eq;
+import static me.krypek.igb.cl2.EqSolver.Field.FieldType.Func;
+import static me.krypek.igb.cl2.EqSolver.Field.FieldType.Val;
+import static me.krypek.igb.cl2.EqSolver.Field.FieldType.Var;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -13,7 +19,8 @@ class EqSolver {
 	public ArrayList<Instruction> solve(final String eqS, RAM ram, Functions funcs) {
 		this.ram = ram;
 		this.funcs = funcs;
-		Equation eq = getFieldListFromString(eqS);
+		Equation eq = getEqFromString(eqS);
+		System.out.println(eq);
 		ArrayList<Instruction> instructionList = getInstructionListFromEq(eq);
 
 		return instructionList;
@@ -24,14 +31,20 @@ class EqSolver {
 
 	private ArrayList<Instruction> getInstructionListFromEq(Equation eq) { return null; }
 
-	private Equation getFieldListFromString(final String str) {
+	private Equation getEqFromString(final String str) {
 		ArrayList<Character> operatorList = new ArrayList<>();
 		ArrayList<String> fieldStringList = new ArrayList<>();
 		{
+			int bracket = 0;
 			char[] charA = str.toCharArray();
 			StringBuilder sb = new StringBuilder(32);
 			for (char c : charA) {
-				if(operators.contains(c)) {
+				if(c == '(')
+					bracket++;
+				else if(c == ')')
+					bracket--;
+
+				if(operators.contains(c) && bracket == 0) {
 					operatorList.add(c);
 					fieldStringList.add(sb.toString());
 					sb = new StringBuilder(32);
@@ -60,7 +73,7 @@ class EqSolver {
 
 		if(str.endsWith(")")) {
 			if(str.startsWith("("))
-				return new Field(stringToField(str.substring(1, str.length() - 1)));
+				return new Field(getEqFromString(str.substring(1, str.length() - 1)));
 			else if(str.contains("(")) {
 				int index = str.indexOf('(');
 				String funcName = str.substring(0, index).stripTrailing();
@@ -100,7 +113,7 @@ class EqSolver {
 		if(cell != -1)
 			return new Field(cell);
 
-		throw new IGB_CL2_Exception("Syntax error.");
+		throw new IGB_CL2_Exception("Unknown variable: \"" + str + "\".");
 	}
 
 	private Field[] stringArrayToFieldArray(String[] arr) {
@@ -110,125 +123,205 @@ class EqSolver {
 		return fa;
 	}
 
-}
+	static class Equation {
+		public final char[] operators;
+		public final Field[] fields;
 
-class Equation {
-	public final char[] operators;
-	public final Field[] fields;
-
-	public Equation(char[] operators, Field[] fields) {
-		if(operators.length != fields.length - 1)
-			throw new IGB_CL2_Exception("Equation syntax error.");
-		this.operators = operators;
-		this.fields = fields;
-	}
-
-	@Override
-	public String toString() { return '(' + toStringNoBrackets() + ')'; }
-
-	public String toStringNoBrackets() {
-		if(fields.length == 0)
-			return "";
-		StringBuilder sb = new StringBuilder(fields[0].toString());
-		for (int i = 1; i < fields.length; i++) {
-			sb.append(" ");
-			sb.append(operators[i - 1]);
-			sb.append(" ");
-			sb.append(fields[i]);
-
+		public Equation(char[] operators, Field[] fields) {
+			if(operators.length != fields.length - 1)
+				throw new IGB_CL2_Exception("Equation syntax error.");
+			this.operators = operators;
+			this.fields = fields;
 		}
-		return sb.toString();
+
+		@Override
+		public String toString() { return '(' + toStringNoBrackets() + ')'; }
+
+		public String toStringNoBrackets() {
+			if(fields.length == 0)
+				return "";
+			StringBuilder sb = new StringBuilder(fields[0].toString());
+			for (int i = 1; i < fields.length; i++) {
+				sb.append(" ");
+				sb.append(operators[i - 1]);
+				sb.append(" ");
+				sb.append(fields[i]);
+
+			}
+			return sb.toString();
+		}
+
+		public static Equation simplyfy(Equation eq) {
+			ArrayList<Character> opeL = new ArrayList<>(eq.operators.length);
+			ArrayList<Field> fieldL = new ArrayList<>(eq.fields.length);
+
+			{
+				Field[] fields = eq.fields;
+				char[] opes = eq.operators;
+				if(fields.length == 0)
+					return null;
+				if(fields.length == 1)
+					return new Equation(new char[] {}, new Field[] { fields[0] });
+
+			}
+
+			char[] operators = opeL.stream().map(String::valueOf).collect(StringBuilder::new, StringBuilder::append, StringBuilder::append).toString()
+					.toCharArray();
+			return new Equation(operators, fieldL.toArray(Field[]::new));
+		}
+
 	}
 
-	public static Equation simplyfy(Equation eq) {
+	class ArrayAccess {
+		public final String name;
+		public final Field[] args;
 
-		return null;
-	}
-}
+		public ArrayAccess(String name, Field[] args) {
+			this.name = name;
+			this.args = args;
+		}
 
-class ArrayAccess {
-	public final String name;
-	public final Field[] args;
-
-	public ArrayAccess(String name, Field[] args) {
-		this.name = name;
-		this.args = args;
+		@Override
+		public String toString() { return name + Utils.arrayToString(args, '[', ']'); }
 	}
 
-	@Override
-	public String toString() { return name + Utils.arrayToString(args, '[', ']'); }
-}
+	class FunctionCall {
+		public final Function func;
+		public final Field[] args;
 
-class FunctionCall {
-	public final Function func;
-	public final Field[] args;
+		public FunctionCall(Field[] args, Function func) {
+			this.args = args;
+			this.func = func;
+		}
 
-	public FunctionCall(Field[] args, Function func) {
-		this.args = args;
-		this.func = func;
+		public List<Instruction> getCall() { return func.getCall(args); }
+
+		@Override
+		public String toString() { return func.name + Utils.arrayToString(args, '(', ')', ","); }
 	}
 
-	public List<Instruction> getCall() { return func.getCall(args); }
+	class Field {
+		enum FieldType {
+			Val, Var, Eq, Func, Array
+		}
 
-	@Override
-	public String toString() { return func.name + Utils.arrayToString(args, '(', ')', ","); }
-}
+		public final FieldType fieldType;
+		public double value;
+		public int cell;
+		public Equation eq;
+		public FunctionCall funcCall;
+		public ArrayAccess arrAccess;
 
-class Field {
-	enum FieldType {
-		Val, Var, Field, Func, Array
+		public Field(double value) {
+			this.fieldType = Val;
+			this.value = value;
+		}
+
+		public Field(int cell) {
+			this.fieldType = Var;
+			this.cell = cell;
+		}
+
+		public Field(Equation eq) {
+			Equation eq1 = eq;
+			while (eq1.fields.length == 1 && eq1.fields[0].isEq()) eq1 = eq1.fields[0].eq;
+
+			Field[] fields = eq1.fields;
+			char[] opes = eq1.operators;
+			if(fields.length == 0)
+				throw new IGB_CL2_Exception("Equation syntax error");
+			if(fields.length == 1) {
+				Field f = fields[0];
+				switch (f.fieldType) {
+				case Array -> {
+					fieldType = Array;
+					arrAccess = f.arrAccess;
+				}
+				case Eq -> throw new IGB_CL2_Exception("how");
+				case Func -> {
+					fieldType = Func;
+					funcCall = f.funcCall;
+				}
+				case Val -> {
+					fieldType = Val;
+					value = f.value;
+				}
+				case Var -> {
+					fieldType = Var;
+					cell = f.cell;
+				}
+				default -> throw new IGB_CL2_Exception("how");
+
+				}
+			} else {
+
+				boolean replace = true;
+				for (char ope : opes) {
+					if(!(ope == '+' || ope == '-')) {
+						replace = false;
+						break;
+					}
+				}
+				if(replace) {
+					int val = 0;
+
+					for (int i = 0; i < fields.length; i++) {
+						Field f = fields[i];
+						if(f.isVal()) {
+							char ope = i == 0 ? '+' : opes[i - 1];
+							if(ope == '+')
+								val += f.value;
+							else
+								val -= f.value;
+						} else {
+							replace = false;
+							break;
+						}
+					}
+					if(replace) {
+						fieldType = Val;
+						this.value = val;
+					} else {
+						fieldType = Eq;
+						this.eq = eq1;
+					}
+				} else {
+					fieldType = Eq;
+					this.eq = eq1;
+				}
+			}
+		}
+
+		public Field(FunctionCall funcCall) {
+			this.fieldType = Func;
+			this.funcCall = funcCall;
+		}
+
+		public Field(ArrayAccess arrAccess) {
+			this.fieldType = Array;
+			this.arrAccess = arrAccess;
+		}
+
+		public boolean isVal() { return fieldType == Val; }
+
+		public boolean isVar() { return fieldType == Var; }
+
+		public boolean isEq() { return fieldType == Eq; }
+
+		public boolean isFunction() { return fieldType == Func; }
+
+		public boolean isArray() { return fieldType == Array; }
+
+		@Override
+		public String toString() {
+			return switch (fieldType) {
+			case Array -> arrAccess.toString();
+			case Eq -> eq.toString();
+			case Func -> funcCall.toString();
+			case Val -> value + "d";
+			case Var -> cell + "c";
+			};
+		}
 	}
 
-	public final FieldType fieldType;
-	public double value;
-	public int cell;
-	public Field field;
-	public FunctionCall funcCall;
-	public ArrayAccess arrAccess;
-
-	public Field(double value) {
-		this.fieldType = FieldType.Val;
-		this.value = value;
-	}
-
-	public Field(int cell) {
-		this.fieldType = FieldType.Var;
-		this.cell = cell;
-	}
-
-	public Field(Field field) {
-		this.fieldType = FieldType.Field;
-		this.field = field;
-	}
-
-	public Field(FunctionCall funcCall) {
-		this.fieldType = FieldType.Func;
-		this.funcCall = funcCall;
-	}
-
-	public Field(ArrayAccess arrAccess) {
-		this.fieldType = FieldType.Array;
-		this.arrAccess = arrAccess;
-	}
-
-	public boolean isVal() { return fieldType == FieldType.Val; }
-
-	public boolean isVar() { return fieldType == FieldType.Var; }
-
-	public boolean isField() { return fieldType == FieldType.Field; }
-
-	public boolean isFunction() { return fieldType == FieldType.Func; }
-
-	public boolean isArray() { return fieldType == FieldType.Array; }
-
-	@Override
-	public String toString() {
-		return switch (fieldType) {
-		case Array -> arrAccess.toString();
-		case Field -> field.toString();
-		case Func -> funcCall.toString();
-		case Val -> value + "d";
-		case Var -> cell + "c";
-		};
-	}
 }

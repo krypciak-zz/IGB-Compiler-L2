@@ -15,6 +15,7 @@ import me.krypek.utils.Utils;
 
 public class IGB_Compiler_L2 {
 
+	@SuppressWarnings("unused")
 	public static void main(String[] args) {
 		//@f:off
 		ParsedData data = new ParserBuilder()
@@ -103,7 +104,7 @@ public class IGB_Compiler_L2 {
 		ram.newVar("testvar", new Variable(2137));
 		ram.newArray("arrat", new int[] { 2, 3 });
 
-		String eq = "arrat[5][6]";
+		String eq = "arrat[5][6]+(1-2+sus)";
 		EqSolver es = new EqSolver();
 		ArrayList<Instruction> solved = es.solve(eq, ram, functions);
 		System.out.println(solved);
