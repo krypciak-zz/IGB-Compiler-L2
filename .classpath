@@ -6,5 +6,8 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="src" path="src"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/Utils"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/FreeArgParser-Java"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/IGB-Compiler-L1"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
