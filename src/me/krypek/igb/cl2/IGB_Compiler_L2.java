@@ -104,7 +104,7 @@ public class IGB_Compiler_L2 {
 		ram.newVar("testvar", new Variable(2137));
 		ram.newArray("arrat", new int[] { 2, 3 });
 
-		String eq = "arrat[5][6]+(1-2+sus)";
+		String eq = "4+(1-2+testvar)";
 		EqSolver es = new EqSolver();
 		ArrayList<Instruction> solved = es.solve(eq, ram, functions);
 		System.out.println(solved);

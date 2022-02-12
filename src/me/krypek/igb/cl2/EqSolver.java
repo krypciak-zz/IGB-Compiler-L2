@@ -10,7 +10,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import me.krypek.igb.cl1.IGB_MA;
 import me.krypek.igb.cl1.Instruction;
+import me.krypek.igb.cl2.EqSolver.Field.FieldType;
+import me.krypek.utils.TripleObject;
 import me.krypek.utils.Utils;
 
 class EqSolver {
@@ -19,8 +22,10 @@ class EqSolver {
 	public ArrayList<Instruction> solve(final String eqS, RAM ram, Functions funcs) {
 		this.ram = ram;
 		this.funcs = funcs;
+		this.tempCell = IGB_MA.CHARLIB_TEMP_START;
 		Equation eq = getEqFromString(eqS);
 		System.out.println(eq);
+
 		ArrayList<Instruction> instructionList = getInstructionListFromEq(eq);
 
 		return instructionList;
@@ -29,7 +34,106 @@ class EqSolver {
 	private RAM ram;
 	private Functions funcs;
 
-	private ArrayList<Instruction> getInstructionListFromEq(Equation eq) { return null; }
+	private int tempCell;
+
+	private ArrayList<Instruction> getInstructionListFromEq(Equation eq) {
+		Field[] fields = eq.fields;
+		char[] opes = eq.operators;
+		ArrayList<Instruction> list = new ArrayList<>();
+
+		Integer[] cells = new Integer[opes.length];
+
+		for (int i = 0; i < fields.length; i++) {
+			final int i_ = i + 1;
+			Field f = fields[i];
+			char ope = (i == opes.length) ? '?' : opes[i];
+			char nextOpe = (i_ >= opes.length) ? '?' : opes[i_];
+			if(isAddi(ope)) {
+				if(isAddi(nextOpe)) {
+					cells[i] = tempCell;
+					cells[i_] = tempCell++;
+					list.add(Instruction.Add(ope, false, nextOpe, i));
+				} else {
+
+				}
+			}
+
+		}
+
+		return list;
+	}
+
+	private boolean isAddi(char ope) { return ope == '+' || ope == '-'; }
+
+	class ConvField {
+		public final FieldType fieldType;
+		public double value;
+		public int cell;
+		public final boolean isCell;
+		public List<Instruction> inst;
+
+		public ConvField(double value) {
+			fieldType = Val;
+			this.value = value;
+			isCell = false;
+		}
+
+		public ConvField(int cell) {
+			fieldType = Var;
+			this.cell = cell;
+			isCell = true;
+		}
+
+		public ConvField(Field f, int directCell) {
+			isCell = switch (f.fieldType) {
+			case Array, Func, Eq -> {
+				TripleObject<Integer, FieldType, List<Instruction>> obj = getInstructionsFromField(f, directCell);
+				this.cell = obj.getValue1();
+				this.fieldType = obj.getValue2();
+				this.inst = obj.getValue3();
+				yield true;
+			}
+			case Val -> {
+				fieldType = Val;
+				this.value = f.value;
+				yield false;
+			}
+			case Var -> {
+				fieldType = Var;
+				this.cell = f.cell;
+				yield true;
+			}
+			};
+		}
+
+		public boolean isVal() { return fieldType == Val; }
+
+		public boolean isVar() { return fieldType == Var; }
+
+		public boolean isEq() { return fieldType == Eq; }
+
+		public boolean isFunction() { return fieldType == Func; }
+
+		public boolean isArray() { return fieldType == Array; }
+
+		public static TripleObject<Integer, FieldType, List<Instruction>> getInstructionsFromField(Field f, int directCell) {
+			assert !f.isVal() && !f.isVar();
+
+			switch (f.fieldType) {
+			case Array -> {
+
+			}
+			case Eq -> {
+
+			}
+			case Function -> {
+
+			}
+			}
+
+			return null;
+		}
+	}
 
 	private Equation getEqFromString(final String str) {
 		ArrayList<Character> operatorList = new ArrayList<>();
@@ -151,6 +255,7 @@ class EqSolver {
 			return sb.toString();
 		}
 
+		@SuppressWarnings("unused")
 		public static Equation simplyfy(Equation eq) {
 			ArrayList<Character> opeL = new ArrayList<>(eq.operators.length);
 			ArrayList<Field> fieldL = new ArrayList<>(eq.fields.length);
