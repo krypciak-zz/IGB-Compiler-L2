@@ -1,11 +1,14 @@
 package me.krypek.igb.cl2;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Stack;
 
 import me.krypek.igb.cl1.IGB_MA;
 import me.krypek.igb.cl1.Instruction;
+import me.krypek.igb.cl2.EqSolver.Field;
+import me.krypek.utils.Pair;
 
 class RAM {
 	static final String[] illegalCharacters = new String[] { "{", "}", "(", ")", "[", "]", ";", "$", "=", "else" };
@@ -43,7 +46,7 @@ class RAM {
 		}));
 	}
 
-	private int allocateSpace(int size) {
+	private int allocateSpace(int size, boolean write) {
 		for1: for (int i = 0; i < allocationArray.length; i++) {
 			final int _i = size + i;
 			for (; i < _i; i++)
@@ -63,9 +66,16 @@ class RAM {
 				throw new IGB_CL2_Exception("Variable name \"" + name + "\" contains illegal character: \"" + c + "\".");
 	}
 
+	public int[] reserve(int amount) {
+		int[] arr = new int[amount];
+		for (int i = 0; i < amount; i++)
+			arr[i] = allocateSpace(1, false);
+		return arr;
+	}
+
 	public int newVar(String name) {
 		checkName(name);
-		int cell = allocateSpace(1);
+		int cell = allocateSpace(1, true);
 		variableStack.peek().put(name, new Variable(cell));
 		return cell;
 	}
@@ -79,7 +89,7 @@ class RAM {
 	public int newArray(String name, int[] size) {
 		checkName(name);
 		int totalSize = calcArraySize(size);
-		int cell = allocateSpace(totalSize);
+		int cell = allocateSpace(totalSize, true);
 		arrayStack.peek().put(name, new Array(cell, size, totalSize));
 		return cell;
 	}
@@ -178,5 +188,17 @@ class Array {
 		this.cell = cell;
 		this.size = size;
 		this.totalSize = totalSize;
+	}
+
+	public ArrayList<Instruction> getAccess(Field[] args, int outCell) {
+		boolean isAllVal = true;
+		int val = 1;
+		for (Field f : args) {
+			if(!f.isVal()) {
+				isAllVal = false;
+				break;
+			}
+		}
+
 	}
 }

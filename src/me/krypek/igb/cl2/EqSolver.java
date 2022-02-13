@@ -13,6 +13,7 @@ import java.util.Set;
 import me.krypek.igb.cl1.IGB_MA;
 import me.krypek.igb.cl1.Instruction;
 import me.krypek.igb.cl2.EqSolver.Field.FieldType;
+import me.krypek.utils.Pair;
 import me.krypek.utils.TripleObject;
 import me.krypek.utils.Utils;
 
@@ -25,7 +26,7 @@ class EqSolver {
 		this.tempCell = IGB_MA.CHARLIB_TEMP_START;
 		Equation eq = getEqFromString(eqS);
 		System.out.println(eq);
-
+		System.out.println(ConvField.getInstructionsFromField(eq.fields[0], -1));
 		ArrayList<Instruction> instructionList = getInstructionListFromEq(eq);
 
 		return instructionList;
@@ -65,7 +66,7 @@ class EqSolver {
 
 	private boolean isAddi(char ope) { return ope == '+' || ope == '-'; }
 
-	class ConvField {
+	static class ConvField {
 		public final FieldType fieldType;
 		public double value;
 		public int cell;
@@ -87,10 +88,10 @@ class EqSolver {
 		public ConvField(Field f, int directCell) {
 			isCell = switch (f.fieldType) {
 			case Array, Func, Eq -> {
-				TripleObject<Integer, FieldType, List<Instruction>> obj = getInstructionsFromField(f, directCell);
-				this.cell = obj.getValue1();
-				this.fieldType = obj.getValue2();
-				this.inst = obj.getValue3();
+				Pair<Integer, ArrayList<Instruction>> obj = getInstructionsFromField(f, directCell);
+				this.cell = obj.getFirst();
+				this.fieldType = f.fieldType;
+				this.inst = obj.getSecond();
 				yield true;
 			}
 			case Val -> {
@@ -116,18 +117,47 @@ class EqSolver {
 
 		public boolean isArray() { return fieldType == Array; }
 
-		public static TripleObject<Integer, FieldType, List<Instruction>> getInstructionsFromField(Field f, int directCell) {
-			assert !f.isVal() && !f.isVar();
-
+		public static Pair<Integer, ArrayList<Instruction>> getInstructionsFromField(Field f, int directCell) {
+			ArrayList<Instruction> list = new ArrayList<>();
 			switch (f.fieldType) {
+			case Val -> {
+				final int outCell;
+				if(directCell == -1)
+					outCell = IGB_MA.TEMP_CELL_1;
+				else
+					outCell = directCell;
+				return new Pair<>(outCell, Utils.listOf(Instruction.Init(f.value, outCell)));
+			}
+			case Var -> {
+				final int outCell;
+				if(directCell == -1)
+					outCell = IGB_MA.TEMP_CELL_1;
+				else
+					outCell = directCell;
+				return new Pair<>(outCell, Utils.listOf(Instruction.Copy(f.cell, outCell)));
+			}
 			case Array -> {
+				ArrayAccess aa = f.arrAccess;
+				String name = aa.name;
+				Field[] args = aa.dims;
 
 			}
 			case Eq -> {
 
 			}
-			case Function -> {
-
+			case Func -> {
+				FunctionCall fc = f.funcCall;
+				Function func = fc.func;
+				Field[] args = fc.args;
+				final int outCell;
+				if(directCell == -1) {
+					outCell = IGB_MA.FUNC_RETURN;
+					list.addAll(func.getCall(args));
+				} else {
+					list.addAll(func.getCall(args, directCell));
+					outCell = directCell;
+				}
+				return new Pair<>(outCell, list);
 			}
 			}
 
@@ -217,6 +247,10 @@ class EqSolver {
 		if(cell != -1)
 			return new Field(cell);
 
+		try {
+			return new Field(getEqFromString(str));
+		} catch (Exception e) {}
+
 		throw new IGB_CL2_Exception("Unknown variable: \"" + str + "\".");
 	}
 
@@ -278,16 +312,20 @@ class EqSolver {
 	}
 
 	class ArrayAccess {
+		public final Array array;
 		public final String name;
-		public final Field[] args;
+		public final Field[] dims;
 
-		public ArrayAccess(String name, Field[] args) {
+		public ArrayAccess(String name, Field[] dims) {
 			this.name = name;
-			this.args = args;
+			this.dims = dims;
+			this.array = ram.getArray(name);
 		}
 
+		public ArrayList<Instruction> getAccess(Field[] dims, int outCell) { return array.getAccess(dims, outCell); }
+
 		@Override
-		public String toString() { return name + Utils.arrayToString(args, '[', ']'); }
+		public String toString() { return name + Utils.arrayToString(dims, '[', ']'); }
 	}
 
 	class FunctionCall {

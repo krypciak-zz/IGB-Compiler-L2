@@ -1,9 +1,11 @@
 package me.krypek.igb.cl2;
 
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 
+import me.krypek.igb.cl1.IGB_MA;
 import me.krypek.igb.cl1.Instruction;
+import me.krypek.igb.cl2.EqSolver.ConvField;
 import me.krypek.igb.cl2.EqSolver.Field;
 import me.krypek.utils.Utils;
 
@@ -32,7 +34,7 @@ class Functions {
 		map.put(argLength, func);
 	}
 
-	private void initFunction(boolean returnType, String rest, boolean ignoreFirstError, int file, int line) {
+	private void initFunction(boolean returnType, String rest, boolean ignoreFirstError, int file, int line, RAM ram) {
 		int bracketIndex = rest.indexOf('(');
 		if(bracketIndex == -1) {
 			if(ignoreFirstError)
@@ -53,11 +55,11 @@ class Functions {
 			String argName = arg.substring(spaceIndex + 1);
 			splited[i] = argName;
 		}
-		Function func = new Function(funcName, ":f_" + funcName + "_" + splited.length, splited, returnType);
+		Function func = new Function(funcName, ":f_" + funcName + "_" + splited.length, splited, returnType, ram);
 		addFunction(funcName, func);
 	}
 
-	public Functions(String[][] inputs, String[] fileNames) {
+	public Functions(String[][] inputs, String[] fileNames, RAM ram) {
 		functionMap = new HashMap<>();
 		for (int i = 0; i < inputs.length; i++) {
 			String[] input = inputs[i];
@@ -68,9 +70,9 @@ class Functions {
 					spaceIndex = cmd.length();
 				String first = cmd.substring(0, spaceIndex);
 				if(first.equals("void")) {
-					initFunction(false, cmd.substring(spaceIndex + 1), true, i, x);
+					initFunction(false, cmd.substring(spaceIndex + 1), true, i, x, ram);
 				} else if(IGB_Compiler_L2.varStr.contains(first)) {
-					initFunction(true, cmd.substring(spaceIndex + 1), false, i, x);
+					initFunction(true, cmd.substring(spaceIndex + 1), false, i, x, ram);
 				}
 			}
 		}
@@ -98,18 +100,36 @@ class Function {
 	public final String name;
 	public final String pointerName;
 	public final String[] argsName;
+	public final int[] argCells;
 	public final boolean returnType;
 
-	public Function(String name, String pointerName, String[] argsName, boolean returnType) {
+	public Function(String name, String pointerName, String[] argsName, boolean returnType, RAM ram) {
 		this.name = name;
 		this.pointerName = pointerName;
+		this.argCells = ram.reserve(argsName.length);
 		this.argsName = argsName;
 		this.returnType = returnType;
 	}
 
-	public List<Instruction> getCall(Field[] args) {
+	public ArrayList<Instruction> getCall(Field[] args) {
+		ArrayList<Instruction> list = new ArrayList<>();
+		for (int i = 0; i < args.length; i++) {
+			var obj = ConvField.getInstructionsFromField(args[i], argCells[i]);
+			if(obj.getSecond() != null)
+				list.addAll(obj.getSecond());
+		}
+		list.add(Instruction.Cell_Call(pointerName));
+		return list;
+	}
 
-		return null;
+	public ArrayList<Instruction> getCall(Field[] args, int outputCell) {
+		if(!returnType)
+			throw new IGB_CL2_Exception("Function: \"" + name + "\" doesn't return any variables, it returns void.");
+
+		ArrayList<Instruction> list = getCall(args);
+		list.add(Instruction.Copy(IGB_MA.FUNC_RETURN, outputCell));
+
+		return list;
 	}
 
 	@Override
