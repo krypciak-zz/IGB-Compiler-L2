@@ -14,7 +14,6 @@ import me.krypek.igb.cl1.IGB_MA;
 import me.krypek.igb.cl1.Instruction;
 import me.krypek.igb.cl2.EqSolver.Field.FieldType;
 import me.krypek.utils.Pair;
-import me.krypek.utils.TripleObject;
 import me.krypek.utils.Utils;
 
 class EqSolver {
@@ -141,9 +140,10 @@ class EqSolver {
 				String name = aa.name;
 				Field[] args = aa.dims;
 
+				return null;
 			}
 			case Eq -> {
-
+				return null;
 			}
 			case Func -> {
 				FunctionCall fc = f.funcCall;
@@ -160,7 +160,6 @@ class EqSolver {
 				return new Pair<>(outCell, list);
 			}
 			}
-
 			return null;
 		}
 	}
@@ -338,6 +337,8 @@ class EqSolver {
 		}
 
 		public List<Instruction> getCall() { return func.getCall(args); }
+
+		public List<Instruction> getCall(int outCell) { return func.getCall(args, outCell); }
 
 		@Override
 		public String toString() { return func.name + Utils.arrayToString(args, '(', ')', ","); }

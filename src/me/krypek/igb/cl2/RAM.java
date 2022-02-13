@@ -7,8 +7,10 @@ import java.util.Stack;
 
 import me.krypek.igb.cl1.IGB_MA;
 import me.krypek.igb.cl1.Instruction;
+import me.krypek.igb.cl2.EqSolver.ConvField;
 import me.krypek.igb.cl2.EqSolver.Field;
 import me.krypek.utils.Pair;
+import me.krypek.utils.Utils;
 
 class RAM {
 	static final String[] illegalCharacters = new String[] { "{", "}", "(", ")", "[", "]", ";", "$", "=", "else" };
@@ -192,13 +194,86 @@ class Array {
 
 	public ArrayList<Instruction> getAccess(Field[] args, int outCell) {
 		boolean isAllVal = true;
-		int val = 1;
-		for (Field f : args) {
+		int cell = 0;
+
+		ArrayList<Pair<Integer, Integer>> cellList = new ArrayList<>();
+		for (int i = args.length - 1, x = 1; i >= 0; i--, x *= size[i]) {
+			Field f = args[i];
 			if(!f.isVal()) {
 				isAllVal = false;
-				break;
+				cellList.add(new Pair<>(i, x));
+			} else {
+				double val = f.value;
+				if(val % 1 != 0)
+					throw new IGB_CL2_Exception("Array dimension has to be an int, insted got: \"" + val + "\".");
+				int val1 = (int) val;
+				if(val1 >= size[i])
+					throw new IGB_CL2_Exception("Index out of bounds: " + val1 + " out of " + size[i] + ".");
+
+				cell += val1 * x;
 			}
 		}
+		ArrayList<Instruction> list = new ArrayList<>();
+		if(isAllVal) {
+			list.add(Instruction.Copy(cell, outCell));
+			return list;
+		} else {
+			boolean inited = cell == 0;
+			boolean set = false;
 
+			if(cellList.size() == 1) {
+				var pair = cellList.get(0);
+				int i = pair.getFirst();
+				int x = pair.getSecond();
+				Field f = args[i];
+				if(cell == 0) {
+					if(i == args.length - 1) {
+						var pair1 = ConvField.getInstructionsFromField(f, outCell);
+						list.addAll(pair1.getSecond());
+						list.add(Instruction.Math_CC(outCell, outCell));
+					} else {
+						var pair1 = ConvField.getInstructionsFromField(f, -1);
+						list.addAll(pair1.getSecond());
+						list.add(Instruction.Math("*", pair1.getFirst(), false, x, outCell));
+						list.add(Instruction.Math_CC(outCell, outCell));
+					}
+				} else {
+					if(i == args.length - 1) {
+						var pair1 = ConvField.getInstructionsFromField(f, IGB_MA.TEMP_CELL_2);
+						list.addAll(pair1.getSecond());
+						list.add(Instruction.Math_CC(outCell, outCell));
+					} else {
+						var pair1 = ConvField.getInstructionsFromField(f, -1);
+						list.addAll(pair1.getSecond());
+						list.add(Instruction.Math("*", pair1.getFirst(), false, x, outCell));
+						list.add(Instruction.Math_CC(outCell, outCell));
+					}
+					
+					
+				}
+				return list;
+			}
+
+			for (int i = 0; i < cellList.size(); i++) {
+				Pair<Integer, Integer> pair1 = cellList.get(i);
+				Field f = args[i];
+				if(!f.isVal()) {
+					if(inited) {
+						Pair<Integer, ArrayList<Instruction>> pair = ConvField.getInstructionsFromField(f, -1);
+						int cell1 = pair.getFirst();
+						ArrayList<Instruction> list1 = pair.getSecond();
+						list.addAll(list1);
+						if(set) {
+							list.add(Instruction.Add(IGB_MA.TEMP_CELL_2, true, cell1, IGB_MA.TEMP_CELL_2));
+						} else {
+							list.add(Instruction.Add(cell1, false, cell, IGB_MA.TEMP_CELL_2));
+							set = true;
+						}
+						return list;
+					}
+
+				}
+			}
+		}
 	}
 }
