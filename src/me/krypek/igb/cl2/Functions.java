@@ -10,7 +10,7 @@ import me.krypek.igb.cl2.EqSolver.Field;
 import me.krypek.utils.Utils;
 
 class Functions {
-	private HashMap<String, HashMap<Integer, Function>> functionMap;
+	private final HashMap<String, HashMap<Integer, Function>> functionMap;
 
 	public Function getFunction(String name, int argLength) {
 		HashMap<Integer, Function> map = functionMap.get(name);
@@ -69,11 +69,10 @@ class Functions {
 				if(spaceIndex == -1)
 					spaceIndex = cmd.length();
 				String first = cmd.substring(0, spaceIndex);
-				if(first.equals("void")) {
+				if(first.equals("void"))
 					initFunction(false, cmd.substring(spaceIndex + 1), true, i, x, ram);
-				} else if(IGB_Compiler_L2.varStr.contains(first)) {
+				else if(IGB_Compiler_L2.varStr.contains(first))
 					initFunction(true, cmd.substring(spaceIndex + 1), false, i, x, ram);
-				}
 			}
 		}
 	}
@@ -106,7 +105,7 @@ class Function {
 	public Function(String name, String pointerName, String[] argsName, boolean returnType, RAM ram) {
 		this.name = name;
 		this.pointerName = pointerName;
-		this.argCells = ram.reserve(argsName.length);
+		argCells = ram.reserve(argsName.length);
 		this.argsName = argsName;
 		this.returnType = returnType;
 	}

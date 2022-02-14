@@ -1,5 +1,12 @@
 package me.krypek.igb.cl2;
 
+import static me.krypek.igb.cl1.Instruction.Add;
+import static me.krypek.igb.cl1.Instruction.Copy;
+import static me.krypek.igb.cl1.Instruction.Init;
+import static me.krypek.igb.cl1.Instruction.Math;
+import static me.krypek.igb.cl1.Instruction.Math_CC;
+import static me.krypek.igb.cl1.Instruction.Math_CW;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -10,17 +17,17 @@ import me.krypek.igb.cl1.Instruction;
 import me.krypek.igb.cl2.EqSolver.ConvField;
 import me.krypek.igb.cl2.EqSolver.Field;
 import me.krypek.utils.Pair;
-import me.krypek.utils.Utils;
+import me.krypek.utils.TripleObject;
 
 class RAM {
-	static final String[] illegalCharacters = new String[] { "{", "}", "(", ")", "[", "]", ";", "$", "=", "else" };
+	static final String[] illegalCharacters = { "{", "}", "(", ")", "[", "]", ";", "$", "=", "else" };
 
-	private boolean[] allocationArray;
+	private final boolean[] allocationArray;
 
 	HashMap<String, Double> finalVars;
 
-	private Stack<Map<String, Variable>> variableStack;
-	private Stack<Map<String, Array>> arrayStack;
+	private final Stack<Map<String, Variable>> variableStack;
+	private final Stack<Map<String, Array>> arrayStack;
 
 	private int allocStart;
 
@@ -37,12 +44,12 @@ class RAM {
 		newVar("keyboard", new Variable(IGB_MA.KEYBOARD_INPUT));
 		newVar("screenWidth", new Variable(IGB_MA.SCREEN_WIDTH));
 		newVar("screenHeight", new Variable(IGB_MA.SCREEN_HEIGHT));
-		newVar("screenType", new Variable(IGB_MA.SCREEN_TYPE, (str) -> {
+		newVar("screenType", new Variable(IGB_MA.SCREEN_TYPE, str -> {
 			String str1 = str.toLowerCase();
 			if(str1.equals("rgb"))
-				return Instruction.Init(1, IGB_MA.SCREEN_TYPE);
-			else if(str1.equals("16c"))
-				return Instruction.Init(0, IGB_MA.SCREEN_TYPE);
+				return Init(1, IGB_MA.SCREEN_TYPE);
+			if(str1.equals("16c"))
+				return Init(0, IGB_MA.SCREEN_TYPE);
 			else
 				throw new IGB_CL2_Exception("Invalid value: \"" + str + "\" screenType can be only \"rgb\", \"16c\", \"0\" or \"1\".");
 		}));
@@ -105,8 +112,8 @@ class RAM {
 
 	public static int calcArraySize(int[] size) {
 		int totalSize = 1;
-		for (int i = 0; i < size.length; i++)
-			totalSize *= size[i];
+		for (int element : size)
+			totalSize *= element;
 
 		return totalSize;
 	}
@@ -167,7 +174,7 @@ class Variable {
 
 	public Variable(int cell, VariableSetAction setAction) {
 		this.cell = cell;
-		this.action = setAction;
+		action = setAction;
 	}
 
 	public void setAction(String arg) {
@@ -177,7 +184,7 @@ class Variable {
 	}
 
 	interface VariableSetAction {
-		public abstract Instruction set(String eq);
+		Instruction set(String eq);
 	}
 }
 
@@ -192,13 +199,16 @@ class Array {
 		this.totalSize = totalSize;
 	}
 
-	public ArrayList<Instruction> getAccess(Field[] args, int outCell) {
+	public TripleObject<Boolean, Integer, ArrayList<Instruction>> getArrayCell(Field[] dims, int outCell) {
+		if(dims.length != size.length)
+			throw new IGB_CL2_Exception("Expected " + size.length + " array dimensions, insted got " + dims.length + "\".");
+
 		boolean isAllVal = true;
 		int cell = 0;
 
 		ArrayList<Pair<Integer, Integer>> cellList = new ArrayList<>();
-		for (int i = args.length - 1, x = 1; i >= 0; i--, x *= size[i]) {
-			Field f = args[i];
+		for (int i = dims.length - 1, x = 1; i >= 0; x *= size[i--]) {
+			Field f = dims[i];
 			if(!f.isVal()) {
 				isAllVal = false;
 				cellList.add(new Pair<>(i, x));
@@ -214,66 +224,117 @@ class Array {
 			}
 		}
 		ArrayList<Instruction> list = new ArrayList<>();
-		if(isAllVal) {
-			list.add(Instruction.Copy(cell, outCell));
-			return list;
-		} else {
-			boolean inited = cell == 0;
-			boolean set = false;
+		if(isAllVal)
+			return new TripleObject<>(true, cell, list);
 
-			if(cellList.size() == 1) {
-				var pair = cellList.get(0);
-				int i = pair.getFirst();
-				int x = pair.getSecond();
-				Field f = args[i];
-				if(cell == 0) {
-					if(i == args.length - 1) {
-						var pair1 = ConvField.getInstructionsFromField(f, outCell);
-						list.addAll(pair1.getSecond());
-						list.add(Instruction.Math_CC(outCell, outCell));
-					} else {
-						var pair1 = ConvField.getInstructionsFromField(f, -1);
-						list.addAll(pair1.getSecond());
-						list.add(Instruction.Math("*", pair1.getFirst(), false, x, outCell));
-						list.add(Instruction.Math_CC(outCell, outCell));
-					}
+		final int len_ = dims.length - 1;
+		System.out.println(cellList);
+		if(cellList.size() == 1) {
+			var pair = cellList.get(0);
+			int i = pair.getFirst();
+			int x = pair.getSecond();
+
+			Field f = dims[i];
+			if(cell == 0) {
+				if(i == len_) {
+					var pair1 = ConvField.getInstructionsFromField(f, outCell);
+					list.addAll(pair1.getSecond());
 				} else {
-					if(i == args.length - 1) {
-						var pair1 = ConvField.getInstructionsFromField(f, IGB_MA.TEMP_CELL_2);
-						list.addAll(pair1.getSecond());
-						list.add(Instruction.Math_CC(outCell, outCell));
-					} else {
-						var pair1 = ConvField.getInstructionsFromField(f, -1);
-						list.addAll(pair1.getSecond());
-						list.add(Instruction.Math("*", pair1.getFirst(), false, x, outCell));
-						list.add(Instruction.Math_CC(outCell, outCell));
-					}
-					
-					
+					var pair1 = ConvField.getInstructionsFromField(f);
+					list.addAll(pair1.getSecond());
+					list.add(Math("*", pair1.getFirst(), false, x, outCell));
 				}
-				return list;
+			} else if(i == len_) {
+				var pair1 = ConvField.getInstructionsFromField(f, outCell);
+				list.addAll(pair1.getSecond());
+				list.add(Add(outCell, false, cell, outCell));
+			} else {
+				var pair1 = ConvField.getInstructionsFromField(f, outCell);
+				list.addAll(pair1.getSecond());
+				list.add(Math("*", outCell, false, x, outCell));
+				list.add(Add(outCell, false, cell, outCell));
 			}
+			return new TripleObject<>(false, outCell, list);
+		}
 
-			for (int i = 0; i < cellList.size(); i++) {
-				Pair<Integer, Integer> pair1 = cellList.get(i);
-				Field f = args[i];
-				if(!f.isVal()) {
-					if(inited) {
-						Pair<Integer, ArrayList<Instruction>> pair = ConvField.getInstructionsFromField(f, -1);
-						int cell1 = pair.getFirst();
-						ArrayList<Instruction> list1 = pair.getSecond();
-						list.addAll(list1);
-						if(set) {
-							list.add(Instruction.Add(IGB_MA.TEMP_CELL_2, true, cell1, IGB_MA.TEMP_CELL_2));
-						} else {
-							list.add(Instruction.Add(cell1, false, cell, IGB_MA.TEMP_CELL_2));
-							set = true;
-						}
-						return list;
+		boolean set = false;
+		boolean waitingForNext = false;
+		for (int h = 0; h < cellList.size(); h++) {
+			Pair<Integer, Integer> pair1 = cellList.get(h);
+			int i = pair1.getFirst();
+			int x = pair1.getSecond();
+			Field f = dims[h];
+			if(!f.isVal()) {
+				if(set) {
+					var pair2 = ConvField.getInstructionsFromField(dims[h - 1]);
+					int cell2 = pair2.getFirst();
+					list.addAll(pair2.getSecond());
+					list.add(Math("*", cell2, false, x, IGB_MA.TEMP_CELL_2));
+					list.add(Add(outCell, true, IGB_MA.TEMP_CELL_2, outCell));
+
+				} else {
+					if(waitingForNext) {
+						waitingForNext = false;
+						set = true;
+
+						var prevPair = ConvField.getInstructionsFromField(dims[h - 1], IGB_MA.TEMP_CELL_3);
+						list.addAll(prevPair.getSecond());
+
+						var currPair = ConvField.getInstructionsFromField(f, IGB_MA.TEMP_CELL_2);
+						list.addAll(currPair.getSecond());
+						list.add(Math("*", IGB_MA.TEMP_CELL_2, false, x, IGB_MA.TEMP_CELL_2));
+						list.add(Add(IGB_MA.TEMP_CELL_2, true, IGB_MA.TEMP_CELL_3, outCell));
+						continue;
 					}
 
+					if(cell == 0 && i == len_) {
+						waitingForNext = true;
+						continue;
+					}
+					var pair2 = ConvField.getInstructionsFromField(f);
+					int cell1 = pair2.getFirst();
+					list.addAll(pair2.getSecond());
+					if(cell == 0) {
+						list.add(Math("*", cell1, false, x, outCell));
+					} else {
+						if(i == len_) {
+							list.add(Add(cell1, false, cell, outCell));
+						} else {
+							list.add(Math("*", cell1, false, x, outCell));
+							list.add(Add(outCell, false, cell, outCell));
+						}
+					}
+					set = true;
 				}
 			}
 		}
+		return new TripleObject<>(false, outCell, list);
+	}
+
+	public ArrayList<Instruction> getAccess(Field[] dims, int outCell) {
+		var obj = getArrayCell(dims, outCell);
+		ArrayList<Instruction> list = obj.getValue3();
+		if(obj.getValue1()) {
+			list.add(Copy(cell, outCell));
+			return list;
+		}
+
+		list.add(Math_CC(obj.getValue2(), outCell));
+		return list;
+	}
+
+	public ArrayList<Instruction> getWrite(Field[] dims, double value) {
+		var obj = getArrayCell(dims, IGB_MA.TEMP_CELL_3);
+		ArrayList<Instruction> list = obj.getValue3();
+		list.add(Init(value, IGB_MA.TEMP_CELL_2));
+		list.add(Math_CW(IGB_MA.TEMP_CELL_3, IGB_MA.TEMP_CELL_2));
+		return list;
+	}
+
+	public ArrayList<Instruction> getWrite(Field[] dims, int cell) {
+		var obj = getArrayCell(dims, IGB_MA.TEMP_CELL_3);
+		ArrayList<Instruction> list = obj.getValue3();
+		list.add(Math_CW(IGB_MA.TEMP_CELL_3, cell));
+		return list;
 	}
 }

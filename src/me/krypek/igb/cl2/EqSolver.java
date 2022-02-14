@@ -22,13 +22,11 @@ class EqSolver {
 	public ArrayList<Instruction> solve(final String eqS, RAM ram, Functions funcs) {
 		this.ram = ram;
 		this.funcs = funcs;
-		this.tempCell = IGB_MA.CHARLIB_TEMP_START;
+		tempCell = IGB_MA.CHARLIB_TEMP_START;
 		Equation eq = getEqFromString(eqS);
 		System.out.println(eq);
-		System.out.println(ConvField.getInstructionsFromField(eq.fields[0], -1));
-		ArrayList<Instruction> instructionList = getInstructionListFromEq(eq);
-
-		return instructionList;
+		for (Instruction inst : ConvField.getInstructionsFromField(eq.fields[0], 2137).getSecond()) { System.out.println(inst); }
+		return getInstructionListFromEq(eq);
 	}
 
 	private RAM ram;
@@ -46,9 +44,9 @@ class EqSolver {
 		for (int i = 0; i < fields.length; i++) {
 			final int i_ = i + 1;
 			Field f = fields[i];
-			char ope = (i == opes.length) ? '?' : opes[i];
-			char nextOpe = (i_ >= opes.length) ? '?' : opes[i_];
-			if(isAddi(ope)) {
+			char ope = i == opes.length ? '?' : opes[i];
+			char nextOpe = i_ >= opes.length ? '?' : opes[i_];
+			if(isAddi(ope))
 				if(isAddi(nextOpe)) {
 					cells[i] = tempCell;
 					cells[i_] = tempCell++;
@@ -56,7 +54,6 @@ class EqSolver {
 				} else {
 
 				}
-			}
 
 		}
 
@@ -88,19 +85,19 @@ class EqSolver {
 			isCell = switch (f.fieldType) {
 			case Array, Func, Eq -> {
 				Pair<Integer, ArrayList<Instruction>> obj = getInstructionsFromField(f, directCell);
-				this.cell = obj.getFirst();
-				this.fieldType = f.fieldType;
-				this.inst = obj.getSecond();
+				cell = obj.getFirst();
+				fieldType = f.fieldType;
+				inst = obj.getSecond();
 				yield true;
 			}
 			case Val -> {
 				fieldType = Val;
-				this.value = f.value;
+				value = f.value;
 				yield false;
 			}
 			case Var -> {
 				fieldType = Var;
-				this.cell = f.cell;
+				cell = f.cell;
 				yield true;
 			}
 			};
@@ -116,6 +113,8 @@ class EqSolver {
 
 		public boolean isArray() { return fieldType == Array; }
 
+		public static Pair<Integer, ArrayList<Instruction>> getInstructionsFromField(Field f) { return getInstructionsFromField(f, -1); }
+
 		public static Pair<Integer, ArrayList<Instruction>> getInstructionsFromField(Field f, int directCell) {
 			ArrayList<Instruction> list = new ArrayList<>();
 			switch (f.fieldType) {
@@ -128,6 +127,8 @@ class EqSolver {
 				return new Pair<>(outCell, Utils.listOf(Instruction.Init(f.value, outCell)));
 			}
 			case Var -> {
+				if(f.cell == directCell)
+					return new Pair<>(directCell, new ArrayList<>());
 				final int outCell;
 				if(directCell == -1)
 					outCell = IGB_MA.TEMP_CELL_1;
@@ -137,10 +138,15 @@ class EqSolver {
 			}
 			case Array -> {
 				ArrayAccess aa = f.arrAccess;
-				String name = aa.name;
 				Field[] args = aa.dims;
+				Array arr = aa.array;
+				final int outCell;
+				if(directCell == -1)
+					outCell = IGB_MA.TEMP_CELL_1;
+				else
+					outCell = directCell;
 
-				return null;
+				return new Pair<>(outCell, arr.getAccess(args, outCell));
 			}
 			case Eq -> {
 				return null;
@@ -207,7 +213,7 @@ class EqSolver {
 		if(str.endsWith(")")) {
 			if(str.startsWith("("))
 				return new Field(getEqFromString(str.substring(1, str.length() - 1)));
-			else if(str.contains("(")) {
+			if(str.contains("(")) {
 				int index = str.indexOf('(');
 				String funcName = str.substring(0, index).stripTrailing();
 
@@ -318,7 +324,7 @@ class EqSolver {
 		public ArrayAccess(String name, Field[] dims) {
 			this.name = name;
 			this.dims = dims;
-			this.array = ram.getArray(name);
+			array = ram.getArray(name);
 		}
 
 		public ArrayList<Instruction> getAccess(Field[] dims, int outCell) { return array.getAccess(dims, outCell); }
@@ -327,7 +333,7 @@ class EqSolver {
 		public String toString() { return name + Utils.arrayToString(dims, '[', ']'); }
 	}
 
-	class FunctionCall {
+	static class FunctionCall {
 		public final Function func;
 		public final Field[] args;
 
@@ -344,7 +350,7 @@ class EqSolver {
 		public String toString() { return func.name + Utils.arrayToString(args, '(', ')', ","); }
 	}
 
-	class Field {
+	static class Field {
 		enum FieldType {
 			Val, Var, Eq, Func, Array
 		}
@@ -357,12 +363,12 @@ class EqSolver {
 		public ArrayAccess arrAccess;
 
 		public Field(double value) {
-			this.fieldType = Val;
+			fieldType = Val;
 			this.value = value;
 		}
 
 		public Field(int cell) {
-			this.fieldType = Var;
+			fieldType = Var;
 			this.cell = cell;
 		}
 
@@ -400,31 +406,29 @@ class EqSolver {
 			} else {
 
 				boolean replace = true;
-				for (char ope : opes) {
-					if(!(ope == '+' || ope == '-')) {
+				for (char ope : opes)
+					if(((ope != '+') && (ope != '-'))) {
 						replace = false;
 						break;
 					}
-				}
 				if(replace) {
 					int val = 0;
 
 					for (int i = 0; i < fields.length; i++) {
 						Field f = fields[i];
-						if(f.isVal()) {
-							char ope = i == 0 ? '+' : opes[i - 1];
-							if(ope == '+')
-								val += f.value;
-							else
-								val -= f.value;
-						} else {
+						if(!f.isVal()) {
 							replace = false;
 							break;
 						}
+						char ope = i == 0 ? '+' : opes[i - 1];
+						if(ope == '+')
+							val += f.value;
+						else
+							val -= f.value;
 					}
 					if(replace) {
 						fieldType = Val;
-						this.value = val;
+						value = val;
 					} else {
 						fieldType = Eq;
 						this.eq = eq1;
@@ -437,12 +441,12 @@ class EqSolver {
 		}
 
 		public Field(FunctionCall funcCall) {
-			this.fieldType = Func;
+			fieldType = Func;
 			this.funcCall = funcCall;
 		}
 
 		public Field(ArrayAccess arrAccess) {
-			this.fieldType = Array;
+			fieldType = Array;
 			this.arrAccess = arrAccess;
 		}
 

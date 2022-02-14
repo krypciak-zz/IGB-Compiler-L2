@@ -22,7 +22,7 @@ public class IGB_Compiler_L2 {
 				.add("cp", "codepath", 		true,	false, 	ArgType.StringArray, 	"Array of paths to code files.")
 				.add("op", "outputpath", 	false,	false, 	ArgType.String, 		"Path to a directory, l1 files will be saved here.")
 				.add("ro", "readableOutput",false, 	false,	ArgType.None, 			"If selected, will also save readable l1 files.")
-				.add("q", "quiet", 			false,	false,	ArgType.None, 			"If selected, won't print output to terminal.") 
+				.add("q", "quiet", 			false,	false,	ArgType.None, 			"If selected, won't print output to terminal.")
 				.parse(args);
 		//@f:on
 
@@ -54,15 +54,14 @@ public class IGB_Compiler_L2 {
 		IGB_Compiler_L2 igb_cl2 = new IGB_Compiler_L2();
 		IGB_L1[] compiled = igb_cl2.compile(inputs, fileNames);
 
-		if(!quiet) {
+		if(!quiet)
 			for (int i = 0; i < compiled.length; i++) {
 				Instruction[] code = compiled[i].code;
 				System.out.println("File: " + fileNames[i] + " :");
-				for (int x = 0; x < code.length; x++)
-					System.out.println(code[x]);
+				for (Instruction element : code)
+					System.out.println(element);
 				System.out.println("\n");
 			}
-		}
 	}
 
 	static final Set<String> varStr = Set.of("float", "double");
@@ -91,7 +90,8 @@ public class IGB_Compiler_L2 {
 		// log
 		for (int i = 0; i < formated.length; i++) {
 			System.out.println(fileNames[i] + " ->");
-			for (int x = 0; x < formated[i].length; x++) { System.out.println("  " + (lines[i][x] + 1) + ": " + formated[i][x]); }
+			for (int x = 0; x < formated[i].length; x++)
+				System.out.println("  " + (lines[i][x] + 1) + ": " + formated[i][x]);
 		}
 		// endlog
 
@@ -104,7 +104,7 @@ public class IGB_Compiler_L2 {
 		ram.newVar("testvar", new Variable(2137));
 		ram.newArray("arrat", new int[] { 2, 3 });
 
-		String eq = "arrat[1][2]";
+		String eq = "arrat[testvar][2]";
 		EqSolver es = new EqSolver();
 		ArrayList<Instruction> solved = es.solve(eq, ram, functions);
 		System.out.println(solved);
@@ -115,7 +115,8 @@ public class IGB_Compiler_L2 {
 	private String[][] formatArray(String[] inputs, String[] fileNames) {
 		lines = new int[inputs.length][];
 		String[][] arr = new String[inputs.length][];
-		for (int i = 0; i < inputs.length; i++) { arr[i] = format(inputs[i], fileNames[i], i); }
+		for (int i = 0; i < inputs.length; i++)
+			arr[i] = format(inputs[i], fileNames[i], i);
 		return arr;
 	}
 
@@ -141,7 +142,7 @@ public class IGB_Compiler_L2 {
 				sb.append(c);
 			else if(c == '\n')
 				line++;
-			else if((c == ' ' && (pc == ' ' || wasLastSemi)) || c == '\t' || c == '\u000B' || c == '\f' || c == '\r')
+			else if(c == ' ' && (pc == ' ' || wasLastSemi) || c == '\t' || c == '\u000B' || c == '\f' || c == '\r')
 				continue;
 			else if(c == '(') {
 				sb.append('(');
@@ -158,9 +159,8 @@ public class IGB_Compiler_L2 {
 				lineList.add(line);
 				sb = new StringBuilder(30);
 			} else if(c == '}') {
-				if(sb.length() != 0) {
+				if(sb.length() != 0)
 					throw new IGB_CL2_Exception("File: \"" + fileName + "\"  Sytnax error");
-				}
 				list.add("}");
 				lineList.add(line);
 			} else if(c == ';') {
@@ -172,9 +172,8 @@ public class IGB_Compiler_L2 {
 					sb = new StringBuilder(30);
 					wasLastSemi = true;
 					continue;
-				} else {
-					sb.append(';');
 				}
+				sb.append(';');
 
 			} else
 				sb.append(c);
@@ -184,9 +183,7 @@ public class IGB_Compiler_L2 {
 
 		lines[index] = lineList.stream().mapToInt(i -> i).toArray();
 
-		String[] formated = list.toArray(String[]::new);
-
-		return formated;
+		return list.toArray(String[]::new);
 	}
 
 }
