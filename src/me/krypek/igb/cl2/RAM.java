@@ -14,7 +14,6 @@ import java.util.Stack;
 
 import me.krypek.igb.cl1.IGB_MA;
 import me.krypek.igb.cl1.Instruction;
-import me.krypek.igb.cl2.EqSolver.ConvField;
 import me.krypek.igb.cl2.EqSolver.Field;
 import me.krypek.utils.Pair;
 import me.krypek.utils.TripleObject;
@@ -30,8 +29,9 @@ class RAM {
 	private final Stack<Map<String, Array>> arrayStack;
 
 	private int allocStart;
+	private int thread;
 
-	public RAM(int ramSize, int allocStart) {
+	public RAM(int ramSize, int allocStart, int thread) {
 		finalVars = new HashMap<>();
 		allocationArray = new boolean[ramSize];
 		variableStack = new Stack<>();
@@ -163,7 +163,13 @@ class RAM {
 		variableStack.add(new HashMap<>());
 		arrayStack.add(new HashMap<>());
 	}
-
+	
+	//@f:off
+	final int IF_TEMP1 = switch(thread) {case 0->IGB_MA.IF_TEMP1_THREAD0; case 1->IGB_MA.IF_TEMP1_THREAD1; default -> -1;};
+	final int IF_TEMP2 = switch(thread) {case 0->IGB_MA.IF_TEMP2_THREAD0; case 1->IGB_MA.IF_TEMP1_THREAD1; default -> -1;};
+	final int EQ_TEMP1 = switch(thread) {case 0->IGB_MA.IF_TEMP1_THREAD0; case 1->IGB_MA.IF_TEMP1_THREAD1; default -> -1;};
+	final int EQ_TEMP2 = switch(thread) {case 0->IGB_MA.IF_TEMP2_THREAD0; case 1->IGB_MA.IF_TEMP2_THREAD1; default -> -1;};
+	//@f:on
 }
 
 class Variable {
@@ -199,7 +205,7 @@ class Array {
 		this.totalSize = totalSize;
 	}
 
-	public TripleObject<Boolean, Integer, ArrayList<Instruction>> getArrayCell(Field[] dims, int outCell) {
+	public TripleObject<Boolean, Integer, ArrayList<Instruction>> getArrayCell(EqSolver eqs, Field[] dims, int outCell) {
 		if(dims.length != size.length)
 			throw new IGB_CL2_Exception("Expected " + size.length + " array dimensions, insted got " + dims.length + "\".");
 
@@ -237,19 +243,19 @@ class Array {
 			Field f = dims[i];
 			if(cell == 0) {
 				if(i == len_) {
-					var pair1 = ConvField.getInstructionsFromField(f, outCell);
+					var pair1 = eqs.getInstructionsFromField(f, outCell);
 					list.addAll(pair1.getSecond());
 				} else {
-					var pair1 = ConvField.getInstructionsFromField(f);
+					var pair1 = eqs.getInstructionsFromField(f);
 					list.addAll(pair1.getSecond());
 					list.add(Math("*", pair1.getFirst(), false, x, outCell));
 				}
 			} else if(i == len_) {
-				var pair1 = ConvField.getInstructionsFromField(f, outCell);
+				var pair1 = eqs.getInstructionsFromField(f, outCell);
 				list.addAll(pair1.getSecond());
 				list.add(Add(outCell, false, cell, outCell));
 			} else {
-				var pair1 = ConvField.getInstructionsFromField(f, outCell);
+				var pair1 = eqs.getInstructionsFromField(f, outCell);
 				list.addAll(pair1.getSecond());
 				list.add(Math("*", outCell, false, x, outCell));
 				list.add(Add(outCell, false, cell, outCell));
@@ -266,7 +272,7 @@ class Array {
 			Field f = dims[h];
 			if(!f.isVal()) {
 				if(set) {
-					var pair2 = ConvField.getInstructionsFromField(dims[h - 1]);
+					var pair2 = eqs.getInstructionsFromField(dims[h - 1]);
 					int cell2 = pair2.getFirst();
 					list.addAll(pair2.getSecond());
 					list.add(Math("*", cell2, false, x, IGB_MA.TEMP_CELL_2));
@@ -277,10 +283,10 @@ class Array {
 						waitingForNext = false;
 						set = true;
 
-						var prevPair = ConvField.getInstructionsFromField(dims[h - 1], IGB_MA.TEMP_CELL_3);
+						var prevPair = eqs.getInstructionsFromField(dims[h - 1], IGB_MA.TEMP_CELL_3);
 						list.addAll(prevPair.getSecond());
 
-						var currPair = ConvField.getInstructionsFromField(f, IGB_MA.TEMP_CELL_2);
+						var currPair = eqs.getInstructionsFromField(f, IGB_MA.TEMP_CELL_2);
 						list.addAll(currPair.getSecond());
 						list.add(Math("*", IGB_MA.TEMP_CELL_2, false, x, IGB_MA.TEMP_CELL_2));
 						list.add(Add(IGB_MA.TEMP_CELL_2, true, IGB_MA.TEMP_CELL_3, outCell));
@@ -291,7 +297,7 @@ class Array {
 						waitingForNext = true;
 						continue;
 					}
-					var pair2 = ConvField.getInstructionsFromField(f);
+					var pair2 = eqs.getInstructionsFromField(f);
 					int cell1 = pair2.getFirst();
 					list.addAll(pair2.getSecond());
 					if(cell == 0) {
@@ -311,8 +317,8 @@ class Array {
 		return new TripleObject<>(false, outCell, list);
 	}
 
-	public ArrayList<Instruction> getAccess(Field[] dims, int outCell) {
-		var obj = getArrayCell(dims, outCell);
+	public ArrayList<Instruction> getAccess(EqSolver eqs, Field[] dims, int outCell) {
+		var obj = getArrayCell(eqs, dims, outCell);
 		ArrayList<Instruction> list = obj.getValue3();
 		if(obj.getValue1()) {
 			list.add(Copy(cell, outCell));
@@ -323,18 +329,19 @@ class Array {
 		return list;
 	}
 
-	public ArrayList<Instruction> getWrite(Field[] dims, double value) {
-		var obj = getArrayCell(dims, IGB_MA.TEMP_CELL_3);
+	public ArrayList<Instruction> getWrite(EqSolver eqs, Field[] dims, double value) {
+		var obj = getArrayCell(eqs, dims, IGB_MA.TEMP_CELL_3);
 		ArrayList<Instruction> list = obj.getValue3();
 		list.add(Init(value, IGB_MA.TEMP_CELL_2));
 		list.add(Math_CW(IGB_MA.TEMP_CELL_3, IGB_MA.TEMP_CELL_2));
 		return list;
 	}
 
-	public ArrayList<Instruction> getWrite(Field[] dims, int cell) {
-		var obj = getArrayCell(dims, IGB_MA.TEMP_CELL_3);
+	public ArrayList<Instruction> getWrite(EqSolver eqs, Field[] dims, int cell) {
+		var obj = getArrayCell(eqs, dims, IGB_MA.TEMP_CELL_3);
 		ArrayList<Instruction> list = obj.getValue3();
 		list.add(Math_CW(IGB_MA.TEMP_CELL_3, cell));
 		return list;
 	}
+
 }

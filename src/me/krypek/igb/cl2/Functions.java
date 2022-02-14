@@ -5,7 +5,6 @@ import java.util.HashMap;
 
 import me.krypek.igb.cl1.IGB_MA;
 import me.krypek.igb.cl1.Instruction;
-import me.krypek.igb.cl2.EqSolver.ConvField;
 import me.krypek.igb.cl2.EqSolver.Field;
 import me.krypek.utils.Utils;
 
@@ -110,10 +109,10 @@ class Function {
 		this.returnType = returnType;
 	}
 
-	public ArrayList<Instruction> getCall(Field[] args) {
+	public ArrayList<Instruction> getCall(EqSolver eqs, Field[] args) {
 		ArrayList<Instruction> list = new ArrayList<>();
 		for (int i = 0; i < args.length; i++) {
-			var obj = ConvField.getInstructionsFromField(args[i], argCells[i]);
+			var obj = eqs.getInstructionsFromField(args[i], argCells[i]);
 			if(obj.getSecond() != null)
 				list.addAll(obj.getSecond());
 		}
@@ -121,11 +120,11 @@ class Function {
 		return list;
 	}
 
-	public ArrayList<Instruction> getCall(Field[] args, int outputCell) {
+	public ArrayList<Instruction> getCall(EqSolver eqs, Field[] args, int outputCell) {
 		if(!returnType)
 			throw new IGB_CL2_Exception("Function: \"" + name + "\" doesn't return any variables, it returns void.");
 
-		ArrayList<Instruction> list = getCall(args);
+		ArrayList<Instruction> list = getCall(eqs, args);
 		list.add(Instruction.Copy(IGB_MA.FUNC_RETURN, outputCell));
 
 		return list;

@@ -5,6 +5,7 @@ import static me.krypek.igb.cl2.EqSolver.Field.FieldType.Eq;
 import static me.krypek.igb.cl2.EqSolver.Field.FieldType.Func;
 import static me.krypek.igb.cl2.EqSolver.Field.FieldType.Val;
 import static me.krypek.igb.cl2.EqSolver.Field.FieldType.Var;
+import static me.krypek.igb.cl1.Instruction.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,162 +13,153 @@ import java.util.Set;
 
 import me.krypek.igb.cl1.IGB_MA;
 import me.krypek.igb.cl1.Instruction;
-import me.krypek.igb.cl2.EqSolver.Field.FieldType;
 import me.krypek.utils.Pair;
 import me.krypek.utils.Utils;
 
 class EqSolver {
 	private final static Set<Character> operators = Set.of('+', '-', '*', '/', '%');
 
-	public ArrayList<Instruction> solve(final String eqS, RAM ram, Functions funcs) {
+	public ArrayList<Instruction> solve(final String eqS, int outCell, RAM ram, Functions funcs) {
 		this.ram = ram;
 		this.funcs = funcs;
 		tempCell = IGB_MA.CHARLIB_TEMP_START;
 		Equation eq = getEqFromString(eqS);
 		System.out.println(eq);
-		for (Instruction inst : ConvField.getInstructionsFromField(eq.fields[0], 2137).getSecond()) { System.out.println(inst); }
-		return getInstructionListFromEq(eq);
+		for (Instruction inst : getInstructionsFromField(eq.fields[0], 2137).getSecond()) { System.out.println(inst); }
+		return getInstructionListFromEq(eq, outCell);
 	}
 
+	private EqSolver eqs = this;
 	private RAM ram;
 	private Functions funcs;
 
 	private int tempCell;
 
-	private ArrayList<Instruction> getInstructionListFromEq(Equation eq) {
+	private Pair<Integer, ArrayList<Instruction>> getInstructionListFromEq(Equation eq) { return null; }
+
+	private final int temp1 = ram.EQ_TEMP1;
+	private final int temp2 = ram.EQ_TEMP2;
+
+	private ArrayList<Instruction> getInstructionListFromEq(Equation eq, int outCell) {
 		Field[] fields = eq.fields;
 		char[] opes = eq.operators;
 		ArrayList<Instruction> list = new ArrayList<>();
 
-		Integer[] cells = new Integer[opes.length];
+		// Integer[] cells = new Integer[opes.length];
 
 		for (int i = 0; i < fields.length; i++) {
 			final int i_ = i + 1;
 			Field f = fields[i];
+			Field nextF = i == opes.length - 1 ? null : fields[i];
 			char ope = i == opes.length ? '?' : opes[i];
 			char nextOpe = i_ >= opes.length ? '?' : opes[i_];
-			if(isAddi(ope))
-				if(isAddi(nextOpe)) {
-					cells[i] = tempCell;
-					cells[i_] = tempCell++;
-					list.add(Instruction.Add(ope, false, nextOpe, i));
+			if(isAddi(ope)) {
+				if(nextOpe == '?') {
+					ArrayList<Instruction> list1 = getInstructionsFromField(f, temp1).getSecond();
+					list.addAll(list1);
+					ArrayList<Instruction> list2 = getInstructionsFromField(fields[i + 1], temp2).getSecond();
+					list.addAll(list2);
+					list.add(Math(ope, temp1, false, temp2, tempCell));
+					break;
+				} else if(isAddi(nextOpe)) {
+					ArrayList<Instruction> list1 = getInstructionsFromField(f, temp1).getSecond();
+					list.addAll(list1);
+					ArrayList<Instruction> list2 = getInstructionsFromField(fields[i + 1], temp2).getSecond();
+					list.addAll(list2);
+					list.add(Math(ope, temp1, false, temp2, tempCell));
+					i++;
+					// cells[i] = tempCell;
+					// cells[i_] = tempCell++;
 				} else {
-
+					ArrayList<Instruction> list2 = getInstructionsFromField(fields[i + 1], temp1).getSecond();
+					list.addAll(list2);
+					ArrayList<Instruction> list3 = getInstructionsFromField(fields[i + 2], temp2).getSecond();
+					list.addAll(list3);
+					list.add(Math(nextOpe, temp1, false, temp2, tempCell));
+					ArrayList<Instruction> list1 = getInstructionsFromField(f, temp1).getSecond();
+					list.addAll(list1);
+					list.add(Math(ope, temp1, false, temp2, tempCell));
+					i += 2;
 				}
-
+			} else {
+				ArrayList<Instruction> list1 = getInstructionsFromField(f, temp1).getSecond();
+				list.addAll(list1);
+				ArrayList<Instruction> list2 = getInstructionsFromField(fields[i + 1], temp2).getSecond();
+				list.addAll(list2);
+				list.add(Math(ope, temp1, false, temp2, tempCell));
+				// cells[i] = tempCell;
+				// cells[i_] = tempCell++;
+			}
 		}
 
 		return list;
 	}
 
-	private boolean isAddi(char ope) { return ope == '+' || ope == '-'; }
+	private static boolean isAddi(char ope) { return ope == '+' || ope == '-'; }
 
-	static class ConvField {
-		public final FieldType fieldType;
-		public double value;
-		public int cell;
-		public final boolean isCell;
-		public List<Instruction> inst;
+	public Pair<Integer, ArrayList<Instruction>> getInstructionsFromField(Field f) { return getInstructionsFromField(f, -1); }
 
-		public ConvField(double value) {
-			fieldType = Val;
-			this.value = value;
-			isCell = false;
+	public Pair<Integer, ArrayList<Instruction>> getInstructionsFromField(Field f, int directCell) {
+		ArrayList<Instruction> list = new ArrayList<>();
+		switch (f.fieldType) {
+		case Val -> {
+			final int outCell;
+			if(directCell == -1)
+				outCell = IGB_MA.TEMP_CELL_1;
+			else
+				outCell = directCell;
+			return new Pair<>(outCell, Utils.listOf(Instruction.Init(f.value, outCell)));
 		}
-
-		public ConvField(int cell) {
-			fieldType = Var;
-			this.cell = cell;
-			isCell = true;
+		case Var -> {
+			if(f.cell == directCell)
+				return new Pair<>(directCell, new ArrayList<>());
+			final int outCell;
+			if(directCell == -1)
+				outCell = IGB_MA.TEMP_CELL_1;
+			else
+				outCell = directCell;
+			return new Pair<>(outCell, Utils.listOf(Instruction.Copy(f.cell, outCell)));
 		}
+		case Array -> {
+			ArrayAccess aa = f.arrAccess;
+			Field[] args = aa.dims;
+			Array arr = aa.array;
+			final int outCell;
+			if(directCell == -1)
+				outCell = IGB_MA.TEMP_CELL_1;
+			else
+				outCell = directCell;
 
-		public ConvField(Field f, int directCell) {
-			isCell = switch (f.fieldType) {
-			case Array, Func, Eq -> {
-				Pair<Integer, ArrayList<Instruction>> obj = getInstructionsFromField(f, directCell);
-				cell = obj.getFirst();
-				fieldType = f.fieldType;
-				inst = obj.getSecond();
-				yield true;
-			}
-			case Val -> {
-				fieldType = Val;
-				value = f.value;
-				yield false;
-			}
-			case Var -> {
-				fieldType = Var;
-				cell = f.cell;
-				yield true;
-			}
-			};
+			return new Pair<>(outCell, arr.getAccess(eqs, args, outCell));
 		}
-
-		public boolean isVal() { return fieldType == Val; }
-
-		public boolean isVar() { return fieldType == Var; }
-
-		public boolean isEq() { return fieldType == Eq; }
-
-		public boolean isFunction() { return fieldType == Func; }
-
-		public boolean isArray() { return fieldType == Array; }
-
-		public static Pair<Integer, ArrayList<Instruction>> getInstructionsFromField(Field f) { return getInstructionsFromField(f, -1); }
-
-		public static Pair<Integer, ArrayList<Instruction>> getInstructionsFromField(Field f, int directCell) {
-			ArrayList<Instruction> list = new ArrayList<>();
-			switch (f.fieldType) {
-			case Val -> {
-				final int outCell;
-				if(directCell == -1)
-					outCell = IGB_MA.TEMP_CELL_1;
-				else
-					outCell = directCell;
-				return new Pair<>(outCell, Utils.listOf(Instruction.Init(f.value, outCell)));
+		case Eq -> {
+			final int cell1;
+			if(directCell == -1) {
+				Pair<Integer, ArrayList<Instruction>> pair1 = getInstructionListFromEq(f.eq);
+				cell1 = pair1.getFirst();
+				list.addAll(pair1.getSecond());
+			} else {
+				cell1 = directCell;
+				list.addAll(getInstructionListFromEq(f.eq, directCell));
 			}
-			case Var -> {
-				if(f.cell == directCell)
-					return new Pair<>(directCell, new ArrayList<>());
-				final int outCell;
-				if(directCell == -1)
-					outCell = IGB_MA.TEMP_CELL_1;
-				else
-					outCell = directCell;
-				return new Pair<>(outCell, Utils.listOf(Instruction.Copy(f.cell, outCell)));
-			}
-			case Array -> {
-				ArrayAccess aa = f.arrAccess;
-				Field[] args = aa.dims;
-				Array arr = aa.array;
-				final int outCell;
-				if(directCell == -1)
-					outCell = IGB_MA.TEMP_CELL_1;
-				else
-					outCell = directCell;
-
-				return new Pair<>(outCell, arr.getAccess(args, outCell));
-			}
-			case Eq -> {
-				return null;
-			}
-			case Func -> {
-				FunctionCall fc = f.funcCall;
-				Function func = fc.func;
-				Field[] args = fc.args;
-				final int outCell;
-				if(directCell == -1) {
-					outCell = IGB_MA.FUNC_RETURN;
-					list.addAll(func.getCall(args));
-				} else {
-					list.addAll(func.getCall(args, directCell));
-					outCell = directCell;
-				}
-				return new Pair<>(outCell, list);
-			}
-			}
-			return null;
+			return new Pair<>(cell1, list);
 		}
+		case Func -> {
+			FunctionCall fc = f.funcCall;
+			Function func = fc.func;
+			Field[] args = fc.args;
+			final int outCell;
+			if(directCell == -1) {
+				outCell = IGB_MA.FUNC_RETURN;
+				list.addAll(func.getCall(eqs, args));
+			} else {
+				list.addAll(func.getCall(eqs, args, directCell));
+				outCell = directCell;
+			}
+			return new Pair<>(outCell, list);
+		}
+		}
+		return null;
 	}
 
 	private Equation getEqFromString(final String str) {
@@ -327,13 +319,13 @@ class EqSolver {
 			array = ram.getArray(name);
 		}
 
-		public ArrayList<Instruction> getAccess(Field[] dims, int outCell) { return array.getAccess(dims, outCell); }
+		public ArrayList<Instruction> getAccess(Field[] dims, int outCell) { return array.getAccess(eqs, dims, outCell); }
 
 		@Override
 		public String toString() { return name + Utils.arrayToString(dims, '[', ']'); }
 	}
 
-	static class FunctionCall {
+	class FunctionCall {
 		public final Function func;
 		public final Field[] args;
 
@@ -342,9 +334,9 @@ class EqSolver {
 			this.func = func;
 		}
 
-		public List<Instruction> getCall() { return func.getCall(args); }
+		public List<Instruction> getCall() { return func.getCall(eqs, args); }
 
-		public List<Instruction> getCall(int outCell) { return func.getCall(args, outCell); }
+		public List<Instruction> getCall(int outCell) { return func.getCall(eqs, args, outCell); }
 
 		@Override
 		public String toString() { return func.name + Utils.arrayToString(args, '(', ')', ","); }

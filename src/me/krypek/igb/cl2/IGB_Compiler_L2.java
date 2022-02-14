@@ -95,18 +95,18 @@ public class IGB_Compiler_L2 {
 		}
 		// endlog
 
-		ram = new RAM(100, 60);
+		ram = new RAM(100, 60, 0);
 		functions = new Functions(formated, fileNames, ram);
 		System.out.println(functions);
 		System.out.println("\n\n");
 
 		ram.finalVars.put("finalvar", -2137d);
 		ram.newVar("testvar", new Variable(2137));
-		ram.newArray("arrat", new int[] { 2, 3 });
+		ram.newArray("arrat", new int[] { 2, 4 });
 
-		String eq = "arrat[testvar][2]";
+		String eq = "1+2+testvar";
 		EqSolver es = new EqSolver();
-		ArrayList<Instruction> solved = es.solve(eq, ram, functions);
+		ArrayList<Instruction> solved = es.solve(eq, 1234, ram, functions);
 		System.out.println(solved);
 		System.exit(1);
 		return arr;
