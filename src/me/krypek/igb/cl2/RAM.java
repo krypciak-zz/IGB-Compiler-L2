@@ -228,7 +228,6 @@ class Array {
 			return new TripleObject<>(true, cell, list);
 
 		final int len_ = dims.length - 1;
-		System.out.println(cellList);
 		if(cellList.size() == 1) {
 			var pair = cellList.get(0);
 			int i = pair.getFirst();

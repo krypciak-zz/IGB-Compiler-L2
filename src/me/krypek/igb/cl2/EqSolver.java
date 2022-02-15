@@ -27,10 +27,12 @@ class EqSolver {
 	public ArrayList<Instruction> solve(final String eqS, int outCell) {
 		tempCell1 = IGB_MA.CHARLIB_TEMP_START;
 		Equation eq = getEqFromString(eqS);
-		System.out.println(eq);
-		// for (Instruction inst : getInstructionsFromField(eq.fields[0],
-		// 2137).getSecond()) { System.out.println(inst); }
-		return getInstructionListFromEq(eq, outCell);
+
+		var list = getInstructionListFromEq(eq, outCell);
+		System.out.println(eq + " -> " + outCell + " ->");
+		for (Instruction inst : list) { System.out.println(inst); }
+		System.out.println();
+		return list;
 	}
 
 	private final EqSolver eqs = this;
@@ -48,16 +50,13 @@ class EqSolver {
 		char[] opes = eq.operators;
 		ArrayList<Instruction> list = new ArrayList<>();
 
-		// Integer[] cells = new Integer[opes.length];
-		int tempCell = tempCell1++;
+		int tempCell = outCell;
 		for (int i = 0; i < fields.length - 1; i++) {
 			final int i_ = i + 1;
 			Field f = fields[i];
 			Field f1 = i == opes.length ? null : fields[i + 1];
-			// char prevOpe = i == 0 ? '?' : opes[i - 1];
 			char ope = i == opes.length ? '?' : opes[i];
 			char nextOpe = i_ >= opes.length ? '?' : opes[i_];
-			System.out.println(i + "\t" + ope);
 
 			if(isAddi(ope) && ((nextOpe != '?') && !isAddi(nextOpe))) {
 
@@ -71,7 +70,7 @@ class EqSolver {
 				} else if(c2)
 					list.add(Math(ope, (int) v2, c3, v3, tempCell));
 				else
-					list.addAll(revertOperation(v2, (int) v3, ope, tempCell));
+					list.addAll(revertOperation(v2, (int) v3, nextOpe, tempCell));
 				var numcell1 = getNumCell(f, list, temp1);
 				list.add(Math(ope, tempCell, numcell1.getFirst(), numcell1.getSecond(), tempCell));
 				i++;
@@ -88,7 +87,6 @@ class EqSolver {
 				else
 					list.addAll(revertOperation(v1, (int) v2, ope, tempCell));
 			} else {
-
 				var numcell2 = getNumCell(f1, list, temp2);
 				list.add(Math(ope, tempCell, numcell2.getFirst(), numcell2.getSecond(), tempCell));
 			}
@@ -133,6 +131,7 @@ class EqSolver {
 		else {
 			var pair = getInstructionsFromField(f, temp);
 			list.addAll(pair.getSecond());
+			System.out.println("getNumCell("+f+", "+list+", "+temp+") \n"+pair.getSecond()+"\n||||");
 			return new Pair<>(true, (double) pair.getFirst());
 		}
 	}
@@ -178,11 +177,12 @@ class EqSolver {
 				Pair<Integer, ArrayList<Instruction>> pair1 = getInstructionListFromEq(f.eq);
 				cell1 = pair1.getFirst();
 				list.addAll(pair1.getSecond());
+				return new Pair<>(cell1, list);
 			} else {
 				cell1 = directCell;
-				list.addAll(getInstructionListFromEq(f.eq, directCell));
+				list.addAll(getInstructionListFromEq(f.eq, tempCell1));
+				return new Pair<>(tempCell1++, list);
 			}
-			return new Pair<>(cell1, list);
 		}
 		case Func -> {
 			FunctionCall fc = f.funcCall;
