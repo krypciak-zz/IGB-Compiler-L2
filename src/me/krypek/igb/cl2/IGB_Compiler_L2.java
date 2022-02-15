@@ -104,10 +104,11 @@ public class IGB_Compiler_L2 {
 		ram.newVar("testvar", new Variable(2137));
 		ram.newArray("arrat", new int[] { 2, 4 });
 
-		String eq = "1+2+testvar";
-		EqSolver es = new EqSolver();
-		ArrayList<Instruction> solved = es.solve(eq, 1234, ram, functions);
-		System.out.println(solved);
+		String eq = "arrat[testvar][2]+1";
+		EqSolver es = new EqSolver(ram, functions);
+		ArrayList<Instruction> solved = es.solve(eq, 1234);
+		for (Instruction inst : solved)
+			System.out.println(inst);
 		System.exit(1);
 		return arr;
 	}

@@ -1,11 +1,6 @@
 package me.krypek.igb.cl2;
 
-import static me.krypek.igb.cl1.Instruction.Add;
-import static me.krypek.igb.cl1.Instruction.Copy;
-import static me.krypek.igb.cl1.Instruction.Init;
-import static me.krypek.igb.cl1.Instruction.Math;
-import static me.krypek.igb.cl1.Instruction.Math_CC;
-import static me.krypek.igb.cl1.Instruction.Math_CW;
+import static me.krypek.igb.cl1.Instruction.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -50,8 +45,7 @@ class RAM {
 				return Init(1, IGB_MA.SCREEN_TYPE);
 			if(str1.equals("16c"))
 				return Init(0, IGB_MA.SCREEN_TYPE);
-			else
-				throw new IGB_CL2_Exception("Invalid value: \"" + str + "\" screenType can be only \"rgb\", \"16c\", \"0\" or \"1\".");
+			throw new IGB_CL2_Exception("Invalid value: \"" + str + "\" screenType can be only \"rgb\", \"16c\", \"0\" or \"1\".");
 		}));
 	}
 
@@ -163,7 +157,7 @@ class RAM {
 		variableStack.add(new HashMap<>());
 		arrayStack.add(new HashMap<>());
 	}
-	
+
 	//@f:off
 	final int IF_TEMP1 = switch(thread) {case 0->IGB_MA.IF_TEMP1_THREAD0; case 1->IGB_MA.IF_TEMP1_THREAD1; default -> -1;};
 	final int IF_TEMP2 = switch(thread) {case 0->IGB_MA.IF_TEMP2_THREAD0; case 1->IGB_MA.IF_TEMP1_THREAD1; default -> -1;};
@@ -255,9 +249,9 @@ class Array {
 				list.addAll(pair1.getSecond());
 				list.add(Add(outCell, false, cell, outCell));
 			} else {
-				var pair1 = eqs.getInstructionsFromField(f, outCell);
+				var pair1 = eqs.getInstructionsFromField(f, -1);
 				list.addAll(pair1.getSecond());
-				list.add(Math("*", outCell, false, x, outCell));
+				list.add(Math("*", pair1.getFirst(), false, x, outCell));
 				list.add(Add(outCell, false, cell, outCell));
 			}
 			return new TripleObject<>(false, outCell, list);
@@ -270,7 +264,7 @@ class Array {
 			int i = pair1.getFirst();
 			int x = pair1.getSecond();
 			Field f = dims[h];
-			if(!f.isVal()) {
+			if(!f.isVal())
 				if(set) {
 					var pair2 = eqs.getInstructionsFromField(dims[h - 1]);
 					int cell2 = pair2.getFirst();
@@ -300,19 +294,16 @@ class Array {
 					var pair2 = eqs.getInstructionsFromField(f);
 					int cell1 = pair2.getFirst();
 					list.addAll(pair2.getSecond());
-					if(cell == 0) {
+					if(cell == 0)
 						list.add(Math("*", cell1, false, x, outCell));
-					} else {
-						if(i == len_) {
-							list.add(Add(cell1, false, cell, outCell));
-						} else {
-							list.add(Math("*", cell1, false, x, outCell));
-							list.add(Add(outCell, false, cell, outCell));
-						}
+					else if(i == len_)
+						list.add(Add(cell1, false, cell, outCell));
+					else {
+						list.add(Math("*", cell1, false, x, outCell));
+						list.add(Add(outCell, false, cell, outCell));
 					}
 					set = true;
 				}
-			}
 		}
 		return new TripleObject<>(false, outCell, list);
 	}
@@ -327,6 +318,17 @@ class Array {
 
 		list.add(Math_CC(obj.getValue2(), outCell));
 		return list;
+	}
+
+	public Pair<Integer, ArrayList<Instruction>> getAccess(EqSolver eqs, int tempCell, Field[] dims) {
+		var obj = getArrayCell(eqs, dims, tempCell);
+		ArrayList<Instruction> list = obj.getValue3();
+		if(obj.getValue1())
+			// list.add(Copy(cell, outCell));
+			return new Pair<>(tempCell, list);
+
+		list.add(Math_CC(obj.getValue2(), tempCell));
+		return new Pair<>(tempCell, list);
 	}
 
 	public ArrayList<Instruction> getWrite(EqSolver eqs, Field[] dims, double value) {
