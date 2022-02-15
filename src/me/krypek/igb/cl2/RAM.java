@@ -12,6 +12,8 @@ import me.krypek.igb.cl1.Instruction;
 import me.krypek.igb.cl2.EqSolver.Field;
 import me.krypek.utils.Pair;
 import me.krypek.utils.TripleObject;
+import net.objecthunter.exp4j.Expression;
+import net.objecthunter.exp4j.ExpressionBuilder;
 
 class RAM {
 	static final String[] illegalCharacters = { "{", "}", "(", ")", "[", "]", ";", "$", "=", "else" };
@@ -34,6 +36,8 @@ class RAM {
 		nextStack();
 		addCompilerVariables();
 	}
+
+	public void setFinalVariables(HashMap<String, Double> finalVars) { this.finalVars = finalVars; }
 
 	private void addCompilerVariables() {
 		newVar("keyboard", new Variable(IGB_MA.KEYBOARD_INPUT));
@@ -163,6 +167,19 @@ class RAM {
 	final int IF_TEMP2 = switch(thread) {case 0->IGB_MA.IF_TEMP2_THREAD0; case 1->IGB_MA.IF_TEMP1_THREAD1; default -> -1;};
 	final int EQ_TEMP1 = switch(thread) {case 0->IGB_MA.IF_TEMP1_THREAD0; case 1->IGB_MA.IF_TEMP1_THREAD1; default -> -1;};
 	final int EQ_TEMP2 = switch(thread) {case 0->IGB_MA.IF_TEMP2_THREAD0; case 1->IGB_MA.IF_TEMP2_THREAD1; default -> -1;};
+
+
+	public double solveFinalEq(String eq) {
+		// net.objecthunter.exp4j
+		// https://www.objecthunter.net/exp4j/
+		// https://github.com/fasseg/exp4j
+		Expression e = new ExpressionBuilder(eq)
+				.variables(finalVars.keySet())
+				.build()
+				.setVariables(finalVars);
+		double result = e.evaluate();
+		return result;
+	}
 	//@f:on
 }
 

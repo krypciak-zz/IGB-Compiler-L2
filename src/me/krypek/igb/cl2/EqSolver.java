@@ -131,7 +131,7 @@ class EqSolver {
 		else {
 			var pair = getInstructionsFromField(f, temp);
 			list.addAll(pair.getSecond());
-			System.out.println("getNumCell("+f+", "+list+", "+temp+") \n"+pair.getSecond()+"\n||||");
+			System.out.println("getNumCell(" + f + ", " + list + ", " + temp + ") \n" + pair.getSecond() + "\n||||");
 			return new Pair<>(true, (double) pair.getFirst());
 		}
 	}

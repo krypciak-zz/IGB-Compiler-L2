@@ -2,6 +2,8 @@ package me.krypek.igb.cl2;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -13,7 +15,7 @@ import me.krypek.igb.cl1.IGB_L1;
 import me.krypek.igb.cl1.Instruction;
 import me.krypek.utils.Utils;
 
-public class IGB_Compiler_L2 {
+public class IGB_CL2 {
 
 	@SuppressWarnings("unused")
 	public static void main(String[] args) {
@@ -51,9 +53,10 @@ public class IGB_Compiler_L2 {
 			}
 		}
 
-		IGB_Compiler_L2 igb_cl2 = new IGB_Compiler_L2();
+		IGB_CL2 igb_cl2 = new IGB_CL2();
 		IGB_L1[] compiled = igb_cl2.compile(inputs, fileNames);
 
+		System.exit(1);
 		if(!quiet)
 			for (int i = 0; i < compiled.length; i++) {
 				Instruction[] code = compiled[i].code;
@@ -80,7 +83,9 @@ public class IGB_Compiler_L2 {
 
 	RAM getRAM() { return ram; }
 
-	public IGB_Compiler_L2() { IGB_CL2_Exception.igb_cl2 = this; }
+	private HashMap<String, Double>[] finalVarsArr;
+
+	public IGB_CL2() { IGB_CL2_Exception.igb_cl2 = this; }
 
 	public IGB_L1[] compile(String[] inputs, String[] fileNames) {
 		IGB_L1[] arr = new IGB_L1[inputs.length];
@@ -97,17 +102,15 @@ public class IGB_Compiler_L2 {
 
 		ram = new RAM(100, 60, 0);
 		functions = new Functions(formated, fileNames, ram);
+		this.finalVarsArr = functions.finalVarsArr;
 		System.out.println(functions);
 		System.out.println("\n\n");
 
-		ram.finalVars.put("finalvar", -2137d);
+		ram.setFinalVariables(finalVarsArr[0]);
 		ram.newVar("testvar", new Variable(2137));
 		ram.newArray("arrat", new int[] { 2, 4 });
-
-		String eq = "arrat[testvar][2]+4*(testvar+3)";
-		EqSolver es = new EqSolver(ram, functions);
-		ArrayList<Instruction> solved = es.solve(eq, 1234);
-		System.exit(1);
+		ram.finalVars.put("finalvar", -2137d);
+		System.out.println(Arrays.toString(finalVarsArr));
 		return arr;
 	}
 

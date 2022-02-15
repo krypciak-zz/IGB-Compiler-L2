@@ -49,7 +49,7 @@ class Functions {
 				throw new IGB_CL2_Exception(file, line, "Function syntax error.");
 
 			String type = arg.substring(0, spaceIndex);
-			if(!IGB_Compiler_L2.varStr.contains(type))
+			if(!IGB_CL2.varStr.contains(type))
 				throw new IGB_CL2_Exception(file, line, "Invalid type: \"" + type + "\".");
 			String argName = arg.substring(spaceIndex + 1);
 			splited[i] = argName;
@@ -58,10 +58,17 @@ class Functions {
 		addFunction(funcName, func);
 	}
 
+	HashMap<String, Double>[] finalVarsArr;
+
+	@SuppressWarnings("unchecked")
 	public Functions(String[][] inputs, String[] fileNames, RAM ram) {
 		functionMap = new HashMap<>();
+
+		finalVarsArr = new HashMap[inputs.length];
+
 		for (int i = 0; i < inputs.length; i++) {
 			String[] input = inputs[i];
+			finalVarsArr[i] = new HashMap<>();
 			for (int x = 0; x < input.length; x++) {
 				String cmd = input[x];
 				int spaceIndex = cmd.indexOf(' ');
@@ -70,8 +77,34 @@ class Functions {
 				String first = cmd.substring(0, spaceIndex);
 				if(first.equals("void"))
 					initFunction(false, cmd.substring(spaceIndex + 1), true, i, x, ram);
-				else if(IGB_Compiler_L2.varStr.contains(first))
+				else if(IGB_CL2.varStr.contains(first) && !cmd.contains("=")) {
 					initFunction(true, cmd.substring(spaceIndex + 1), false, i, x, ram);
+				} else if(first.equals("final")) {
+					// init final vars
+					if(cmd.contains("=")) {}
+					String[] split = cmd.split("=");
+					int spaceIndex1 = split[0].indexOf(' ');
+					if(spaceIndex1 == -1)
+						throw new IGB_CL2_Exception(i, x, "Syntax error.");
+					split[0] = split[0].substring(spaceIndex1);
+					if(split.length != 2)
+						throw new IGB_CL2_Exception(i, x, "Syntax error.");
+					String eq = split[1].strip();
+					spaceIndex1 = split[0].indexOf(' ');
+					if(spaceIndex1 == -1)
+						throw new IGB_CL2_Exception(i, x, "Syntax error.");
+
+					String varname = split[0].stripLeading().substring(spaceIndex1).strip();
+					String type = split[0].stripLeading().substring(0, spaceIndex + 1).strip();
+					if(!IGB_CL2.varStr.contains(type))
+						throw new IGB_CL2_Exception(i, x, "Unknown variable type: \"" + type + "\".");
+					double val = ram.solveFinalEq(eq);
+					if(finalVarsArr[i].containsKey(varname))
+						throw new IGB_CL2_Exception(i, x, "Final variable already exists: \"" + varname + "\".");
+					finalVarsArr[i].put(varname, val);
+
+				}
+
 			}
 		}
 	}
