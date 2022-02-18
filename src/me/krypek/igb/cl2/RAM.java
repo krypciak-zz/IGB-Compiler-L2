@@ -56,6 +56,8 @@ class RAM {
 	private int allocateSpace(int size, boolean write) {
 		for1: for (int i = 0; i < allocationArray.length; i++) {
 			final int _i = size + i;
+			if(_i >= allocationArray.length)
+				throw new IGB_CL2_Exception("Ran out of space in RAM!");
 			for (; i < _i; i++)
 				if(allocationArray[i])
 					continue for1;
@@ -177,22 +179,13 @@ class RAM {
 				.variables(finalVars.keySet())
 				.build()
 				.setVariables(finalVars);
+		//@f:on
 		double result = e.evaluate();
 		return result;
 	}
 
-	public double solveFinalEq(String eq) {
-		// net.objecthunter.exp4j
-		// https://www.objecthunter.net/exp4j/
-		// https://github.com/fasseg/exp4j
-		Expression e = new ExpressionBuilder(eq)
-				.variables(finalVars.keySet())
-				.build()
-				.setVariables(finalVars);
-		double result = e.evaluate();
-		return result;
-	}
-	//@f:on
+	public double solveFinalEq(String eq) { return solveFinalEq(eq, finalVars); }
+
 }
 
 class Variable {
