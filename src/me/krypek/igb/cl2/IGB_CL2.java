@@ -147,11 +147,12 @@ public class IGB_CL2 {
 	}
 
 	private String[] format(String input, String fileName, int index) {
+		final int stringBuilderSize = 30;
 		List<String> list = new ArrayList<>();
 		List<Integer> lineList = new ArrayList<>();
 
 		char[] charA = input.toCharArray();
-		StringBuilder sb = new StringBuilder(30);
+		StringBuilder sb = new StringBuilder(stringBuilderSize);
 
 		boolean isQuote = false, isQuote1 = false, wasLastSemi = false;
 		int bracket = 0, line = 0;
@@ -169,7 +170,7 @@ public class IGB_CL2 {
 			else if(c == '\n') {
 				line++;
 				if(sb.length() >= 2 && sb.charAt(0) == '/' && sb.charAt(1) == '/')
-					sb = new StringBuilder(30);
+					sb = new StringBuilder(stringBuilderSize);
 
 			} else if(c == ' ' && (pc == ' ' || wasLastSemi) || c == '\t' || c == '\u000B' || c == '\f' || c == '\r')
 				continue;
@@ -186,24 +187,28 @@ public class IGB_CL2 {
 				}
 				list.add("{");
 				lineList.add(line);
-				sb = new StringBuilder(30);
+				sb = new StringBuilder(stringBuilderSize);
 			} else if(c == '}') {
 				if(sb.length() != 0)
 					throw new IGB_CL2_Exception(fileName, line, "Sytnax error");
 				list.add("}");
 				lineList.add(line);
 			} else if(c == ';') {
-				if(bracket == 0) {
-					if(sb.length() != 0) {
-						list.add(sb.toString());
-						lineList.add(line);
+				if(sb.length() >= 2 && sb.charAt(0) == '/' && sb.charAt(1) == '/') {
+					sb = new StringBuilder(stringBuilderSize);
+					sb.append("//");
+				} else {
+					if(bracket == 0) {
+						if(sb.length() != 0) {
+							list.add(sb.toString());
+							lineList.add(line);
+						}
+						sb = new StringBuilder(stringBuilderSize);
+						wasLastSemi = true;
+						continue;
 					}
-					sb = new StringBuilder(30);
-					wasLastSemi = true;
-					continue;
+					sb.append(';');
 				}
-				sb.append(';');
-
 			} else
 				sb.append(c);
 

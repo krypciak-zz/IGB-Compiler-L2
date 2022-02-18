@@ -24,6 +24,9 @@ public class VarSolver {
 			String first = cmd.substring(0, spaceIndex);
 			if(IGB_CL2.varStr.contains(first)) {
 				// var init
+				String rest = cmd.substring(spaceIndex);
+				System.out.println(rest);
+				
 			} else {
 				int bracketIndex = cmd.indexOf('[');
 				if(bracketIndex != -1) {
