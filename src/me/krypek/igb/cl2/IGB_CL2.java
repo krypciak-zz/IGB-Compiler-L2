@@ -2,8 +2,6 @@ package me.krypek.igb.cl2;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -56,11 +54,10 @@ public class IGB_CL2 {
 		IGB_CL2 igb_cl2 = new IGB_CL2();
 		IGB_L1[] compiled = igb_cl2.compile(inputs, fileNames);
 
-		System.exit(1);
 		if(!quiet)
 			for (int i = 0; i < compiled.length; i++) {
 				Instruction[] code = compiled[i].code;
-				System.out.println("File: " + fileNames[i] + " :");
+				System.out.println("File: " + fileNames[i] + " ->");
 				for (Instruction element : code)
 					System.out.println(element);
 				System.out.println("\n");
@@ -83,7 +80,10 @@ public class IGB_CL2 {
 
 	RAM getRAM() { return ram; }
 
-	private HashMap<String, Double>[] finalVarsArr;
+	private VarSolver varsolver;
+
+	@SuppressWarnings("unused")
+	private boolean assu;
 
 	public IGB_CL2() { IGB_CL2_Exception.igb_cl2 = this; }
 
@@ -100,18 +100,42 @@ public class IGB_CL2 {
 		}
 		// endlog
 
-		ram = new RAM(100, 60, 0);
-		functions = new Functions(formated, fileNames, ram);
-		this.finalVarsArr = functions.finalVarsArr;
+		functions = new Functions(formated, fileNames);
 		System.out.println(functions);
 		System.out.println("\n\n");
 
-		ram.setFinalVariables(finalVarsArr[0]);
-		ram.newVar("testvar", new Variable(2137));
-		ram.newArray("arrat", new int[] { 2, 4 });
-		ram.finalVars.put("finalvar", -2137d);
-		System.out.println(Arrays.toString(finalVarsArr));
+		for (int i = 0; i < formated.length; i++) {
+			ArrayList<Instruction> instList = new ArrayList<>();
+			ram = functions.rams[i];
+			varsolver = new VarSolver(this);
+			for (int x = 0; x < formated[i].length; x++) {
+				String cmd = formated[i][x];
+				ArrayList<Instruction> out = cmd(cmd);
+				if(out == null) {
+					// return;
+					instList.add(Instruction.Pointer(":null"));
+				} else
+					instList.addAll(out);
+			}
+			if(instList.size() > functions.lenlimits[i])
+				throw new IGB_CL2_Exception(true,
+						"\nFile: " + fileNames[i] + " Instruction length limit reached: " + instList.size() + " out of " + functions.lenlimits[i] + ".");
+
+			arr[i] = new IGB_L1(functions.startlines[i], instList.toArray(Instruction[]::new));
+		}
+
 		return arr;
+	}
+
+	private ArrayList<Instruction> cmd(String cmd) {
+
+		{
+			ArrayList<Instruction> var = varsolver.cmd(cmd);
+			if(var != null)
+				return var;
+		}
+
+		return null;
 	}
 
 	private String[][] formatArray(String[] inputs, String[] fileNames) {
@@ -142,9 +166,12 @@ public class IGB_CL2 {
 				isQuote1 = !isQuote1;
 			else if(isQuote || isQuote1)
 				sb.append(c);
-			else if(c == '\n')
+			else if(c == '\n') {
 				line++;
-			else if(c == ' ' && (pc == ' ' || wasLastSemi) || c == '\t' || c == '\u000B' || c == '\f' || c == '\r')
+				if(sb.length() >= 2 && sb.charAt(0) == '/' && sb.charAt(1) == '/')
+					sb = new StringBuilder(30);
+
+			} else if(c == ' ' && (pc == ' ' || wasLastSemi) || c == '\t' || c == '\u000B' || c == '\f' || c == '\r')
 				continue;
 			else if(c == '(') {
 				sb.append('(');
@@ -162,7 +189,7 @@ public class IGB_CL2 {
 				sb = new StringBuilder(30);
 			} else if(c == '}') {
 				if(sb.length() != 0)
-					throw new IGB_CL2_Exception("File: \"" + fileName + "\"  Sytnax error");
+					throw new IGB_CL2_Exception(fileName, line, "Sytnax error");
 				list.add("}");
 				lineList.add(line);
 			} else if(c == ';') {

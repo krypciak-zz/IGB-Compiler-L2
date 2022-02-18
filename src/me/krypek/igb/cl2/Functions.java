@@ -58,54 +58,132 @@ class Functions {
 		addFunction(funcName, func);
 	}
 
-	HashMap<String, Double>[] finalVarsArr;
+	RAM[] rams;
+	boolean[] assus;
+	int[] startlines;
+	int[] lenlimits;
 
-	@SuppressWarnings("unchecked")
-	public Functions(String[][] inputs, String[] fileNames, RAM ram) {
+	public Functions(String[][] inputs, String[] fileNames) {
 		functionMap = new HashMap<>();
-
-		finalVarsArr = new HashMap[inputs.length];
+		rams = new RAM[inputs.length];
+		assus = new boolean[inputs.length];
+		startlines = new int[inputs.length];
+		lenlimits = new int[inputs.length];
 
 		for (int i = 0; i < inputs.length; i++) {
 			String[] input = inputs[i];
-			finalVarsArr[i] = new HashMap<>();
+			HashMap<String, Double> finalVars = new HashMap<>();
+			int startline = -1, lenlimit = -1, thread = 0, ramcell = -1, ramlimit = -1;
+			boolean assu = true, ramInited = false;
+
 			for (int x = 0; x < input.length; x++) {
 				String cmd = input[x];
 				int spaceIndex = cmd.indexOf(' ');
 				if(spaceIndex == -1)
 					spaceIndex = cmd.length();
 				String first = cmd.substring(0, spaceIndex);
-				if(first.equals("void"))
-					initFunction(false, cmd.substring(spaceIndex + 1), true, i, x, ram);
-				else if(IGB_CL2.varStr.contains(first) && !cmd.contains("=")) {
-					initFunction(true, cmd.substring(spaceIndex + 1), false, i, x, ram);
-				} else if(first.equals("final")) {
-					// init final vars
-					if(cmd.contains("=")) {}
+
+				if(first.startsWith("$")) {
 					String[] split = cmd.split("=");
-					int spaceIndex1 = split[0].indexOf(' ');
-					if(spaceIndex1 == -1)
-						throw new IGB_CL2_Exception(i, x, "Syntax error.");
-					split[0] = split[0].substring(spaceIndex1);
-					if(split.length != 2)
+					if(split.length == 1)
+						throw new IGB_CL2_Exception(i, x, "Compiler variable has to be set.");
+					if(split.length > 2)
 						throw new IGB_CL2_Exception(i, x, "Syntax error.");
 					String eq = split[1].strip();
-					spaceIndex1 = split[0].indexOf(' ');
-					if(spaceIndex1 == -1)
-						throw new IGB_CL2_Exception(i, x, "Syntax error.");
 
-					String varname = split[0].stripLeading().substring(spaceIndex1).strip();
-					String type = split[0].stripLeading().substring(0, spaceIndex + 1).strip();
-					if(!IGB_CL2.varStr.contains(type))
-						throw new IGB_CL2_Exception(i, x, "Unknown variable type: \"" + type + "\".");
-					double val = ram.solveFinalEq(eq);
-					if(finalVarsArr[i].containsKey(varname))
-						throw new IGB_CL2_Exception(i, x, "Final variable already exists: \"" + varname + "\".");
-					finalVarsArr[i].put(varname, val);
+					String name = split[0].substring(1).strip();
 
+					if(name.toLowerCase().equals("autoscreensizeupdate") || name.toLowerCase().equals("assu")) {
+						if(eq.equals("true") || eq.equals("1"))
+							assu = true;
+						else if(eq.equals("false") || eq.equals("0"))
+							assu = false;
+						else
+							throw new IGB_CL2_Exception(i, x, "Assu value can be only \"true\" or \"false\".");
+						continue;
+					}
+
+					double valD = RAM.solveFinalEq(eq, new HashMap<>());
+					if(valD % 1 != 0)
+						throw new IGB_CL2_Exception(i, x, "Compiler variable value has to be an integer.");
+					int val = (int) valD;
+					if(val < 0)
+						throw new IGB_CL2_Exception(i, x, "Compiler variable value cannot be negative.");
+
+					switch (name.toLowerCase()) {
+					case "startline" -> {
+						if(startline != -1)
+							throw new IGB_CL2_Exception(i, x, "Cannot set startline twice.");
+						startline = val;
+					}
+					case "lenlimit" -> {
+						if(lenlimit != -1)
+							throw new IGB_CL2_Exception(i, x, "Cannot set lenlimit twice.");
+						lenlimit = val;
+					}
+					case "ramlimit" -> {
+						if(ramlimit != -1)
+							throw new IGB_CL2_Exception(i, x, "Cannot set ramlimit twice.");
+						ramlimit = val;
+					}
+					case "ramcell" -> {
+						if(ramcell != -1)
+							throw new IGB_CL2_Exception(i, x, "Cannot set ramcell twice.");
+						ramcell = val;
+					}
+					case "thread" -> {
+						if(thread > 1)
+							throw new IGB_CL2_Exception(i, x, "Thread can be only 0 or 1.");
+					}
+					default -> throw new IGB_CL2_Exception(i, x, "Unknown compiler variable: \"" + name + "\".");
+					}
+				} else {
+					if(!ramInited) {
+						if(startline == -1)
+							throw new IGB_CL2_Exception(i, x, "Startline has to be set.");
+						if(ramcell == -1)
+							throw new IGB_CL2_Exception(i, x, "Ramcell has to be set.");
+						if(ramlimit == -1)
+							throw new IGB_CL2_Exception(i, x, "Ramlimit has to be set.");
+
+						rams[i] = new RAM(ramlimit, ramcell, thread);
+						startlines[i] = startline;
+						assus[i] = assu;
+						lenlimits[i] = lenlimit == -1 ? Integer.MAX_VALUE : lenlimit;
+					}
+					if(first.equals("void")) {
+						initFunction(false, cmd.substring(spaceIndex + 1), true, i, x, rams[i]);
+					} else if(IGB_CL2.varStr.contains(first) && !cmd.contains("=")) {
+						initFunction(true, cmd.substring(spaceIndex + 1), false, i, x, rams[i]);
+					} else if(first.equals("final")) {
+						// init final vars
+						if(!cmd.contains("="))
+							throw new IGB_CL2_Exception(i, x, "Final variable has to be set.");
+						String[] split = cmd.split("=");
+						int spaceIndex1 = split[0].indexOf(' ');
+						if(spaceIndex1 == -1)
+							throw new IGB_CL2_Exception(i, x, "Syntax error.");
+						split[0] = split[0].substring(spaceIndex1);
+						if(split.length != 2)
+							throw new IGB_CL2_Exception(i, x, "Syntax error.");
+						String eq = split[1].strip();
+						spaceIndex1 = split[0].indexOf(' ');
+						if(spaceIndex1 == -1)
+							throw new IGB_CL2_Exception(i, x, "Syntax error.");
+
+						String varname = split[0].stripLeading().substring(spaceIndex1).strip();
+						String type = split[0].stripLeading().substring(0, spaceIndex + 1).strip();
+						if(!IGB_CL2.varStr.contains(type))
+							throw new IGB_CL2_Exception(i, x, "Unknown variable type: \"" + type + "\".");
+						double val = RAM.solveFinalEq(eq, finalVars);
+						if(finalVars.containsKey(varname))
+							throw new IGB_CL2_Exception(i, x, "Final variable already exists: \"" + varname + "\".");
+						finalVars.put(varname, val);
+					}
 				}
 
 			}
+			rams[i].setFinalVariables(finalVars);
 		}
 	}
 

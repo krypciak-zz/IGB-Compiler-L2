@@ -21,4 +21,8 @@ public class IGB_CL2_Exception extends RuntimeException {
 	IGB_CL2_Exception(int file, int line, String str) {
 		super("\nFile: " + igb_cl2.fileNames[file] + "\nLine: " + (igb_cl2.lines[igb_cl2.file][line] + 1) + "\n" + str);
 	}
+
+	public IGB_CL2_Exception(String fileName, int line, String str) { super("\nFile: " + fileName + "\nLine: " + line + "\n" + str); }
+
+	public IGB_CL2_Exception(boolean whatever, String str) { super(str); }
 }

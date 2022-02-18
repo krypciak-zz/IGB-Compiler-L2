@@ -169,6 +169,18 @@ class RAM {
 	final int EQ_TEMP2 = switch(thread) {case 0->IGB_MA.IF_TEMP2_THREAD0; case 1->IGB_MA.IF_TEMP2_THREAD1; default -> -1;};
 
 
+	public static double solveFinalEq(String eq, HashMap<String, Double> finalVars) {
+		// net.objecthunter.exp4j
+		// https://www.objecthunter.net/exp4j/
+		// https://github.com/fasseg/exp4j
+		Expression e = new ExpressionBuilder(eq)
+				.variables(finalVars.keySet())
+				.build()
+				.setVariables(finalVars);
+		double result = e.evaluate();
+		return result;
+	}
+
 	public double solveFinalEq(String eq) {
 		// net.objecthunter.exp4j
 		// https://www.objecthunter.net/exp4j/
