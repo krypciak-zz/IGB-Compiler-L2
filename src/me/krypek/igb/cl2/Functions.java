@@ -145,16 +145,17 @@ class Functions {
 							throw new IGB_CL2_Exception(i, x, "Ramcell has to be set.");
 						if(ramlimit == -1)
 							throw new IGB_CL2_Exception(i, x, "Ramlimit has to be set.");
-
+						
 						rams[i] = new RAM(ramlimit, ramcell, thread);
 						startlines[i] = startline;
 						assus[i] = assu;
 						lenlimits[i] = lenlimit == -1 ? Integer.MAX_VALUE : lenlimit;
+						ramInited = true;
 					}
 					if(first.equals("void")) {
-						initFunction(false, cmd.substring(spaceIndex + 1), true, i, x, rams[i]);
+						initFunction(false, cmd.substring(spaceIndex + 1), false, i, x, rams[i]);
 					} else if(IGB_CL2.varStr.contains(first) && !cmd.contains("=")) {
-						initFunction(true, cmd.substring(spaceIndex + 1), false, i, x, rams[i]);
+						initFunction(true, cmd.substring(spaceIndex + 1), true, i, x, rams[i]);
 					} else if(first.equals("final")) {
 						// init final vars
 						if(!cmd.contains("="))
@@ -163,7 +164,7 @@ class Functions {
 						int spaceIndex1 = split[0].indexOf(' ');
 						if(spaceIndex1 == -1)
 							throw new IGB_CL2_Exception(i, x, "Syntax error.");
-						split[0] = split[0].substring(spaceIndex1);
+						split[0] = split[0].substring(spaceIndex1).strip();
 						if(split.length != 2)
 							throw new IGB_CL2_Exception(i, x, "Syntax error.");
 						String eq = split[1].strip();
@@ -171,8 +172,10 @@ class Functions {
 						if(spaceIndex1 == -1)
 							throw new IGB_CL2_Exception(i, x, "Syntax error.");
 
-						String varname = split[0].stripLeading().substring(spaceIndex1).strip();
-						String type = split[0].stripLeading().substring(0, spaceIndex + 1).strip();
+						split[0] = split[0].stripLeading();
+						String varname = split[0].substring(spaceIndex1).strip();
+						String type = split[0].substring(0, spaceIndex + 1).strip();
+
 						if(!IGB_CL2.varStr.contains(type))
 							throw new IGB_CL2_Exception(i, x, "Unknown variable type: \"" + type + "\".");
 						double val = RAM.solveFinalEq(eq, finalVars);

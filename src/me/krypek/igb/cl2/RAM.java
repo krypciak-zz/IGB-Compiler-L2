@@ -12,11 +12,12 @@ import me.krypek.igb.cl1.Instruction;
 import me.krypek.igb.cl2.EqSolver.Field;
 import me.krypek.utils.Pair;
 import me.krypek.utils.TripleObject;
+import me.krypek.utils.Utils;
 import net.objecthunter.exp4j.Expression;
 import net.objecthunter.exp4j.ExpressionBuilder;
 
 class RAM {
-	static final String[] illegalCharacters = { "{", "}", "(", ")", "[", "]", ";", "$", "=", "else" };
+	static final String[] illegalCharacters = { "{", "}", "(", ")", "[", "]", ";", "$", "=", "else", "|" };
 
 	private final boolean[] allocationArray;
 
@@ -29,6 +30,8 @@ class RAM {
 	private int thread;
 
 	public RAM(int ramSize, int allocStart, int thread) {
+		this.thread = thread;
+		this.allocStart = allocStart;
 		finalVars = new HashMap<>();
 		allocationArray = new boolean[ramSize];
 		variableStack = new Stack<>();
@@ -36,6 +39,9 @@ class RAM {
 		nextStack();
 		addCompilerVariables();
 	}
+
+	@Override
+	public String toString() { return "RAM: {\n  " + variableStack + "\n  " + arrayStack + "\n  " + finalVars + "\n}"; }
 
 	public void setFinalVariables(HashMap<String, Double> finalVars) { this.finalVars = finalVars; }
 
@@ -58,21 +64,37 @@ class RAM {
 			final int _i = size + i;
 			if(_i >= allocationArray.length)
 				throw new IGB_CL2_Exception("Ran out of space in RAM!");
-			for (; i < _i; i++)
+			for (; i < _i; i++) {
 				if(allocationArray[i])
 					continue for1;
-			for (int h = i; h < i + size; h++)
+			}
+
+			for (int h = --i; h < i + size; h++)
 				allocationArray[h] = true;
-			return i - allocStart;
+
+			System.out.println(i + " " + allocStart);
+			return i + allocStart;
 		}
 
 		throw new IGB_CL2_Exception("Ran out of space in RAM!");
 	}
 
-	void checkName(String name) {
+	int checkName(String name) {
+		int val = -1;
+		if(name.endsWith("|")) {
+			String[] split1 = name.split("\\|");
+			if(split1.length != 2)
+				throw new IGB_CL2_Exception("Variable cell syntax error.");
+			val = (int) solveFinalEq(split1[1]);
+			if(val < 0)
+				throw new IGB_CL2_Exception("Variable cell cannot be negative.");
+		}
+
 		for (String c : illegalCharacters)
-			if(name.contains(c))
+			if(name.contains(c) && (!c.equals("" + '|') || val == -1))
 				throw new IGB_CL2_Exception("Variable name \"" + name + "\" contains illegal character: \"" + c + "\".");
+
+		return val;
 	}
 
 	public int[] reserve(int amount) {
@@ -83,8 +105,15 @@ class RAM {
 	}
 
 	public int newVar(String name) {
-		checkName(name);
-		int cell = allocateSpace(1, true);
+		int cell1 = checkName(name);
+		final int cell;
+		if(cell1 == -1) {
+			cell = allocateSpace(1, true);
+		} else {
+			name = name.substring(0, name.indexOf('|'));
+			cell = cell1;
+		}
+
 		variableStack.peek().put(name, new Variable(cell));
 		return cell;
 	}
@@ -96,16 +125,17 @@ class RAM {
 	}
 
 	public int newArray(String name, int[] size) {
-		checkName(name);
 		int totalSize = calcArraySize(size);
-		int cell = allocateSpace(totalSize, true);
-		arrayStack.peek().put(name, new Array(cell, size, totalSize));
-		return cell;
-	}
 
-	public int newArray(String name, int[] size, int cell) {
-		checkName(name);
-		int totalSize = calcArraySize(size);
+		int cell1 = checkName(name);
+		final int cell;
+		if(cell1 == -1) {
+			cell = allocateSpace(totalSize, true);
+		} else {
+			name = name.substring(0, name.indexOf('|'));
+			cell = cell1;
+		}
+
 		arrayStack.peek().put(name, new Array(cell, size, totalSize));
 		return cell;
 	}
@@ -208,6 +238,9 @@ class Variable {
 	interface VariableSetAction {
 		Instruction set(String eq);
 	}
+
+	@Override
+	public String toString() { return cell + (action == null ? "" : " (action)"); }
 }
 
 class Array {
@@ -220,6 +253,9 @@ class Array {
 		this.size = size;
 		this.totalSize = totalSize;
 	}
+
+	@Override
+	public String toString() { return cell + "c " + totalSize + " == " + Utils.arrayToString(size, '[', ']'); }
 
 	public TripleObject<Boolean, Integer, ArrayList<Instruction>> getArrayCell(EqSolver eqs, Field[] dims, int outCell) {
 		if(dims.length != size.length)

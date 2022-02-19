@@ -64,7 +64,7 @@ public class IGB_CL2 {
 			}
 	}
 
-	static final Set<String> varStr = Set.of("float", "double");
+	static final Set<String> varStr = Set.of("float", "double", "int");
 
 	String[] fileNames;
 	// String[][] in;

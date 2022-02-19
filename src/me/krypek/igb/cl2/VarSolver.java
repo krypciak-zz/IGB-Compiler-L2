@@ -24,13 +24,21 @@ public class VarSolver {
 			String first = cmd.substring(0, spaceIndex);
 			if(IGB_CL2.varStr.contains(first)) {
 				// var init
-				String rest = cmd.substring(spaceIndex);
-				System.out.println(rest);
-				
+				String rest = cmd.substring(spaceIndex + 1).strip();
+				int equalsIndex = rest.indexOf('=');
+				if(equalsIndex == -1) {
+					if(rest.contains("(") || rest.contains(")"))
+						return null;
+					ram.newVar(rest);
+					System.out.println(ram);
+					return new ArrayList<>();
+				}
+
 			} else {
 				int bracketIndex = cmd.indexOf('[');
 				if(bracketIndex != -1) {
 					initArray(cmd, bracketIndex);
+					return new ArrayList<>();
 				}
 
 			}
@@ -89,6 +97,7 @@ public class VarSolver {
 				}, new Integer[0], '[', ']', new IGB_CL2_Exception("Array size bracket syntax error."))).mapToInt(Integer::intValue).toArray();
 				if(size.length != dimsCount)
 					throw new IGB_CL2_Exception("Expected " + dimsCount + " dimenstions, insted got " + size.length + ".");
+
 				ram.newArray(name, size);
 				return;
 			}
