@@ -19,6 +19,16 @@ public class VarSolver {
 	public ArrayList<Instruction> cmd(String cmd) {
 		ArrayList<Instruction> list = new ArrayList<>();
 
+		for (char c : EqSolver.operators) {
+			int index = cmd.indexOf(c + "=");
+			if(index != -1) {
+				String name = cmd.substring(0, index).strip();
+				int cell = ram.getVariable(name);
+				String eq = cmd.substring(index + 2).strip();
+				return cl2.getEqSolver().solve(name + c + "(" + eq + ")", cell);
+			}
+		}
+
 		int spaceIndex = cmd.indexOf(' ');
 		if(spaceIndex != -1) {
 			String first = cmd.substring(0, spaceIndex);
@@ -30,19 +40,22 @@ public class VarSolver {
 					if(rest.contains("(") || rest.contains(")"))
 						return null;
 					ram.newVar(rest);
-					System.out.println(ram);
 					return new ArrayList<>();
+				} else {
+					String name = rest.substring(0, equalsIndex).strip();
+					String eq = rest.substring(equalsIndex + 1).strip();
+					int cell = ram.reserve(1)[0];
+					list.addAll(cl2.getEqSolver().solve(eq, cell));
+					ram.newVar(name, new Variable(cell));
+					return list;
 				}
-
 			} else {
 				int bracketIndex = cmd.indexOf('[');
 				if(bracketIndex != -1) {
 					initArray(cmd, bracketIndex);
 					return new ArrayList<>();
 				}
-
 			}
-
 		}
 
 		return null;

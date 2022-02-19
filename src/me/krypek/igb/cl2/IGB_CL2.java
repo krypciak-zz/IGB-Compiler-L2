@@ -75,10 +75,13 @@ public class IGB_CL2 {
 
 	private Functions functions;
 	private RAM ram;
+	private EqSolver eqsolver;
 
 	Functions getFunctions() { return functions; }
 
 	RAM getRAM() { return ram; }
+
+	EqSolver getEqSolver() { return eqsolver; }
 
 	private VarSolver varsolver;
 
@@ -107,6 +110,7 @@ public class IGB_CL2 {
 		for (int i = 0; i < formated.length; i++) {
 			ArrayList<Instruction> instList = new ArrayList<>();
 			ram = functions.rams[i];
+			eqsolver = new EqSolver(ram, functions);
 			varsolver = new VarSolver(this);
 			for (int x = 0; x < formated[i].length; x++) {
 				String cmd = formated[i][x];
@@ -117,6 +121,7 @@ public class IGB_CL2 {
 				} else
 					instList.addAll(out);
 			}
+			System.out.println(ram);
 			if(instList.size() > functions.lenlimits[i])
 				throw new IGB_CL2_Exception(true,
 						"\nFile: " + fileNames[i] + " Instruction length limit reached: " + instList.size() + " out of " + functions.lenlimits[i] + ".");

@@ -38,6 +38,7 @@ class RAM {
 		arrayStack = new Stack<>();
 		nextStack();
 		addCompilerVariables();
+
 	}
 
 	@Override
@@ -59,21 +60,20 @@ class RAM {
 		}));
 	}
 
-	private int allocateSpace(int size, boolean write) {
+	private int allocateSpace(int size) {
 		for1: for (int i = 0; i < allocationArray.length; i++) {
 			final int _i = size + i;
 			if(_i >= allocationArray.length)
 				throw new IGB_CL2_Exception("Ran out of space in RAM!");
-			for (; i < _i; i++) {
+			final int startI = i;
+			for (; i < _i; i++)
 				if(allocationArray[i])
 					continue for1;
-			}
 
-			for (int h = --i; h < i + size; h++)
+			for (int h = startI; h < startI + size; h++)
 				allocationArray[h] = true;
 
-			System.out.println(i + " " + allocStart);
-			return i + allocStart;
+			return startI + allocStart;
 		}
 
 		throw new IGB_CL2_Exception("Ran out of space in RAM!");
@@ -100,7 +100,7 @@ class RAM {
 	public int[] reserve(int amount) {
 		int[] arr = new int[amount];
 		for (int i = 0; i < amount; i++)
-			arr[i] = allocateSpace(1, false);
+			arr[i] = allocateSpace(1);
 		return arr;
 	}
 
@@ -108,7 +108,7 @@ class RAM {
 		int cell1 = checkName(name);
 		final int cell;
 		if(cell1 == -1) {
-			cell = allocateSpace(1, true);
+			cell = allocateSpace(1);
 		} else {
 			name = name.substring(0, name.indexOf('|'));
 			cell = cell1;
@@ -130,7 +130,7 @@ class RAM {
 		int cell1 = checkName(name);
 		final int cell;
 		if(cell1 == -1) {
-			cell = allocateSpace(totalSize, true);
+			cell = allocateSpace(totalSize);
 		} else {
 			name = name.substring(0, name.indexOf('|'));
 			cell = cell1;
@@ -175,8 +175,18 @@ class RAM {
 			if(var != null)
 				return var.cell;
 		}
+
+		throw new IGB_CL2_Exception("Variable \"" + name + "\" doesn't exist.");
+	}
+
+	int getVariableNoExc(String name) {
+		for (int i = variableStack.size() - 1; i >= 0; i--) {
+			Variable var = variableStack.elementAt(i).get(name);
+			if(var != null)
+				return var.cell;
+		}
+
 		return -1;
-		/// throw new IGB_CL2_Exception("Variable \"" + name + "\" doesn't exist.");
 	}
 
 	Array getArray(String name) {

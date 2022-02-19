@@ -15,7 +15,7 @@ import me.krypek.utils.Pair;
 import me.krypek.utils.Utils;
 
 class EqSolver {
-	private final static Set<Character> operators = Set.of('+', '-', '*', '/', '%');
+	final static Set<Character> operators = Set.of('+', '-', '*', '/', '%');
 
 	public EqSolver(RAM ram, Functions funcs) {
 		this.ram = ram;
@@ -26,8 +26,9 @@ class EqSolver {
 
 	public ArrayList<Instruction> solve(final String eqS, int outCell) {
 		tempCell1 = IGB_MA.CHARLIB_TEMP_START;
+		System.out.print(eqS);
 		Equation eq = getEqFromString(eqS);
-
+		System.out.println(" -> " + eq);
 		var list = getInstructionListFromEq(eq, outCell);
 		System.out.println(eq + " -> " + outCell + " ->");
 		for (Instruction inst : list) { System.out.println(inst); }
@@ -49,6 +50,10 @@ class EqSolver {
 		Field[] fields = eq.fields;
 		char[] opes = eq.operators;
 		ArrayList<Instruction> list = new ArrayList<>();
+
+		if(fields.length == 1) {
+			return getInstructionsFromField(fields[0], outCell).getSecond();
+		}
 
 		int tempCell = outCell;
 		for (int i = 0; i < fields.length - 1; i++) {
@@ -131,7 +136,8 @@ class EqSolver {
 		else {
 			var pair = getInstructionsFromField(f, temp);
 			list.addAll(pair.getSecond());
-			System.out.println("getNumCell(" + f + ", " + list + ", " + temp + ") \n" + pair.getSecond() + "\n||||");
+			// System.out.println("getNumCell(" + f + ", " + list + ", " + temp + ") \n" +
+			// pair.getSecond() + "\n||||");
 			return new Pair<>(true, (double) pair.getFirst());
 		}
 	}
@@ -230,7 +236,7 @@ class EqSolver {
 				.toCharArray();
 
 		Field[] fields = new Field[fieldStringList.size()];
-
+		System.out.println(fieldStringList);
 		for (int i = 0; i < fieldStringList.size(); i++)
 			fields[i] = stringToField(fieldStringList.get(i));
 
@@ -280,13 +286,13 @@ class EqSolver {
 		if(v != null)
 			return new Field(v);
 
-		int cell = ram.getVariable(str);
+		int cell = ram.getVariableNoExc(str);
 		if(cell != -1)
 			return new Field(cell);
 
-		try {
-			return new Field(getEqFromString(str));
-		} catch (Exception e) {}
+		/*
+		 * try { return new Field(getEqFromString(str, true)); } catch (Exception e) {}
+		 */
 
 		throw new IGB_CL2_Exception("Unknown variable: \"" + str + "\".");
 	}
