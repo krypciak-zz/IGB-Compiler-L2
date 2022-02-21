@@ -115,10 +115,10 @@ public class IGB_CL2 {
 			for (line = 0; line < formated[i].length; line++) {
 				String cmd = formated[i][line];
 				ArrayList<Instruction> out = cmd(cmd);
-				if(out == null) {
+				if(out == null)
 					// return;
 					instList.add(Instruction.Pointer(":null"));
-				} else
+				else
 					instList.addAll(out);
 			}
 			System.out.println(ram);
@@ -133,7 +133,7 @@ public class IGB_CL2 {
 	}
 
 	private ArrayList<Instruction> cmd(String cmd) {
-		if((cmd.length() > 0 && cmd.charAt(0) == '$') || cmd.startsWith("final"))
+		if(cmd.length() > 0 && cmd.charAt(0) == '$' || cmd.startsWith("final"))
 			return new ArrayList<>();
 		{
 			ArrayList<Instruction> var = varsolver.cmd(cmd);

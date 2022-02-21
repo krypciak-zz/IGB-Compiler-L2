@@ -5,6 +5,7 @@ import static me.krypek.igb.cl1.Instruction.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.Stack;
 
 import me.krypek.igb.cl1.IGB_MA;
@@ -17,7 +18,8 @@ import net.objecthunter.exp4j.Expression;
 import net.objecthunter.exp4j.ExpressionBuilder;
 
 class RAM {
-	static final String[] illegalCharacters = { "{", "}", "(", ")", "[", "]", ";", "$", "=", "else", "|" };
+	static final String[] illegalCharacters = { "{", "}", "(", ")", "[", "]", ";", "$", "=", "|" };
+	static final Set<String> illegalNames = Set.of("else");
 
 	private final boolean[] allocationArray;
 
@@ -26,7 +28,7 @@ class RAM {
 	private final Stack<Map<String, Variable>> variableStack;
 	private final Stack<Map<String, Array>> arrayStack;
 
-	private int allocStart;
+	private final int allocStart;
 	private int thread;
 
 	public RAM(int ramSize, int allocStart, int thread) {
@@ -38,7 +40,6 @@ class RAM {
 		arrayStack = new Stack<>();
 		nextStack();
 		addCompilerVariables();
-
 	}
 
 	@Override
@@ -89,6 +90,8 @@ class RAM {
 			if(val < 0)
 				throw new IGB_CL2_Exception("Variable cell cannot be negative.");
 		}
+		if(illegalNames.contains(name))
+			throw new IGB_CL2_Exception("Illegal variable name: \"" + name + "\".");
 
 		for (String c : illegalCharacters)
 			if(name.contains(c) && (!c.equals("" + '|') || val == -1))
@@ -107,9 +110,9 @@ class RAM {
 	public int newVar(String name) {
 		int cell1 = checkName(name);
 		final int cell;
-		if(cell1 == -1) {
+		if(cell1 == -1)
 			cell = allocateSpace(1);
-		} else {
+		else {
 			name = name.substring(0, name.indexOf('|'));
 			cell = cell1;
 		}
@@ -129,9 +132,9 @@ class RAM {
 
 		int cell1 = checkName(name);
 		final int cell;
-		if(cell1 == -1) {
+		if(cell1 == -1)
 			cell = allocateSpace(totalSize);
-		} else {
+		else {
 			name = name.substring(0, name.indexOf('|'));
 			cell = cell1;
 		}
@@ -206,6 +209,7 @@ class RAM {
 	//@f:off
 	final int IF_TEMP1 = switch(thread) {case 0->IGB_MA.IF_TEMP1_THREAD0; case 1->IGB_MA.IF_TEMP1_THREAD1; default -> -1;};
 	final int IF_TEMP2 = switch(thread) {case 0->IGB_MA.IF_TEMP2_THREAD0; case 1->IGB_MA.IF_TEMP1_THREAD1; default -> -1;};
+	
 	final int EQ_TEMP1 = switch(thread) {case 0->IGB_MA.IF_TEMP1_THREAD0; case 1->IGB_MA.IF_TEMP1_THREAD1; default -> -1;};
 	boolean isEQ_TEMP1_used = false;
 	final int EQ_TEMP2 = switch(thread) {case 0->IGB_MA.IF_TEMP2_THREAD0; case 1->IGB_MA.IF_TEMP2_THREAD1; default -> -1;};
@@ -219,9 +223,7 @@ class RAM {
 				.variables(finalVars.keySet())
 				.build()
 				.setVariables(finalVars);
-		//@f:on
-		double result = e.evaluate();
-		return result;
+		return e.evaluate();
 	}
 
 	public double solveFinalEq(String eq) { return solveFinalEq(eq, finalVars); }

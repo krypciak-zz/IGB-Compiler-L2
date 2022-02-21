@@ -31,7 +31,8 @@ class EqSolver {
 		System.out.println(" -> " + eq);
 		var list = getInstructionListFromEq(eq, outCell);
 		System.out.println(eq + " -> " + outCell + " ->");
-		for (Instruction inst : list) { System.out.println(inst); }
+		for (Instruction inst : list)
+			System.out.println(inst);
 		System.out.println();
 		return list;
 	}
@@ -39,8 +40,6 @@ class EqSolver {
 	private final EqSolver eqs = this;
 	private final RAM ram;
 	private final Functions funcs;
-
-	private Pair<Integer, ArrayList<Instruction>> getInstructionListFromEq(Equation eq) { return null; }
 
 	private final int temp1;
 	private final int temp2;
@@ -51,9 +50,8 @@ class EqSolver {
 		char[] opes = eq.operators;
 		ArrayList<Instruction> list = new ArrayList<>();
 
-		if(fields.length == 1) {
+		if(fields.length == 1)
 			return getInstructionsFromField(fields[0], outCell).getSecond();
-		}
 
 		int tempCell = outCell;
 		for (int i = 0; i < fields.length - 1; i++) {
@@ -63,18 +61,18 @@ class EqSolver {
 			char ope = i == opes.length ? '?' : opes[i];
 			char nextOpe = i_ >= opes.length ? '?' : opes[i_];
 
-			if(isAddi(ope) && ((nextOpe != '?') && !isAddi(nextOpe))) {
+			if(isAddi(ope) && nextOpe != '?' && !isAddi(nextOpe)) {
 				final int tCell1;
-				if(ram.isEQ_TEMP1_used) {
+				if(ram.isEQ_TEMP1_used)
 					tCell1 = tempCell1++;
-				} else {
+				else {
 					tCell1 = temp1;
 					ram.isEQ_TEMP1_used = true;
 				}
 				final int tCell2;
-				if(ram.isEQ_TEMP2_used) {
+				if(ram.isEQ_TEMP2_used)
 					tCell2 = tempCell1++;
-				} else {
+				else {
 					tCell2 = temp2;
 					ram.isEQ_TEMP2_used = true;
 				}
@@ -101,16 +99,16 @@ class EqSolver {
 				i++;
 			} else if(i == 0) {
 				final int tCell1;
-				if(ram.isEQ_TEMP1_used) {
+				if(ram.isEQ_TEMP1_used)
 					tCell1 = tempCell1++;
-				} else {
+				else {
 					tCell1 = temp1;
 					ram.isEQ_TEMP1_used = true;
 				}
 				final int tCell2;
-				if(ram.isEQ_TEMP2_used) {
+				if(ram.isEQ_TEMP2_used)
 					tCell2 = tempCell1++;
-				} else {
+				else {
 					tCell2 = temp2;
 					ram.isEQ_TEMP2_used = true;
 				}
@@ -133,9 +131,9 @@ class EqSolver {
 					ram.isEQ_TEMP2_used = false;
 			} else {
 				final int tCell2;
-				if(ram.isEQ_TEMP2_used) {
+				if(ram.isEQ_TEMP2_used)
 					tCell2 = tempCell1++;
-				} else {
+				else {
 					tCell2 = temp2;
 					ram.isEQ_TEMP2_used = true;
 				}
@@ -145,7 +143,8 @@ class EqSolver {
 				if(tCell2 == temp2)
 					ram.isEQ_TEMP2_used = false;
 			}
-			if(tempCell1>=IGB_MA.CHARLIB_CHAR) throw new IGB_CL2_Exception("This equation is too long.");
+			if(tempCell1 >= IGB_MA.CHARLIB_CHAR)
+				throw new IGB_CL2_Exception("This equation is too long.");
 		}
 
 		return list;
@@ -183,11 +182,9 @@ class EqSolver {
 			return new Pair<>(false, f.value);
 		if(f.isVar())
 			return new Pair<>(true, (double) f.cell);
-		else {
-			var pair = getInstructionsFromField(f, temp);
-			list.addAll(pair.getSecond());
-			return new Pair<>(true, (double) pair.getFirst());
-		}
+		var pair = getInstructionsFromField(f, temp);
+		list.addAll(pair.getSecond());
+		return new Pair<>(true, (double) pair.getFirst());
 	}
 
 	private static boolean isAddi(char ope) { return ope == '+' || ope == '-'; }
@@ -228,15 +225,12 @@ class EqSolver {
 		case Eq -> {
 			final int cell1;
 			if(directCell == -1) {
-				Pair<Integer, ArrayList<Instruction>> pair1 = getInstructionListFromEq(f.eq);
-				cell1 = pair1.getFirst();
-				list.addAll(pair1.getSecond());
-				return new Pair<>(cell1, list);
-			} else {
-				cell1 = directCell;
-				list.addAll(getInstructionListFromEq(f.eq, cell1));
-				return new Pair<>(cell1, list);
+				ArrayList<Instruction> list1 = getInstructionListFromEq(f.eq, ram.EQ_TEMP1);
+				return new Pair<>(ram.EQ_TEMP1, list1);
 			}
+			cell1 = directCell;
+			list.addAll(getInstructionListFromEq(f.eq, cell1));
+			return new Pair<>(cell1, list);
 		}
 		case Func -> {
 			FunctionCall fc = f.funcCall;
@@ -292,9 +286,10 @@ class EqSolver {
 	}
 
 	Field stringToField(final String str, boolean epicFail) {
-		Double v = Utils.parseDouble(str);
-		if(v != null)
-			return new Field(v);
+		try {
+			double val = ram.solveFinalEq(str);
+			return new Field(val);
+		} catch (Exception e) {}
 
 		if(str.endsWith(")")) {
 			if(str.startsWith("("))
@@ -329,10 +324,6 @@ class EqSolver {
 
 			return new Field(new ArrayAccess(arrName, fa));
 		}
-
-		v = ram.finalVars.get(str);
-		if(v != null)
-			return new Field(v);
 
 		int cell = ram.getVariableNoExc(str);
 		if(cell != -1)

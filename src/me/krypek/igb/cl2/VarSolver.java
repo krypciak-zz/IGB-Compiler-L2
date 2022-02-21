@@ -14,7 +14,7 @@ public class VarSolver {
 
 	public VarSolver(IGB_CL2 cl2) {
 		this.cl2 = cl2;
-		this.ram = cl2.getRAM();
+		ram = cl2.getRAM();
 	}
 
 	public ArrayList<Instruction> cmd(String cmd) {
@@ -53,18 +53,16 @@ public class VarSolver {
 					ram.newVar(name, new Variable(cell));
 					return list;
 				}
-			} else {
-				for (String str : IGB_CL2.varStr) {
-					if(first.startsWith(str)) {
-						int bracketIndex = cmd.indexOf('[');
-						if(bracketIndex != -1) {
-							initArray(cmd, bracketIndex);
-							return new ArrayList<>();
-						}
-						break;
-					}
-				}
 			}
+			for (String str : IGB_CL2.varStr)
+				if(first.startsWith(str)) {
+					int bracketIndex = cmd.indexOf('[');
+					if(bracketIndex != -1) {
+						initArray(cmd, bracketIndex);
+						return new ArrayList<>();
+					}
+					break;
+				}
 		}
 		if(!hasEqSign)
 			return null;
@@ -74,8 +72,8 @@ public class VarSolver {
 		if(bracketIndex != -1) {
 			String dims = name.substring(bracketIndex).strip();
 			name = name.substring(0, bracketIndex).strip();
-			Field[] dimsF = Utils.getArrayElementsFromString(dims, (str) -> cl2.getEqSolver().stringToField(str, false), new Field[0], '[', ']',
-					(e) -> new IGB_CL2_Exception("Array dimensions syntax error.", e));
+			Field[] dimsF = Utils.getArrayElementsFromString(dims, str -> cl2.getEqSolver().stringToField(str, false), new Field[0], '[', ']',
+					e -> new IGB_CL2_Exception("Array dimensions syntax error.", e));
 			Array arr = ram.getArray(name);
 			list.addAll(cl2.getEqSolver().solve(eq, ram.EQ_TEMP1));
 			list.addAll(arr.getWrite(cl2.getEqSolver(), dimsF, ram.EQ_TEMP1));
@@ -92,7 +90,7 @@ public class VarSolver {
 		if(!IGB_CL2.varStr.contains(type))
 			throw new IGB_CL2_Exception("Unknown variable type: \"" + type + "\".");
 
-		String dims = cmd.substring(bracketIndex, cmd.length());
+		String dims = cmd.substring(bracketIndex);
 		String[] split = dims.split("=");
 		if(split.length == 1)
 			throw new IGB_CL2_Exception("Array needs to be initalized.");
@@ -102,7 +100,7 @@ public class VarSolver {
 		int lastBracketIndex = split[0].lastIndexOf(']');
 		if(lastBracketIndex == -1)
 			throw new IGB_CL2_Exception("Syntax error.");
-		String name = split[0].substring(lastBracketIndex + 1, split[0].length()).strip();
+		String name = split[0].substring(lastBracketIndex + 1).strip();
 		if(name.contains("["))
 			throw new IGB_CL2_Exception("Bracket syntax error.");
 
@@ -113,7 +111,7 @@ public class VarSolver {
 			if(Character.isWhitespace(c))
 				continue;
 			int t1 = dimsCount++ % 2;
-			if((c == '[' && t1 == 1) || (c == ']' && t1 == 0))
+			if(c == '[' && t1 == 1 || c == ']' && t1 == 0)
 				throw new IGB_CL2_Exception("Bracket syntax error.");
 		}
 		if(dimsCount % 2 == 1)
@@ -126,14 +124,14 @@ public class VarSolver {
 			if(eq.startsWith(str1)) {
 				String dims1 = eq.substring(str1.length());
 
-				int[] size = Arrays.stream(Utils.getArrayElementsFromString(dims1, (str2) -> {
+				int[] size = Arrays.stream(Utils.getArrayElementsFromString(dims1, str2 -> {
 					double val = ram.solveFinalEq(str2);
 					if(val % 1 != 0)
 						throw new IGB_CL2_Exception("Array size has to be an integer.");
 					if(val < 0)
 						throw new IGB_CL2_Exception("Array size cannot be negative.");
 					return (int) val;
-				}, new Integer[0], '[', ']', (e) -> new IGB_CL2_Exception("Array size bracket syntax error.", e))).mapToInt(Integer::intValue).toArray();
+				}, new Integer[0], '[', ']', e -> new IGB_CL2_Exception("Array size bracket syntax error.", e))).mapToInt(Integer::intValue).toArray();
 				if(size.length != dimsCount)
 					throw new IGB_CL2_Exception("Expected " + dimsCount + " dimenstions, insted got " + size.length + ".");
 
