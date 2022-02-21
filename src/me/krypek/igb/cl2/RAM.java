@@ -195,8 +195,7 @@ class RAM {
 			if(var != null)
 				return var;
 		}
-		return null;
-		/// throw new IGB_CL2_Exception("Variable \"" + name + "\" doesn't exist.");
+		throw new IGB_CL2_Exception("Variable \"" + name + "\" doesn't exist.");
 	}
 
 	void nextStack() {
@@ -208,8 +207,9 @@ class RAM {
 	final int IF_TEMP1 = switch(thread) {case 0->IGB_MA.IF_TEMP1_THREAD0; case 1->IGB_MA.IF_TEMP1_THREAD1; default -> -1;};
 	final int IF_TEMP2 = switch(thread) {case 0->IGB_MA.IF_TEMP2_THREAD0; case 1->IGB_MA.IF_TEMP1_THREAD1; default -> -1;};
 	final int EQ_TEMP1 = switch(thread) {case 0->IGB_MA.IF_TEMP1_THREAD0; case 1->IGB_MA.IF_TEMP1_THREAD1; default -> -1;};
+	boolean isEQ_TEMP1_used = false;
 	final int EQ_TEMP2 = switch(thread) {case 0->IGB_MA.IF_TEMP2_THREAD0; case 1->IGB_MA.IF_TEMP2_THREAD1; default -> -1;};
-
+	boolean isEQ_TEMP2_used = false;
 
 	public static double solveFinalEq(String eq, HashMap<String, Double> finalVars) {
 		// net.objecthunter.exp4j
@@ -269,7 +269,7 @@ class Array {
 
 	public TripleObject<Boolean, Integer, ArrayList<Instruction>> getArrayCell(EqSolver eqs, Field[] dims, int outCell) {
 		if(dims.length != size.length)
-			throw new IGB_CL2_Exception("Expected " + size.length + " array dimensions, insted got " + dims.length + "\".");
+			throw new IGB_CL2_Exception("Expected " + size.length + " array dimensions, insted got " + dims.length + ".");
 
 		boolean isAllVal = true;
 		int cell = 0;
@@ -297,6 +297,7 @@ class Array {
 
 		final int len_ = dims.length - 1;
 		if(cellList.size() == 1) {
+
 			var pair = cellList.get(0);
 			int i = pair.getFirst();
 			int x = pair.getSecond();
@@ -372,6 +373,7 @@ class Array {
 					set = true;
 				}
 		}
+		System.out.println(new TripleObject<>(false, outCell, list));
 		return new TripleObject<>(false, outCell, list);
 	}
 

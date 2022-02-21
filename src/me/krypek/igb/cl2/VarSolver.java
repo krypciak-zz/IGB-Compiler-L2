@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 import me.krypek.igb.cl1.Instruction;
+import me.krypek.igb.cl2.EqSolver.Field;
 import me.krypek.utils.Utils;
 
 public class VarSolver {
@@ -19,15 +20,18 @@ public class VarSolver {
 	public ArrayList<Instruction> cmd(String cmd) {
 		ArrayList<Instruction> list = new ArrayList<>();
 
-		for (char c : EqSolver.operators) {
-			int index = cmd.indexOf(c + "=");
-			if(index != -1) {
-				String name = cmd.substring(0, index).strip();
-				int cell = ram.getVariable(name);
-				String eq = cmd.substring(index + 2).strip();
-				return cl2.getEqSolver().solve(name + c + "(" + eq + ")", cell);
+		int eqIndex = cmd.indexOf('=');
+		boolean hasEqSign = eqIndex != -1;
+		if(hasEqSign)
+			for (char c : EqSolver.operators) {
+				int index = cmd.indexOf(c + "=");
+				if(index != -1) {
+					String name = cmd.substring(0, index).strip();
+					int cell = ram.getVariable(name);
+					String eq = cmd.substring(index + 2).strip();
+					return cl2.getEqSolver().solve(name + c + "(" + eq + ")", cell);
+				}
 			}
-		}
 
 		int spaceIndex = cmd.indexOf(' ');
 		if(spaceIndex != -1) {
@@ -50,15 +54,37 @@ public class VarSolver {
 					return list;
 				}
 			} else {
-				int bracketIndex = cmd.indexOf('[');
-				if(bracketIndex != -1) {
-					initArray(cmd, bracketIndex);
-					return new ArrayList<>();
+				for (String str : IGB_CL2.varStr) {
+					if(first.startsWith(str)) {
+						int bracketIndex = cmd.indexOf('[');
+						if(bracketIndex != -1) {
+							initArray(cmd, bracketIndex);
+							return new ArrayList<>();
+						}
+						break;
+					}
 				}
 			}
 		}
+		if(!hasEqSign)
+			return null;
+		String name = cmd.substring(0, eqIndex).strip();
+		String eq = cmd.substring(eqIndex + 1).strip();
+		int bracketIndex = name.indexOf('[');
+		if(bracketIndex != -1) {
+			String dims = name.substring(bracketIndex).strip();
+			name = name.substring(0, bracketIndex).strip();
+			Field[] dimsF = Utils.getArrayElementsFromString(dims, (str) -> cl2.getEqSolver().stringToField(str, false), new Field[0], '[', ']',
+					(e) -> new IGB_CL2_Exception("Array dimensions syntax error.", e));
+			Array arr = ram.getArray(name);
+			list.addAll(cl2.getEqSolver().solve(eq, ram.EQ_TEMP1));
+			list.addAll(arr.getWrite(cl2.getEqSolver(), dimsF, ram.EQ_TEMP1));
+			System.out.println(list);
+			return list;
+		}
+		int cell = ram.getVariable(name);
 
-		return null;
+		return cl2.getEqSolver().solve(eq, cell);
 	}
 
 	private void initArray(String cmd, int bracketIndex) {
@@ -107,7 +133,7 @@ public class VarSolver {
 					if(val < 0)
 						throw new IGB_CL2_Exception("Array size cannot be negative.");
 					return (int) val;
-				}, new Integer[0], '[', ']', new IGB_CL2_Exception("Array size bracket syntax error."))).mapToInt(Integer::intValue).toArray();
+				}, new Integer[0], '[', ']', (e) -> new IGB_CL2_Exception("Array size bracket syntax error.", e))).mapToInt(Integer::intValue).toArray();
 				if(size.length != dimsCount)
 					throw new IGB_CL2_Exception("Expected " + dimsCount + " dimenstions, insted got " + size.length + ".");
 

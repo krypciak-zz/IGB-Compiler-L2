@@ -27,7 +27,7 @@ class EqSolver {
 	public ArrayList<Instruction> solve(final String eqS, int outCell) {
 		tempCell1 = IGB_MA.CHARLIB_TEMP_START;
 		System.out.print(eqS);
-		Equation eq = getEqFromString(eqS);
+		Equation eq = getEqFromString(eqS, false);
 		System.out.println(" -> " + eq);
 		var list = getInstructionListFromEq(eq, outCell);
 		System.out.println(eq + " -> " + outCell + " ->");
@@ -64,9 +64,23 @@ class EqSolver {
 			char nextOpe = i_ >= opes.length ? '?' : opes[i_];
 
 			if(isAddi(ope) && ((nextOpe != '?') && !isAddi(nextOpe))) {
+				final int tCell1;
+				if(ram.isEQ_TEMP1_used) {
+					tCell1 = tempCell1++;
+				} else {
+					tCell1 = temp1;
+					ram.isEQ_TEMP1_used = true;
+				}
+				final int tCell2;
+				if(ram.isEQ_TEMP2_used) {
+					tCell2 = tempCell1++;
+				} else {
+					tCell2 = temp2;
+					ram.isEQ_TEMP2_used = true;
+				}
 
-				var numcell2 = getNumCell(f1, list, temp1);
-				var numcell3 = getNumCell(fields[i + 2], list, temp2);
+				var numcell2 = getNumCell(f1, list, tCell1);
+				var numcell3 = getNumCell(fields[i + 2], list, tCell2);
 				boolean c2 = numcell2.getFirst(), c3 = numcell3.getFirst();
 				double v2 = numcell2.getSecond(), v3 = numcell3.getSecond();
 				if(!c2 && !c3) {
@@ -76,12 +90,33 @@ class EqSolver {
 					list.add(Math(ope, (int) v2, c3, v3, tempCell));
 				else
 					list.addAll(revertOperation(v2, (int) v3, nextOpe, tempCell));
-				var numcell1 = getNumCell(f, list, temp1);
+				var numcell1 = getNumCell(f, list, tCell1);
 				list.add(Math(ope, tempCell, numcell1.getFirst(), numcell1.getSecond(), tempCell));
+
+				if(tCell1 == temp1)
+					ram.isEQ_TEMP1_used = false;
+				if(tCell2 == temp2)
+					ram.isEQ_TEMP2_used = false;
+
 				i++;
 			} else if(i == 0) {
-				var numcell1 = getNumCell(f, list, temp1);
-				var numcell2 = getNumCell(f1, list, temp2);
+				final int tCell1;
+				if(ram.isEQ_TEMP1_used) {
+					tCell1 = tempCell1++;
+				} else {
+					tCell1 = temp1;
+					ram.isEQ_TEMP1_used = true;
+				}
+				final int tCell2;
+				if(ram.isEQ_TEMP2_used) {
+					tCell2 = tempCell1++;
+				} else {
+					tCell2 = temp2;
+					ram.isEQ_TEMP2_used = true;
+				}
+
+				var numcell1 = getNumCell(f, list, tCell1);
+				var numcell2 = getNumCell(f1, list, tCell2);
 				boolean c1 = numcell1.getFirst(), c2 = numcell2.getFirst();
 				double v1 = numcell1.getSecond(), v2 = numcell2.getSecond();
 				if(!c1 && !c2) {
@@ -91,11 +126,26 @@ class EqSolver {
 					list.add(Math(ope, (int) v1, c2, v2, tempCell));
 				else
 					list.addAll(revertOperation(v1, (int) v2, ope, tempCell));
-			} else {
-				var numcell2 = getNumCell(f1, list, temp2);
-				list.add(Math(ope, tempCell, numcell2.getFirst(), numcell2.getSecond(), tempCell));
-			}
 
+				if(tCell1 == temp1)
+					ram.isEQ_TEMP1_used = false;
+				if(tCell2 == temp2)
+					ram.isEQ_TEMP2_used = false;
+			} else {
+				final int tCell2;
+				if(ram.isEQ_TEMP2_used) {
+					tCell2 = tempCell1++;
+				} else {
+					tCell2 = temp2;
+					ram.isEQ_TEMP2_used = true;
+				}
+				var numcell2 = getNumCell(f1, list, tCell2);
+				list.add(Math(ope, tempCell, numcell2.getFirst(), numcell2.getSecond(), tempCell));
+
+				if(tCell2 == temp2)
+					ram.isEQ_TEMP2_used = false;
+			}
+			if(tempCell1>=IGB_MA.CHARLIB_CHAR) throw new IGB_CL2_Exception("This equation is too long.");
 		}
 
 		return list;
@@ -136,8 +186,6 @@ class EqSolver {
 		else {
 			var pair = getInstructionsFromField(f, temp);
 			list.addAll(pair.getSecond());
-			// System.out.println("getNumCell(" + f + ", " + list + ", " + temp + ") \n" +
-			// pair.getSecond() + "\n||||");
 			return new Pair<>(true, (double) pair.getFirst());
 		}
 	}
@@ -186,8 +234,8 @@ class EqSolver {
 				return new Pair<>(cell1, list);
 			} else {
 				cell1 = directCell;
-				list.addAll(getInstructionListFromEq(f.eq, tempCell1));
-				return new Pair<>(tempCell1++, list);
+				list.addAll(getInstructionListFromEq(f.eq, cell1));
+				return new Pair<>(cell1, list);
 			}
 		}
 		case Func -> {
@@ -208,7 +256,7 @@ class EqSolver {
 		return null;
 	}
 
-	private Equation getEqFromString(final String str) {
+	private Equation getEqFromString(final String str, boolean epicFail) {
 		ArrayList<Character> operatorList = new ArrayList<>();
 		ArrayList<String> fieldStringList = new ArrayList<>();
 		{
@@ -236,21 +284,21 @@ class EqSolver {
 				.toCharArray();
 
 		Field[] fields = new Field[fieldStringList.size()];
-		System.out.println(fieldStringList);
+
 		for (int i = 0; i < fieldStringList.size(); i++)
-			fields[i] = stringToField(fieldStringList.get(i));
+			fields[i] = stringToField(fieldStringList.get(i), epicFail);
 
 		return new Equation(operators, fields);
 	}
 
-	private Field stringToField(String str) {
+	Field stringToField(final String str, boolean epicFail) {
 		Double v = Utils.parseDouble(str);
 		if(v != null)
 			return new Field(v);
 
 		if(str.endsWith(")")) {
 			if(str.startsWith("("))
-				return new Field(getEqFromString(str.substring(1, str.length() - 1)));
+				return new Field(getEqFromString(str.substring(1, str.length() - 1), epicFail));
 			if(str.contains("(")) {
 				int index = str.indexOf('(');
 				String funcName = str.substring(0, index).stripTrailing();
@@ -290,9 +338,12 @@ class EqSolver {
 		if(cell != -1)
 			return new Field(cell);
 
-		/*
-		 * try { return new Field(getEqFromString(str, true)); } catch (Exception e) {}
-		 */
+		if(!epicFail)
+			try {
+				return new Field(getEqFromString(str, true));
+			} catch (IGB_CL2_Exception e) {
+				throw e;
+			}
 
 		throw new IGB_CL2_Exception("Unknown variable: \"" + str + "\".");
 	}
@@ -300,7 +351,7 @@ class EqSolver {
 	private Field[] stringArrayToFieldArray(String[] arr) {
 		Field[] fa = new Field[arr.length];
 		for (int i = 0; i < arr.length; i++)
-			fa[i] = stringToField(arr[i]);
+			fa[i] = stringToField(arr[i], false);
 		return fa;
 	}
 
@@ -330,26 +381,6 @@ class EqSolver {
 
 			}
 			return sb.toString();
-		}
-
-		@SuppressWarnings("unused")
-		public static Equation simplyfy(Equation eq) {
-			ArrayList<Character> opeL = new ArrayList<>(eq.operators.length);
-			ArrayList<Field> fieldL = new ArrayList<>(eq.fields.length);
-
-			{
-				Field[] fields = eq.fields;
-				char[] opes = eq.operators;
-				if(fields.length == 0)
-					return null;
-				if(fields.length == 1)
-					return new Equation(new char[] {}, new Field[] { fields[0] });
-
-			}
-
-			char[] operators = opeL.stream().map(String::valueOf).collect(StringBuilder::new, StringBuilder::append, StringBuilder::append).toString()
-					.toCharArray();
-			return new Equation(operators, fieldL.toArray(Field[]::new));
 		}
 
 	}

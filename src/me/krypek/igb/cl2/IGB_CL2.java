@@ -112,8 +112,8 @@ public class IGB_CL2 {
 			ram = functions.rams[i];
 			eqsolver = new EqSolver(ram, functions);
 			varsolver = new VarSolver(this);
-			for (int x = 0; x < formated[i].length; x++) {
-				String cmd = formated[i][x];
+			for (line = 0; line < formated[i].length; line++) {
+				String cmd = formated[i][line];
 				ArrayList<Instruction> out = cmd(cmd);
 				if(out == null) {
 					// return;
@@ -133,7 +133,8 @@ public class IGB_CL2 {
 	}
 
 	private ArrayList<Instruction> cmd(String cmd) {
-
+		if((cmd.length() > 0 && cmd.charAt(0) == '$') || cmd.startsWith("final"))
+			return new ArrayList<>();
 		{
 			ArrayList<Instruction> var = varsolver.cmd(cmd);
 			if(var != null)
