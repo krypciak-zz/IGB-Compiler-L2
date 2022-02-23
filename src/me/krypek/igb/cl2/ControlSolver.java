@@ -2,13 +2,8 @@ package me.krypek.igb.cl2;
 
 import static me.krypek.igb.cl1.Instruction.Cell_Jump;
 import static me.krypek.igb.cl1.Instruction.Cell_Return;
-import static me.krypek.igb.cl1.Instruction.Pointer;
-import static me.krypek.igb.cl2.BracketType.Bracket;
-import static me.krypek.igb.cl2.BracketType.Default;
-import static me.krypek.igb.cl2.BracketType.Function;
+import static me.krypek.igb.cl1.Instruction.*;
 import static me.krypek.igb.cl2.BracketType.*;
-import static me.krypek.igb.cl2.ControlSolver.Bracket._default;
-import static me.krypek.igb.cl2.ControlSolver.Bracket.bracketIndex;
 
 import java.util.ArrayList;
 import java.util.Set;
@@ -18,12 +13,12 @@ import me.krypek.igb.cl1.Instruction;
 import me.krypek.utils.Utils;
 
 enum BracketType {
-	Default, Bracket, If, For, While, Function
+	Default, None, If, For, While, Function
 }
 
 class ControlSolver {
 	static class Bracket {
-		static int bracketIndex = 0;
+		private static int bracketIndex = 0;
 		private static int forIndex = 0;
 		private static int whileIndex = 0;
 		private static int ifIndex = 0;
@@ -40,11 +35,13 @@ class ControlSolver {
 		public String toString() { return startPointer.toString(); }
 
 		private Bracket() {
-			this.type = Bracket;
+			this.type = None;
 			startPointer = Pointer(":bracket_" + bracketIndex + "_start");
-			endPointer = Pointer(":bracket_" + bracketIndex++ + "_end");
+			endPointer = Pointer(":bracket_" + bracketIndex + "_end");
 			list = new ArrayList<>();
 		}
+
+		public void accessBracket() { bracketIndex++; }
 
 		private Bracket(String funcName, int argLen) {
 			type = Function;
@@ -93,20 +90,19 @@ class ControlSolver {
 		public static Bracket _func() { return new Bracket(); }
 	}
 
-	static String[] booleanOperators = new String[] { "==", "!=", ">", "<", ">=", "<=" };
+	static String[] booleanOperators = new String[] { "==", "!=", ">=", "<=", ">", "<", };
 
 	private final IGB_CL2 cl2;
 	private final RAM ram;
-	private final Functions funcs;
 
 	Stack<Bracket> bracketStack;
 
 	public ControlSolver(IGB_CL2 cl2) {
 		this.cl2 = cl2;
 		ram = cl2.getRAM();
-		this.funcs = cl2.getFunctions();
+		// this.funcs = cl2.getFunctions();
 		bracketStack = new Stack<>();
-		bracketStack.push(_default());
+		bracketStack.push(Bracket._default());
 	}
 
 	private Bracket pop() {
@@ -124,8 +120,6 @@ class ControlSolver {
 		if(bracketStack.size() != 1)
 			throw new IGB_CL2_Exception(true, "\nFile: " + fileName + "\nToo little brackets.");
 	}
-
-	public void lowerBracketCounter() { bracketIndex--; }
 
 	private Bracket getBracket(int depth) {
 		assert depth > -1;
@@ -154,9 +148,11 @@ class ControlSolver {
 	private Bracket nextAdd = new Bracket();
 
 	public ArrayList<Instruction> cmd(String cmd) {
-		//System.out.println(bracketStack);
+		// System.out.println(bracketStack);
 		if(cmd.equals("{")) {
 			push(nextAdd);
+			if(nextAdd.type == None)
+				nextAdd.accessBracket();
 			ArrayList<Instruction> list = Utils.listOf(nextAdd.startPointer);
 			nextAdd = new Bracket();
 			return list;
@@ -184,11 +180,19 @@ class ControlSolver {
 	}
 
 	private ArrayList<Instruction> _if(String rest) {
+		if(!(rest.startsWith("(") && rest.endsWith(")")))
+			throw new IGB_CL2_Exception("If statement has to start with '(' and end with ')'.");
 
-		return solveIfEq(rest, ":susibaka");
+		nextAdd = Bracket._if();
+		return solveIfEq(rest.substring(1, rest.length() - 1), nextAdd.endPointer.argS[0]);
 	}
 
 	private ArrayList<Instruction> solveIfEq(String eq, String pointerToJump) {
+		if(eq.equals("false") || eq.equals("0"))
+			return Utils.listOf(Cell_Jump(pointerToJump));
+		if(eq.equals("true") || eq.equals("1"))
+			return new ArrayList<>();
+
 		ArrayList<Instruction> list = new ArrayList<>();
 		int index = -1;
 		String ope = null;
@@ -201,11 +205,50 @@ class ControlSolver {
 		}
 		if(index == -1)
 			throw new IGB_CL2_Exception("Unknown boolean operator in: \"" + eq + "\".");
+
 		String f1 = eq.substring(0, index).strip();
-		String f2 = eq.substring(index + 1).strip();
+		String f2 = eq.substring(index + ope.length()).strip();
 
-		System.out.println(f1 + "|" + ope + "|" + f2);
+		var t1 = cl2.getEqSolver().solve(f1);
+		boolean nc1 = t1.getValue1() == null;
+		list.addAll(t1.getValue3());
 
+		var t2 = cl2.getEqSolver().solve(f2);
+		boolean nc2 = t2.getValue1() == null;
+		if(nc1 && nc2 && t2.getValue2() == t1.getValue2()) {
+			t2.setValue2(ram.IF_TEMP2);
+			list.addAll(cl2.getEqSolver().solve(f2, ram.IF_TEMP2));
+		} else
+			list.addAll(t2.getValue3());
+
+		if(!nc1 && !nc2) {
+			double val1 = t1.getValue1();
+			double val2 = t2.getValue1();
+			if(switch (ope) {
+			case "==" -> val1 == val2;
+			case "!=" -> val1 != val2;
+			case ">=" -> val1 >= val2;
+			case "<=" -> val1 <= val2;
+			case ">" -> val1 > val2;
+			case "<" -> val1 < val2;
+			default -> throw new IGB_CL2_Exception();
+			}) {
+				return new ArrayList<>();
+			} else
+				return Utils.listOf(Cell_Jump(pointerToJump));
+		}
+
+		if(!nc1) {
+			list.add(If(switch (ope) {
+			case "==", "!=" -> ope;
+			case ">" -> "<";
+			case "<" -> ">";
+			case ">=" -> "<=";
+			case "<=" -> ">=";
+			default -> throw new IGB_CL2_Exception();
+			}, t2.getValue2(), false, t1.getValue1(), pointerToJump));
+		} else
+			list.add(If(ope, t1.getValue2(), nc2, nc2 ? t2.getValue2() : t2.getValue1(), pointerToJump));
 		return list;
 	}
 

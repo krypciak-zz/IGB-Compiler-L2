@@ -124,7 +124,7 @@ public class IGB_CL2 {
 					instList.addAll(out);
 			}
 			cntrlsolver.checkStack(fileNames[file]);
-			cntrlsolver.lowerBracketCounter();
+			
 			System.out.println(ram);
 			if(instList.size() > functions.lenlimits[file])
 				throw new IGB_CL2_Exception(true, "\nFile: " + fileNames[file] + "\n Instruction length limit reached: " + instList.size() + " out of "
@@ -136,12 +136,11 @@ public class IGB_CL2 {
 		return arr;
 	}
 
-	@SuppressWarnings("unused")
 	private ArrayList<Instruction> cmd(String cmd) {
 		if(cmd.length() > 0 && cmd.charAt(0) == '$' || cmd.startsWith("final"))
 			return new ArrayList<>();
 
-		if(false) {
+		{
 			ArrayList<Instruction> var = varsolver.cmd(cmd);
 			if(var != null)
 				return var;

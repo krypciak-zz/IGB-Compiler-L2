@@ -18,6 +18,9 @@ class VarSolver {
 	}
 
 	public ArrayList<Instruction> cmd(String cmd) {
+		if(cmd.startsWith("if") || cmd.startsWith("for") || cmd.startsWith("while"))
+			return null;
+
 		ArrayList<Instruction> list = new ArrayList<>();
 
 		int eqIndex = cmd.indexOf('=');

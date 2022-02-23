@@ -12,6 +12,7 @@ import java.util.Set;
 import me.krypek.igb.cl1.IGB_MA;
 import me.krypek.igb.cl1.Instruction;
 import me.krypek.utils.Pair;
+import me.krypek.utils.TripleObject;
 import me.krypek.utils.Utils;
 
 class EqSolver {
@@ -22,6 +23,16 @@ class EqSolver {
 		this.funcs = funcs;
 		temp1 = ram.EQ_TEMP1;
 		temp2 = ram.EQ_TEMP2;
+	}
+
+	public TripleObject<Double, Integer, ArrayList<Instruction>> solve(String eqS) {
+		tempCell1 = IGB_MA.CHARLIB_TEMP_START;
+		Equation eq = getEqFromString(eqS, false);
+		if(eq.fields.length == 1 && eq.fields[0].isVal())
+			return new TripleObject<>(eq.fields[0].value, -1, new ArrayList<>());
+
+		var pair = getInstructionsFromField(new Field(eq), -1);
+		return new TripleObject<>(null, pair.getFirst(), pair.getSecond());
 	}
 
 	public ArrayList<Instruction> solve(final String eqS, int outCell) {
