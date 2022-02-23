@@ -24,7 +24,8 @@ class ControlSolver {
 		private static int ifIndex = 0;
 
 		public final BracketType type;
-		public final ArrayList<Instruction> list;
+		public final ArrayList<Instruction> startList;
+		public final ArrayList<Instruction> endList;
 		public final Instruction startPointer;
 		public final Instruction endPointer;
 		public Instruction loopPointer;
@@ -38,7 +39,8 @@ class ControlSolver {
 			this.type = None;
 			startPointer = Pointer(":bracket_" + bracketIndex + "_start");
 			endPointer = Pointer(":bracket_" + bracketIndex + "_end");
-			list = new ArrayList<>();
+			startList = new ArrayList<>();
+			endList = new ArrayList<>();
 		}
 
 		public void accessBracket() { bracketIndex++; }
@@ -47,11 +49,13 @@ class ControlSolver {
 			type = Function;
 			startPointer = Pointer(":func_" + funcName + "_" + argLen + "_start");
 			endPointer = Pointer(":func_" + funcName + "_" + argLen + "_end");
-			list = Utils.listOf(Cell_Return());
+			startList = new ArrayList<>();
+			endList = Utils.listOf(Cell_Return());
 		}
 
-		private Bracket(BracketType bt, ArrayList<Instruction> list) {
-			this.list = list;
+		private Bracket(BracketType bt, ArrayList<Instruction> startList, ArrayList<Instruction> endList) {
+			this.startList = startList;
+			this.endList = endList;
 			this.type = bt;
 			switch (bt) {
 			case Default -> {
@@ -68,6 +72,8 @@ class ControlSolver {
 			case While -> {
 				startPointer = Pointer(":while_" + whileIndex + "_start");
 				endPointer = Pointer(":while_" + whileIndex + "_end");
+				loopPointer = Pointer(":while_" + whileIndex + "_loop");
+				checkPointer = Pointer(":while_" + whileIndex++ + "_check");
 			}
 			case If -> {
 				startPointer = Pointer(":if_" + ifIndex + "_start");
@@ -79,13 +85,13 @@ class ControlSolver {
 
 		public static Bracket _bracket() { return new Bracket(); }
 
-		public static Bracket _default() { return new Bracket(Default, null); }
+		public static Bracket _default() { return new Bracket(Default, null, null); }
 
-		public static Bracket _if() { return new Bracket(If, new ArrayList<>()); }
+		public static Bracket _if(ArrayList<Instruction> startList, ArrayList<Instruction> endList) { return new Bracket(If, startList, endList); }
 
-		public static Bracket _for() { return new Bracket(); }
+		public static Bracket _for(ArrayList<Instruction> startList, ArrayList<Instruction> endList) { return new Bracket(For, startList, endList); }
 
-		public static Bracket _while() { return new Bracket(); }
+		public static Bracket _while(ArrayList<Instruction> startList, ArrayList<Instruction> endList) { return new Bracket(While, startList, endList); }
 
 		public static Bracket _func() { return new Bracket(); }
 	}
@@ -114,8 +120,6 @@ class ControlSolver {
 
 	private void push(Bracket bt) { bracketStack.push(bt); }
 
-	private Bracket peek() { return bracketStack.peek(); }
-
 	public void checkStack(String fileName) {
 		if(bracketStack.size() != 1)
 			throw new IGB_CL2_Exception(true, "\nFile: " + fileName + "\nToo little brackets.");
@@ -135,7 +139,7 @@ class ControlSolver {
 	private Bracket lookFor(int amount, Set<BracketType> set) {
 		assert amount > 0;
 		int found = 0;
-		for (int i = bracketStack.size(); i >= 1; i--) {
+		for (int i = bracketStack.size() - 1; i >= 1; i--) {
 			Bracket br = bracketStack.get(i);
 			if(set.contains(br.type)) {
 				if(found++ == amount)
@@ -154,12 +158,13 @@ class ControlSolver {
 			if(nextAdd.type == None)
 				nextAdd.accessBracket();
 			ArrayList<Instruction> list = Utils.listOf(nextAdd.startPointer);
+			list.addAll(nextAdd.startList);
 			nextAdd = new Bracket();
 			return list;
 		} else if(cmd.equals("}")) {
 			Bracket b = pop();
-			b.list.add(b.endPointer);
-			return b.list;
+			b.endList.add(b.endPointer);
+			return b.endList;
 		} else if(cmd.startsWith("break")) {
 			return _break(cmd.substring(5).strip());
 		} else if(cmd.startsWith("redo")) {
@@ -171,7 +176,7 @@ class ControlSolver {
 		} else if(cmd.startsWith("if")) {
 			return _if(cmd.substring(2).strip());
 		} else if(cmd.startsWith("while")) {
-
+			_while(cmd.substring(5).strip());
 		} else if(cmd.startsWith("for")) {
 
 		}
@@ -179,15 +184,29 @@ class ControlSolver {
 		return null;
 	}
 
+	private ArrayList<Instruction> _while(String rest) {
+		if(!(rest.startsWith("(") && rest.endsWith(")")))
+			throw new IGB_CL2_Exception("While statement has to start with '(' and end with ')'.");
+
+		nextAdd = Bracket._while(new ArrayList<>(), new ArrayList<>());
+		nextAdd.startList.addAll(solveIfEq(rest.substring(1, rest.length() - 1), nextAdd.endPointer.argS[0], false));
+		nextAdd.startList.add(nextAdd.loopPointer);
+		nextAdd.endList.add(nextAdd.checkPointer);
+		nextAdd.endList.addAll(solveIfEq(rest.substring(1, rest.length() - 1), nextAdd.loopPointer.argS[0], true));
+		return new ArrayList<>();
+	}
+
 	private ArrayList<Instruction> _if(String rest) {
 		if(!(rest.startsWith("(") && rest.endsWith(")")))
 			throw new IGB_CL2_Exception("If statement has to start with '(' and end with ')'.");
 
-		nextAdd = Bracket._if();
-		return solveIfEq(rest.substring(1, rest.length() - 1), nextAdd.endPointer.argS[0]);
+		nextAdd = Bracket._if(new ArrayList<>(), new ArrayList<>());
+		nextAdd.startList.addAll(solveIfEq(rest.substring(1, rest.length() - 1), nextAdd.endPointer.argS[0], false));
+
+		return new ArrayList<>();
 	}
 
-	private ArrayList<Instruction> solveIfEq(String eq, String pointerToJump) {
+	private ArrayList<Instruction> solveIfEq(String eq, String pointerToJump, boolean revertOperator) {
 		if(eq.equals("false") || eq.equals("0"))
 			return Utils.listOf(Cell_Jump(pointerToJump));
 		if(eq.equals("true") || eq.equals("1"))
@@ -205,6 +224,9 @@ class ControlSolver {
 		}
 		if(index == -1)
 			throw new IGB_CL2_Exception("Unknown boolean operator in: \"" + eq + "\".");
+
+		if(revertOperator)
+			ope = revertOperator(ope);
 
 		String f1 = eq.substring(0, index).strip();
 		String f2 = eq.substring(index + ope.length()).strip();
@@ -239,17 +261,21 @@ class ControlSolver {
 		}
 
 		if(!nc1) {
-			list.add(If(switch (ope) {
-			case "==", "!=" -> ope;
-			case ">" -> "<";
-			case "<" -> ">";
-			case ">=" -> "<=";
-			case "<=" -> ">=";
-			default -> throw new IGB_CL2_Exception();
-			}, t2.getValue2(), false, t1.getValue1(), pointerToJump));
+			list.add(If(revertOperator(ope), t2.getValue2(), false, t1.getValue1(), pointerToJump));
 		} else
 			list.add(If(ope, t1.getValue2(), nc2, nc2 ? t2.getValue2() : t2.getValue1(), pointerToJump));
 		return list;
+	}
+
+	private String revertOperator(String ope) {
+		return switch (ope) {
+		case "==", "!=" -> ope;
+		case ">" -> "<";
+		case "<" -> ">";
+		case ">=" -> "<=";
+		case "<=" -> ">=";
+		default -> throw new IGB_CL2_Exception();
+		};
 	}
 
 	private ArrayList<Instruction> _continue(String rest) {

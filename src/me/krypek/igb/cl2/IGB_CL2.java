@@ -117,6 +117,7 @@ public class IGB_CL2 {
 			for (line = 0; line < formated[file].length; line++) {
 				String cmd = formated[file][line];
 				ArrayList<Instruction> out = cmd(cmd);
+				System.out.println("cmd:  "+cmd+" -> "+out);
 				if(out == null)
 					// return;
 					instList.add(Instruction.Pointer(":null"));
