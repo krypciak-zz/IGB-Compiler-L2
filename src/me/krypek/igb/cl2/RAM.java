@@ -90,6 +90,9 @@ class RAM {
 			if(val < 0)
 				throw new IGB_CL2_Exception("Variable cell cannot be negative.");
 		}
+		if(finalVars.containsKey(name))
+			throw new IGB_CL2_Exception("Cannot create a variable that is named the same as a final variable.");
+
 		if(illegalNames.contains(name))
 			throw new IGB_CL2_Exception("Illegal variable name: \"" + name + "\".");
 
@@ -219,11 +222,15 @@ class RAM {
 		// net.objecthunter.exp4j
 		// https://www.objecthunter.net/exp4j/
 		// https://github.com/fasseg/exp4j
+		try {
 		Expression e = new ExpressionBuilder(eq)
 				.variables(finalVars.keySet())
 				.build()
 				.setVariables(finalVars);
 		return e.evaluate();
+		} catch(Exception e) {
+			throw new IGB_CL2_Exception("Syntax error: \"" + eq + "\".", e);
+		}
 	}
 
 	public double solveFinalEq(String eq) { return solveFinalEq(eq, finalVars); }

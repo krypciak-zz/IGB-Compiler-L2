@@ -31,13 +31,13 @@ class Functions {
 		return func;
 	}
 
-	private void addFunction(String name, Function func) {
-		if(RAM.illegalNames.contains(name))
-			throw new IGB_CL2_Exception("Illegal function name: \"" + name + "\".");
+	private void addFunction(String name, Function func, boolean ignoreName) {
+		if(!ignoreName && (RAM.illegalNames.contains(name) || name.equals("sqrt")))
+			throw new IGB_CL2_Exception(file, line, "Illegal function name: \"" + name + "\".");
 
 		for (String c : RAM.illegalCharacters)
 			if(name.contains(c))
-				throw new IGB_CL2_Exception("Variable name \"" + name + "\" contains illegal character: \"" + c + "\".");
+				throw new IGB_CL2_Exception(file, line, "Variable name \"" + name + "\" contains illegal character: \"" + c + "\".");
 
 		HashMap<Integer, Function> map = functionMap.get(name);
 		if(map == null) {
@@ -72,7 +72,7 @@ class Functions {
 			splited[i] = argName;
 		}
 		Function func = new Function(funcName, ":f_" + funcName + "_" + splited.length, splited, returnType, ram);
-		addFunction(funcName, func);
+		addFunction(funcName, func, false);
 	}
 
 	private void initCompilerFunctions() {
@@ -85,7 +85,7 @@ class Functions {
 			list.addAll(pair1.getSecond());
 			list.add(Math_Sqrt(pair1.getFirst(), outCell));
 			return list;
-		}, 1, true));
+		}, 1, true), true);
 
 	}
 

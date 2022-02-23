@@ -7,7 +7,7 @@ import me.krypek.igb.cl1.Instruction;
 import me.krypek.igb.cl2.EqSolver.Field;
 import me.krypek.utils.Utils;
 
-public class VarSolver {
+class VarSolver {
 
 	private final IGB_CL2 cl2;
 	private final RAM ram;

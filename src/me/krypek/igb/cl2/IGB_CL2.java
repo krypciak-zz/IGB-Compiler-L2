@@ -84,6 +84,7 @@ public class IGB_CL2 {
 	EqSolver getEqSolver() { return eqsolver; }
 
 	private VarSolver varsolver;
+	private ControlSolver cntrlsolver;
 
 	@SuppressWarnings("unused")
 	private boolean assu;
@@ -107,13 +108,14 @@ public class IGB_CL2 {
 		System.out.println(functions);
 		System.out.println("\n\n");
 
-		for (int i = 0; i < formated.length; i++) {
+		for (file = 0; file < formated.length; file++) {
 			ArrayList<Instruction> instList = new ArrayList<>();
-			ram = functions.rams[i];
+			ram = functions.rams[file];
 			eqsolver = new EqSolver(ram, functions);
 			varsolver = new VarSolver(this);
-			for (line = 0; line < formated[i].length; line++) {
-				String cmd = formated[i][line];
+			cntrlsolver = new ControlSolver(this);
+			for (line = 0; line < formated[file].length; line++) {
+				String cmd = formated[file][line];
 				ArrayList<Instruction> out = cmd(cmd);
 				if(out == null)
 					// return;
@@ -121,24 +123,33 @@ public class IGB_CL2 {
 				else
 					instList.addAll(out);
 			}
+			cntrlsolver.checkStack(fileNames[file]);
+			cntrlsolver.lowerBracketCounter();
 			System.out.println(ram);
-			if(instList.size() > functions.lenlimits[i])
-				throw new IGB_CL2_Exception(true,
-						"\nFile: " + fileNames[i] + " Instruction length limit reached: " + instList.size() + " out of " + functions.lenlimits[i] + ".");
+			if(instList.size() > functions.lenlimits[file])
+				throw new IGB_CL2_Exception(true, "\nFile: " + fileNames[file] + "\n Instruction length limit reached: " + instList.size() + " out of "
+						+ functions.lenlimits[file] + ".");
 
-			arr[i] = new IGB_L1(functions.startlines[i], instList.toArray(Instruction[]::new));
+			arr[file] = new IGB_L1(functions.startlines[file], instList.toArray(Instruction[]::new));
 		}
 
 		return arr;
 	}
 
+	@SuppressWarnings("unused")
 	private ArrayList<Instruction> cmd(String cmd) {
 		if(cmd.length() > 0 && cmd.charAt(0) == '$' || cmd.startsWith("final"))
 			return new ArrayList<>();
-		{
+
+		if(false) {
 			ArrayList<Instruction> var = varsolver.cmd(cmd);
 			if(var != null)
 				return var;
+		}
+		{
+			ArrayList<Instruction> cntrl = cntrlsolver.cmd(cmd);
+			if(cntrl != null)
+				return cntrl;
 		}
 
 		return null;
