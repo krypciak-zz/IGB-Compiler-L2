@@ -2,7 +2,8 @@ package me.krypek.igb.cl2;
 
 import static me.krypek.igb.cl1.Instruction.Cell_Jump;
 import static me.krypek.igb.cl1.Instruction.Cell_Return;
-import static me.krypek.igb.cl1.Instruction.*;
+import static me.krypek.igb.cl1.Instruction.If;
+import static me.krypek.igb.cl1.Instruction.Pointer;
 import static me.krypek.igb.cl2.BracketType.*;
 
 import java.util.ArrayList;
@@ -10,6 +11,7 @@ import java.util.Set;
 import java.util.Stack;
 
 import me.krypek.igb.cl1.Instruction;
+import me.krypek.igb.cl2.EqSolver.Field;
 import me.krypek.utils.Utils;
 
 enum BracketType {
@@ -30,7 +32,8 @@ class ControlSolver {
 		public final Instruction endPointer;
 		public Instruction loopPointer;
 		public Instruction checkPointer;
-		public Instruction addPointer;
+
+		public Runnable onBracket = () -> {};
 
 		@Override
 		public String toString() { return startPointer.toString(); }
@@ -45,10 +48,10 @@ class ControlSolver {
 
 		public void accessBracket() { bracketIndex++; }
 
-		private Bracket(String funcName, int argLen) {
+		private Bracket(Function func) {
 			type = Function;
-			startPointer = Pointer(":func_" + funcName + "_" + argLen + "_start");
-			endPointer = Pointer(":func_" + funcName + "_" + argLen + "_end");
+			startPointer = Pointer(func.startPointerName);
+			endPointer = Pointer(func.endPointerName);
 			startList = new ArrayList<>();
 			endList = Utils.listOf(Cell_Return());
 		}
@@ -66,8 +69,7 @@ class ControlSolver {
 				startPointer = Pointer(":for_" + forIndex + "_start");
 				endPointer = Pointer(":for_" + forIndex + "_end");
 				checkPointer = Pointer(":for_" + forIndex + "_check");
-				loopPointer = Pointer(":for_" + forIndex + "_loop");
-				addPointer = Pointer(":for_" + forIndex++ + "_add");
+				loopPointer = Pointer(":for_" + forIndex++ + "_loop");
 			}
 			case While -> {
 				startPointer = Pointer(":while_" + whileIndex + "_start");
@@ -87,25 +89,27 @@ class ControlSolver {
 
 		public static Bracket _default() { return new Bracket(Default, null, null); }
 
-		public static Bracket _if(ArrayList<Instruction> startList, ArrayList<Instruction> endList) { return new Bracket(If, startList, endList); }
+		public static Bracket _if() { return new Bracket(If, new ArrayList<>(), new ArrayList<>()); }
 
-		public static Bracket _for(ArrayList<Instruction> startList, ArrayList<Instruction> endList) { return new Bracket(For, startList, endList); }
+		public static Bracket _for() { return new Bracket(For, new ArrayList<>(), new ArrayList<>()); }
 
-		public static Bracket _while(ArrayList<Instruction> startList, ArrayList<Instruction> endList) { return new Bracket(While, startList, endList); }
+		public static Bracket _while() { return new Bracket(While, new ArrayList<>(), new ArrayList<>()); }
 
-		public static Bracket _func() { return new Bracket(); }
+		public static Bracket _func(Function func) { return new Bracket(func); }
 	}
 
 	static String[] booleanOperators = new String[] { "==", "!=", ">=", "<=", ">", "<", };
 
 	private final IGB_CL2 cl2;
 	private final RAM ram;
+	private final EqSolver eqsolver;
 
 	Stack<Bracket> bracketStack;
 
 	public ControlSolver(IGB_CL2 cl2) {
 		this.cl2 = cl2;
 		ram = cl2.getRAM();
+		this.eqsolver = cl2.getEqSolver();
 		// this.funcs = cl2.getFunctions();
 		bracketStack = new Stack<>();
 		bracketStack.push(Bracket._default());
@@ -138,11 +142,12 @@ class ControlSolver {
 
 	private Bracket lookFor(int amount, Set<BracketType> set) {
 		assert amount > 0;
+		System.out.println(bracketStack);
 		int found = 0;
 		for (int i = bracketStack.size() - 1; i >= 1; i--) {
 			Bracket br = bracketStack.get(i);
 			if(set.contains(br.type)) {
-				if(found++ == amount)
+				if(++found == amount)
 					return br;
 			}
 		}
@@ -154,14 +159,18 @@ class ControlSolver {
 	public ArrayList<Instruction> cmd(String cmd) {
 		// System.out.println(bracketStack);
 		if(cmd.equals("{")) {
+			ram.next();
 			push(nextAdd);
 			if(nextAdd.type == None)
 				nextAdd.accessBracket();
+			nextAdd.onBracket.run();
+
 			ArrayList<Instruction> list = Utils.listOf(nextAdd.startPointer);
 			list.addAll(nextAdd.startList);
 			nextAdd = new Bracket();
 			return list;
 		} else if(cmd.equals("}")) {
+			ram.pop();
 			Bracket b = pop();
 			b.endList.add(b.endPointer);
 			return b.endList;
@@ -176,23 +185,87 @@ class ControlSolver {
 		} else if(cmd.startsWith("if")) {
 			return _if(cmd.substring(2).strip());
 		} else if(cmd.startsWith("while")) {
-			_while(cmd.substring(5).strip());
+			return _while(cmd.substring(5).strip());
 		} else if(cmd.startsWith("for")) {
+			return _for(cmd.substring(3).strip());
+		} else {
+			int spaceIndex = cmd.indexOf(' ');
+			if(spaceIndex != -1) {
+				String first = cmd.substring(0, spaceIndex).strip();
+				if(first.equals("void") || IGB_CL2.varStr.contains(first)) {
+					return _function(cmd.substring(spaceIndex).strip());
+				}
+			} else if(cmd.contains("(")) {
 
+				try {
+					Field funcField = eqsolver.stringToField(cmd, false);
+					if(funcField.isFunction()) {
+						return funcField.funcCall.getCall();
+					}
+				} catch (Exception e) {}
+
+			}
 		}
 
 		return null;
+	}
+
+	private ArrayList<Instruction> _function(String rest) {
+		int bracketIndex = rest.indexOf('(');
+		if(bracketIndex == -1)
+			throw new IGB_CL2_Exception();
+		String name = rest.substring(0, bracketIndex);
+		int argsLen = Utils.getArrayElementsFromString(rest.substring(bracketIndex - 1), '(', ')', ",").length;
+		Function func = cl2.getFunctions().getFunction(name, argsLen);
+
+		nextAdd = Bracket._func(func);
+		nextAdd.onBracket = () -> { func.initVariables(ram); };
+		return new ArrayList<>();
+	}
+
+	private ArrayList<Instruction> _for(String rest) {
+		if(!(rest.startsWith("(") && rest.endsWith(")")))
+			throw new IGB_CL2_Exception("While statement has to start with '(' and end with ')'.");
+
+		rest = rest.substring(1, rest.length() - 1).strip();
+
+		String[] split = rest.split(";");
+		if(split.length != 3)
+			throw new IGB_CL2_Exception("For requires 3 fields.");
+		String init = split[0].strip();
+		String condi = split[1].strip();
+		String addi = split[2].strip();
+		nextAdd = Bracket._for();
+		ArrayList<Instruction> startList = nextAdd.startList;
+		ArrayList<Instruction> initSolved = cl2.getVarSolver().cmd(init, false);
+		if(initSolved == null)
+			throw new IGB_CL2_Exception("Syntax error at for init field.");
+		startList.addAll(initSolved);
+		startList.addAll(solveIfEq(condi, nextAdd.endPointer.argS[0], false));
+		startList.add(nextAdd.loopPointer);
+
+		ArrayList<Instruction> endList = nextAdd.endList;
+		endList.add(nextAdd.checkPointer);
+		ArrayList<Instruction> addiSolved = cl2.getVarSolver().cmd(addi, true);
+		if(addiSolved == null)
+			throw new IGB_CL2_Exception("Syntax error at for addition field.");
+		endList.addAll(addiSolved);
+		endList.addAll(solveIfEq(condi, nextAdd.loopPointer.argS[0], true));
+
+		return new ArrayList<>();
 	}
 
 	private ArrayList<Instruction> _while(String rest) {
 		if(!(rest.startsWith("(") && rest.endsWith(")")))
 			throw new IGB_CL2_Exception("While statement has to start with '(' and end with ')'.");
 
-		nextAdd = Bracket._while(new ArrayList<>(), new ArrayList<>());
-		nextAdd.startList.addAll(solveIfEq(rest.substring(1, rest.length() - 1), nextAdd.endPointer.argS[0], false));
+		rest = rest.substring(1, rest.length() - 1).strip();
+
+		nextAdd = Bracket._while();
+		nextAdd.startList.addAll(solveIfEq(rest, nextAdd.endPointer.argS[0], false));
 		nextAdd.startList.add(nextAdd.loopPointer);
 		nextAdd.endList.add(nextAdd.checkPointer);
-		nextAdd.endList.addAll(solveIfEq(rest.substring(1, rest.length() - 1), nextAdd.loopPointer.argS[0], true));
+		nextAdd.endList.addAll(solveIfEq(rest, nextAdd.loopPointer.argS[0], true));
 		return new ArrayList<>();
 	}
 
@@ -200,8 +273,10 @@ class ControlSolver {
 		if(!(rest.startsWith("(") && rest.endsWith(")")))
 			throw new IGB_CL2_Exception("If statement has to start with '(' and end with ')'.");
 
-		nextAdd = Bracket._if(new ArrayList<>(), new ArrayList<>());
-		nextAdd.startList.addAll(solveIfEq(rest.substring(1, rest.length() - 1), nextAdd.endPointer.argS[0], false));
+		rest = rest.substring(1, rest.length() - 1).strip();
+
+		nextAdd = Bracket._if();
+		nextAdd.startList.addAll(solveIfEq(rest, nextAdd.endPointer.argS[0], false));
 
 		return new ArrayList<>();
 	}
@@ -231,15 +306,15 @@ class ControlSolver {
 		String f1 = eq.substring(0, index).strip();
 		String f2 = eq.substring(index + ope.length()).strip();
 
-		var t1 = cl2.getEqSolver().solve(f1);
+		var t1 = eqsolver.solve(f1);
 		boolean nc1 = t1.getValue1() == null;
 		list.addAll(t1.getValue3());
 
-		var t2 = cl2.getEqSolver().solve(f2);
+		var t2 = eqsolver.solve(f2);
 		boolean nc2 = t2.getValue1() == null;
 		if(nc1 && nc2 && t2.getValue2() == t1.getValue2()) {
 			t2.setValue2(ram.IF_TEMP2);
-			list.addAll(cl2.getEqSolver().solve(f2, ram.IF_TEMP2));
+			list.addAll(eqsolver.solve(f2, ram.IF_TEMP2));
 		} else
 			list.addAll(t2.getValue3());
 
@@ -288,7 +363,7 @@ class ControlSolver {
 		}
 		Bracket br = lookFor(count, Set.of(For, While));
 
-		return Utils.listOf(Cell_Jump(br.type == For ? br.addPointer.argS[0] : br.startPointer.argS[0]));
+		return Utils.listOf(Cell_Jump(br.type == For ? br.checkPointer.argS[0] : br.startPointer.argS[0]));
 
 	}
 

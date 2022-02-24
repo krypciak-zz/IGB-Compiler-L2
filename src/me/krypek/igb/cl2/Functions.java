@@ -71,7 +71,9 @@ class Functions {
 			String argName = arg.substring(spaceIndex + 1);
 			splited[i] = argName;
 		}
-		Function func = new Function(funcName, ":f_" + funcName + "_" + splited.length, splited, returnType, ram);
+		String startPointer = ":f_" + funcName + "_" + splited.length + "_start";
+		String endPointer = ":f_" + funcName + "_" + splited.length + "_end";
+		Function func = new Function(funcName, startPointer, endPointer, splited, returnType, ram);
 		addFunction(funcName, func, false);
 	}
 
@@ -244,18 +246,20 @@ class Functions {
 
 class Function {
 	public final String name;
-	public final String pointerName;
-	public final String[] argsName;
+	public final String startPointerName;
+	public final String endPointerName;
+	public final String[] argNames;
 	public final int[] argCells;
 	public final boolean returnType;
 
 	public final Generator<ArrayList<Instruction>, TripleObject<EqSolver, Field[], Integer>> callAction;
 
-	public Function(String name, String pointerName, String[] argsName, boolean returnType, RAM ram) {
+	public Function(String name, String startPointer, String endPointer, String[] argsName, boolean returnType, RAM ram) {
 		this.name = name;
-		this.pointerName = pointerName;
+		this.startPointerName = startPointer;
+		this.endPointerName = endPointer;
 		argCells = ram.reserve(argsName.length);
-		this.argsName = argsName;
+		this.argNames = argsName;
 		this.returnType = returnType;
 		callAction = null;
 	}
@@ -264,8 +268,9 @@ class Function {
 		this.name = name;
 		this.callAction = callAction;
 		this.returnType = returnType;
-		pointerName = null;
-		argsName = null;
+		this.startPointerName = null;
+		this.endPointerName = null;
+		argNames = null;
 		argCells = new int[argLen];
 	}
 
@@ -278,7 +283,7 @@ class Function {
 			if(obj.getSecond() != null)
 				list.addAll(obj.getSecond());
 		}
-		list.add(Cell_Call(pointerName));
+		list.add(Cell_Call(startPointerName));
 		return list;
 	}
 
@@ -295,9 +300,11 @@ class Function {
 		return list;
 	}
 
+	public void initVariables(RAM ram) { for (int i = 0; i < argCells.length; i++) { ram.newVar(argNames[i], new Variable(argCells[i])); } }
+
 	@Override
 	public String toString() {
-		return callAction == null ? pointerName + ", \t" + name + Utils.arrayToString(argsName, '(', ')', ",") + " " + returnType
+		return callAction == null ? startPointerName + ", \t" + name + Utils.arrayToString(argNames, '(', ')', ",") + " " + returnType
 				: name + ", len=" + argCells.length + ", " + returnType + ", " + callAction;
 	}
 }

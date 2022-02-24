@@ -38,7 +38,7 @@ class RAM {
 		allocationArray = new boolean[ramSize];
 		variableStack = new Stack<>();
 		arrayStack = new Stack<>();
-		nextStack();
+		next();
 		addCompilerVariables();
 	}
 
@@ -154,7 +154,7 @@ class RAM {
 		return totalSize;
 	}
 
-	void popStack() {
+	void pop() {
 		Map<String, Variable> t1 = variableStack.pop();
 		for (Variable var : t1.values()) {
 			int cell = var.cell - allocStart;
@@ -204,7 +204,7 @@ class RAM {
 		throw new IGB_CL2_Exception("Variable \"" + name + "\" doesn't exist.");
 	}
 
-	void nextStack() {
+	void next() {
 		variableStack.add(new HashMap<>());
 		arrayStack.add(new HashMap<>());
 	}

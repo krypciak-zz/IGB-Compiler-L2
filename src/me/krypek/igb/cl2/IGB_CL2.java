@@ -76,6 +76,8 @@ public class IGB_CL2 {
 	private Functions functions;
 	private RAM ram;
 	private EqSolver eqsolver;
+	private VarSolver varsolver;
+	private ControlSolver cntrlsolver;
 
 	Functions getFunctions() { return functions; }
 
@@ -83,8 +85,7 @@ public class IGB_CL2 {
 
 	EqSolver getEqSolver() { return eqsolver; }
 
-	private VarSolver varsolver;
-	private ControlSolver cntrlsolver;
+	VarSolver getVarSolver() { return varsolver; }
 
 	@SuppressWarnings("unused")
 	private boolean assu;
@@ -117,15 +118,15 @@ public class IGB_CL2 {
 			for (line = 0; line < formated[file].length; line++) {
 				String cmd = formated[file][line];
 				ArrayList<Instruction> out = cmd(cmd);
-				System.out.println("cmd:  "+cmd+" -> "+out);
+				System.out.println("cmd:  " + cmd + " -> " + out);
 				if(out == null)
-					// return;
-					instList.add(Instruction.Pointer(":null"));
+					throw new IGB_CL2_Exception("Unknown command: \"" + cmd + "\".");
+				// instList.add(Instruction.Pointer(":null"));
 				else
 					instList.addAll(out);
 			}
 			cntrlsolver.checkStack(fileNames[file]);
-			
+
 			System.out.println(ram);
 			if(instList.size() > functions.lenlimits[file])
 				throw new IGB_CL2_Exception(true, "\nFile: " + fileNames[file] + "\n Instruction length limit reached: " + instList.size() + " out of "
@@ -142,7 +143,7 @@ public class IGB_CL2 {
 			return new ArrayList<>();
 
 		{
-			ArrayList<Instruction> var = varsolver.cmd(cmd);
+			ArrayList<Instruction> var = varsolver.cmd(cmd, false);
 			if(var != null)
 				return var;
 		}

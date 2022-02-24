@@ -7,6 +7,8 @@ import me.krypek.igb.cl1.Instruction;
 import me.krypek.igb.cl2.EqSolver.Field;
 import me.krypek.utils.Utils;
 
+import static me.krypek.igb.cl1.Instruction.*;
+
 class VarSolver {
 
 	private final IGB_CL2 cl2;
@@ -17,9 +19,31 @@ class VarSolver {
 		ram = cl2.getRAM();
 	}
 
-	public ArrayList<Instruction> cmd(String cmd) {
+	public ArrayList<Instruction> cmd(String cmd, boolean noinit) {
 		if(cmd.startsWith("if") || cmd.startsWith("for") || cmd.startsWith("while"))
 			return null;
+
+		{
+			int valToAdd = 0;
+			String name = null;
+			if(cmd.startsWith("++")) {
+				valToAdd = 1;
+				name = cmd.substring(2);
+			} else if(cmd.endsWith("++")) {
+				valToAdd = 1;
+				name = cmd.substring(0, cmd.length() - 2);
+			} else if(cmd.startsWith("--")) {
+				valToAdd = -1;
+				name = cmd.substring(2);
+			} else if(cmd.endsWith("++")) {
+				valToAdd = -1;
+				name = cmd.substring(0, cmd.length() - 2);
+			}
+			if(name != null) {
+				int cell = ram.getVariable(name);
+				return Utils.listOf(Add(cell, false, valToAdd, cell));
+			}
+		}
 
 		ArrayList<Instruction> list = new ArrayList<>();
 
@@ -40,6 +64,9 @@ class VarSolver {
 		if(spaceIndex != -1) {
 			String first = cmd.substring(0, spaceIndex);
 			if(IGB_CL2.varStr.contains(first)) {
+				if(noinit)
+					throw new IGB_CL2_Exception("Cannot init variables in for addition field.");
+
 				// var init
 				String rest = cmd.substring(spaceIndex + 1).strip();
 				int equalsIndex = rest.indexOf('=');
@@ -61,12 +88,15 @@ class VarSolver {
 				if(first.startsWith(str)) {
 					int bracketIndex = cmd.indexOf('[');
 					if(bracketIndex != -1) {
+						if(noinit)
+							throw new IGB_CL2_Exception("Cannot init arrays in for addition field.");
 						initArray(cmd, bracketIndex);
 						return new ArrayList<>();
 					}
 					break;
 				}
 		}
+
 		if(!hasEqSign)
 			return null;
 		String name = cmd.substring(0, eqIndex).strip();

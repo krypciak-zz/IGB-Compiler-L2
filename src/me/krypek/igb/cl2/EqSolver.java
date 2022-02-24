@@ -37,14 +37,14 @@ class EqSolver {
 
 	public ArrayList<Instruction> solve(final String eqS, int outCell) {
 		tempCell1 = IGB_MA.CHARLIB_TEMP_START;
-		System.out.print(eqS);
+		// System.out.print(eqS);
 		Equation eq = getEqFromString(eqS, false);
-		System.out.println(" -> " + eq);
+		// System.out.println(" -> " + eq);
 		var list = getInstructionListFromEq(eq, outCell);
-		System.out.println(eq + " -> " + outCell + " ->");
-		for (Instruction inst : list)
-			System.out.println(inst);
-		System.out.println();
+		// System.out.println(eq + " -> " + outCell + " ->");
+		// for (Instruction inst : list)
+		// System.out.println(inst);
+		// System.out.println();
 		return list;
 	}
 
@@ -413,9 +413,9 @@ class EqSolver {
 			this.func = func;
 		}
 
-		public List<Instruction> getCall() { return func.getCall(eqs, args); }
+		public ArrayList<Instruction> getCall() { return func.getCall(eqs, args); }
 
-		public List<Instruction> getCall(int outCell) { return func.getCall(eqs, args, outCell); }
+		public ArrayList<Instruction> getCall(int outCell) { return func.getCall(eqs, args, outCell); }
 
 		@Override
 		public String toString() { return func.name + Utils.arrayToString(args, '(', ')', ","); }
