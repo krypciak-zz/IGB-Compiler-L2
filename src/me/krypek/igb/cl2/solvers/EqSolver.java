@@ -32,6 +32,8 @@ public class EqSolver {
 		temp2 = ram.EQ_TEMP2;
 	}
 
+	public double solveFinalEq(String eq) { return ram.solveFinalEq(eq); }
+
 	public TripleObject<Double, Integer, ArrayList<Instruction>> solve(String eqS) {
 		tempCell1 = IGB_MA.CHARLIB_TEMP_START;
 		Equation eq = getEqFromString(eqS, false);
@@ -290,6 +292,7 @@ public class EqSolver {
 			if(!sb.isEmpty())
 				fieldStringList.add(sb.toString());
 		}
+		System.out.println(str + "\tlist: " + fieldStringList);
 
 		char[] operators = operatorList.stream().map(String::valueOf).collect(StringBuilder::new, StringBuilder::append, StringBuilder::append).toString()
 				.toCharArray();
@@ -303,6 +306,7 @@ public class EqSolver {
 	}
 
 	Field stringToField(final String str, boolean epicFail) {
+		System.out.println(str);
 		try {
 			double val = ram.solveFinalEq(str);
 			return new Field(val);
@@ -315,7 +319,7 @@ public class EqSolver {
 				int index = str.indexOf('(');
 				String funcName = str.substring(0, index).stripTrailing();
 
-				String[] args = Utils.getArrayElementsFromString(str.substring(index), '(', ')', ",");
+				String[] args = Utils.getArrayElementsFromStringIgnoreBrackets(str.substring(index), '(', ')', ',');
 
 				Field[] fa = stringArrayToFieldArray(args);
 
@@ -342,7 +346,7 @@ public class EqSolver {
 			return new Field(new ArrayAccess(arrName, arr, fa));
 		}
 
-		int cell = ram.getVariableNoExc(str);
+		int cell = ram.getVariableCellNoExc(str);
 		if(cell != -1)
 			return new Field(cell);
 

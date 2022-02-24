@@ -198,12 +198,13 @@ public class ControlSolver {
 				String first = cmd.substring(0, spaceIndex).strip();
 				if(first.equals("void") || IGB_CL2.varStr.contains(first))
 					return _function(cmd.substring(spaceIndex).strip());
-			} else if(cmd.contains("("))
-				try {
-					Field funcField = eqsolver.stringToField(cmd, false);
-					if(funcField.isFunction())
-						return funcField.funcCall.getCall(eqsolver);
-				} catch (Exception e) {}
+			}
+			if(cmd.contains("(")) {
+				Field funcField = eqsolver.stringToField(cmd, false);
+
+				if(funcField.isFunction())
+					return funcField.funcCall.getCall(eqsolver);
+			}
 		}
 
 		return null;

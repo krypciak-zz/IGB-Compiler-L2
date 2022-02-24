@@ -1,5 +1,6 @@
 package me.krypek.igb.cl2;
 
+import static me.krypek.igb.cl1.Instruction.Device_ScreenUpdate;
 import static me.krypek.igb.cl1.Instruction.Init;
 
 import java.util.HashMap;
@@ -10,6 +11,7 @@ import java.util.Stack;
 import me.krypek.igb.cl1.IGB_MA;
 import me.krypek.igb.cl2.datatypes.Array;
 import me.krypek.igb.cl2.datatypes.Variable;
+import me.krypek.utils.Utils;
 import net.objecthunter.exp4j.Expression;
 import net.objecthunter.exp4j.ExpressionBuilder;
 
@@ -48,11 +50,11 @@ public class RAM {
 		newVar("screenWidth", new Variable(IGB_MA.SCREEN_WIDTH));
 		newVar("screenHeight", new Variable(IGB_MA.SCREEN_HEIGHT));
 		newVar("screenType", new Variable(IGB_MA.SCREEN_TYPE, str -> {
-			String str1 = str.toLowerCase();
-			if(str1.equals("rgb"))
-				return Init(1, IGB_MA.SCREEN_TYPE);
-			if(str1.equals("16c"))
-				return Init(0, IGB_MA.SCREEN_TYPE);
+			String str1 = str.toLowerCase().strip();
+			if(str1.equals("rgb") || str1.equals("1"))
+				return Utils.listOf(Init(1, IGB_MA.SCREEN_TYPE), Device_ScreenUpdate());
+			if(str1.equals("16c") || str1.equals("0"))
+				return Utils.listOf(Init(0, IGB_MA.SCREEN_TYPE), Device_ScreenUpdate());
 			throw new IGB_CL2_Exception("Invalid value: \"" + str + "\" screenType can be only \"rgb\", \"16c\", \"0\" or \"1\".");
 		}));
 	}
@@ -171,7 +173,7 @@ public class RAM {
 		}
 	}
 
-	public int getVariable(String name) {
+	public int getVariableCell(String name) {
 		for (int i = variableStack.size() - 1; i >= 0; i--) {
 			Variable var = variableStack.elementAt(i).get(name);
 			if(var != null)
@@ -181,7 +183,17 @@ public class RAM {
 		throw new IGB_CL2_Exception("Variable \"" + name + "\" doesn't exist.");
 	}
 
-	public int getVariableNoExc(String name) {
+	public Variable getVariable(String name) {
+		for (int i = variableStack.size() - 1; i >= 0; i--) {
+			Variable var = variableStack.elementAt(i).get(name);
+			if(var != null)
+				return var;
+		}
+
+		throw new IGB_CL2_Exception("Variable \"" + name + "\" doesn't exist.");
+	}
+
+	public int getVariableCellNoExc(String name) {
 		for (int i = variableStack.size() - 1; i >= 0; i--) {
 			Variable var = variableStack.elementAt(i).get(name);
 			if(var != null)

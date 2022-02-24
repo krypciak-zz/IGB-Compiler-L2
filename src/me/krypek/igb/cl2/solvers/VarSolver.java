@@ -45,7 +45,7 @@ public class VarSolver {
 				name = cmd.substring(0, cmd.length() - 2);
 			}
 			if(name != null) {
-				int cell = ram.getVariable(name);
+				int cell = ram.getVariableCell(name);
 				return Utils.listOf(Add(cell, false, valToAdd, cell));
 			}
 		}
@@ -59,7 +59,7 @@ public class VarSolver {
 				int index = cmd.indexOf(c + "=");
 				if(index != -1) {
 					String name = cmd.substring(0, index).strip();
-					int cell = ram.getVariable(name);
+					int cell = ram.getVariableCell(name);
 					String eq = cmd.substring(index + 2).strip();
 					return cl2.getEqSolver().solve(name + c + "(" + eq + ")", cell);
 				}
@@ -114,12 +114,13 @@ public class VarSolver {
 			Array arr = ram.getArray(name);
 			list.addAll(cl2.getEqSolver().solve(eq, ram.EQ_TEMP1));
 			list.addAll(arr.getWrite(cl2.getEqSolver(), dimsF, ram.EQ_TEMP1));
-			System.out.println(list);
 			return list;
 		}
-		int cell = ram.getVariable(name);
+		Variable var = ram.getVariable(name);
+		if(var.action != null)
+			return var.action.get(eq);
 
-		return cl2.getEqSolver().solve(eq, cell);
+		return cl2.getEqSolver().solve(eq, var.cell);
 	}
 
 	private void initArray(String cmd, int bracketIndex) {

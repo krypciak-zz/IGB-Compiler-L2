@@ -2,6 +2,7 @@ package me.krypek.igb.cl2;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -73,8 +74,8 @@ public class IGB_CL2 {
 	// String[][] in;
 	int[][] lines;
 
-	int file;
-	int line;
+	public int file;
+	public int line;
 
 	private Functions functions;
 	private RAM ram;
@@ -90,9 +91,6 @@ public class IGB_CL2 {
 
 	public VarSolver getVarSolver() { return varsolver; }
 
-	@SuppressWarnings("unused")
-	private boolean assu;
-
 	public IGB_CL2() { IGB_CL2_Exception.igb_cl2 = this; }
 
 	public IGB_L1[] compile(String[] inputs, String[] fileNames) {
@@ -100,6 +98,7 @@ public class IGB_CL2 {
 		String[][] formated = formatArray(inputs, fileNames);
 
 		this.fileNames = fileNames;
+		System.out.println(Arrays.toString(fileNames));
 		// log
 		for (int i = 0; i < formated.length; i++) {
 			System.out.println(fileNames[i] + " ->");
@@ -108,7 +107,7 @@ public class IGB_CL2 {
 		}
 		// endlog
 
-		functions = new Functions(formated, fileNames);
+		functions = new Functions(formated, fileNames, this);
 		System.out.println(functions);
 		System.out.println("\n\n");
 
