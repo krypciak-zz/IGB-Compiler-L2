@@ -1,23 +1,19 @@
 package me.krypek.igb.cl2;
 
-import static me.krypek.igb.cl1.Instruction.*;
+import static me.krypek.igb.cl1.Instruction.Init;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
 
 import me.krypek.igb.cl1.IGB_MA;
-import me.krypek.igb.cl1.Instruction;
-import me.krypek.igb.cl2.EqSolver.Field;
-import me.krypek.utils.Pair;
-import me.krypek.utils.TripleObject;
-import me.krypek.utils.Utils;
+import me.krypek.igb.cl2.datatypes.Array;
+import me.krypek.igb.cl2.datatypes.Variable;
 import net.objecthunter.exp4j.Expression;
 import net.objecthunter.exp4j.ExpressionBuilder;
 
-class RAM {
+public class RAM {
 	static final String[] illegalCharacters = { "{", "}", "(", ")", "[", "]", ";", "$", "=", "|" };
 	static final Set<String> illegalNames = Set.of("else");
 
@@ -80,7 +76,7 @@ class RAM {
 		throw new IGB_CL2_Exception("Ran out of space in RAM!");
 	}
 
-	int checkName(String name) {
+	public int checkName(String name) {
 		int val = -1;
 		if(name.endsWith("|")) {
 			String[] split1 = name.split("\\|");
@@ -154,7 +150,7 @@ class RAM {
 		return totalSize;
 	}
 
-	void pop() {
+	public void pop() {
 		Map<String, Variable> t1 = variableStack.pop();
 		for (Variable var : t1.values()) {
 			int cell = var.cell - allocStart;
@@ -175,7 +171,7 @@ class RAM {
 		}
 	}
 
-	int getVariable(String name) {
+	public int getVariable(String name) {
 		for (int i = variableStack.size() - 1; i >= 0; i--) {
 			Variable var = variableStack.elementAt(i).get(name);
 			if(var != null)
@@ -185,7 +181,7 @@ class RAM {
 		throw new IGB_CL2_Exception("Variable \"" + name + "\" doesn't exist.");
 	}
 
-	int getVariableNoExc(String name) {
+	public int getVariableNoExc(String name) {
 		for (int i = variableStack.size() - 1; i >= 0; i--) {
 			Variable var = variableStack.elementAt(i).get(name);
 			if(var != null)
@@ -195,7 +191,7 @@ class RAM {
 		return -1;
 	}
 
-	Array getArray(String name) {
+	public Array getArray(String name) {
 		for (int i = arrayStack.size() - 1; i >= 0; i--) {
 			Array var = arrayStack.elementAt(i).get(name);
 			if(var != null)
@@ -204,19 +200,19 @@ class RAM {
 		throw new IGB_CL2_Exception("Variable \"" + name + "\" doesn't exist.");
 	}
 
-	void next() {
+	public void next() {
 		variableStack.add(new HashMap<>());
 		arrayStack.add(new HashMap<>());
 	}
 
 	//@f:off
-	final int IF_TEMP1 = switch(thread) {case 0->IGB_MA.IF_TEMP1_THREAD0; case 1->IGB_MA.IF_TEMP1_THREAD1; default -> -1;};
-	final int IF_TEMP2 = switch(thread) {case 0->IGB_MA.IF_TEMP2_THREAD0; case 1->IGB_MA.IF_TEMP1_THREAD1; default -> -1;};
-	
-	final int EQ_TEMP1 = switch(thread) {case 0->IGB_MA.IF_TEMP1_THREAD0; case 1->IGB_MA.IF_TEMP1_THREAD1; default -> -1;};
-	boolean isEQ_TEMP1_used = false;
-	final int EQ_TEMP2 = switch(thread) {case 0->IGB_MA.IF_TEMP2_THREAD0; case 1->IGB_MA.IF_TEMP2_THREAD1; default -> -1;};
-	boolean isEQ_TEMP2_used = false;
+	public final int IF_TEMP1 = switch(thread) {case 0->IGB_MA.IF_TEMP1_THREAD0; case 1->IGB_MA.IF_TEMP1_THREAD1; default -> -1;};
+	public final int IF_TEMP2 = switch(thread) {case 0->IGB_MA.IF_TEMP2_THREAD0; case 1->IGB_MA.IF_TEMP1_THREAD1; default -> -1;};
+
+	public final int EQ_TEMP1 = switch(thread) {case 0->IGB_MA.IF_TEMP1_THREAD0; case 1->IGB_MA.IF_TEMP1_THREAD1; default -> -1;};
+	public boolean isEQ_TEMP1_used = false;
+	public final int EQ_TEMP2 = switch(thread) {case 0->IGB_MA.IF_TEMP2_THREAD0; case 1->IGB_MA.IF_TEMP2_THREAD1; default -> -1;};
+	public boolean isEQ_TEMP2_used = false;
 
 	public static double solveFinalEq(String eq, HashMap<String, Double> finalVars) {
 		// net.objecthunter.exp4j
@@ -234,194 +230,5 @@ class RAM {
 	}
 
 	public double solveFinalEq(String eq) { return solveFinalEq(eq, finalVars); }
-
-}
-
-class Variable {
-	public final int cell;
-	public VariableSetAction action;
-
-	public Variable(int cell) { this.cell = cell; }
-
-	public Variable(int cell, VariableSetAction setAction) {
-		this.cell = cell;
-		action = setAction;
-	}
-
-	public void setAction(String arg) {
-		if(action == null)
-			throw new IGB_CL2_Exception();
-		action.set(arg);
-	}
-
-	interface VariableSetAction {
-		Instruction set(String eq);
-	}
-
-	@Override
-	public String toString() { return cell + (action == null ? "" : " (action)"); }
-}
-
-class Array {
-	public final int cell;
-	public final int[] size;
-	public final int totalSize;
-
-	public Array(int cell, int[] size, int totalSize) {
-		this.cell = cell;
-		this.size = size;
-		this.totalSize = totalSize;
-	}
-
-	@Override
-	public String toString() { return cell + "c " + totalSize + " == " + Utils.arrayToString(size, '[', ']'); }
-
-	public TripleObject<Boolean, Integer, ArrayList<Instruction>> getArrayCell(EqSolver eqs, Field[] dims, int outCell) {
-		if(dims.length != size.length)
-			throw new IGB_CL2_Exception("Expected " + size.length + " array dimensions, insted got " + dims.length + ".");
-
-		boolean isAllVal = true;
-		int cell = 0;
-
-		ArrayList<Pair<Integer, Integer>> cellList = new ArrayList<>();
-		for (int i = dims.length - 1, x = 1; i >= 0; x *= size[i--]) {
-			Field f = dims[i];
-			if(!f.isVal()) {
-				isAllVal = false;
-				cellList.add(new Pair<>(i, x));
-			} else {
-				double val = f.value;
-				if(val % 1 != 0)
-					throw new IGB_CL2_Exception("Array dimension has to be an int, insted got: \"" + val + "\".");
-				int val1 = (int) val;
-				if(val1 >= size[i])
-					throw new IGB_CL2_Exception("Index out of bounds: " + val1 + " out of " + size[i] + ".");
-
-				cell += val1 * x;
-			}
-		}
-		ArrayList<Instruction> list = new ArrayList<>();
-		if(isAllVal)
-			return new TripleObject<>(true, cell, list);
-
-		final int len_ = dims.length - 1;
-		if(cellList.size() == 1) {
-
-			var pair = cellList.get(0);
-			int i = pair.getFirst();
-			int x = pair.getSecond();
-
-			Field f = dims[i];
-			if(cell == 0) {
-				if(i == len_) {
-					var pair1 = eqs.getInstructionsFromField(f, outCell);
-					list.addAll(pair1.getSecond());
-				} else {
-					var pair1 = eqs.getInstructionsFromField(f);
-					list.addAll(pair1.getSecond());
-					list.add(Math("*", pair1.getFirst(), false, x, outCell));
-				}
-			} else if(i == len_) {
-				var pair1 = eqs.getInstructionsFromField(f, outCell);
-				list.addAll(pair1.getSecond());
-				list.add(Add(outCell, false, cell, outCell));
-			} else {
-				var pair1 = eqs.getInstructionsFromField(f, -1);
-				list.addAll(pair1.getSecond());
-				list.add(Math("*", pair1.getFirst(), false, x, outCell));
-				list.add(Add(outCell, false, cell, outCell));
-			}
-			return new TripleObject<>(false, outCell, list);
-		}
-
-		boolean set = false;
-		boolean waitingForNext = false;
-		for (int h = 0; h < cellList.size(); h++) {
-			Pair<Integer, Integer> pair1 = cellList.get(h);
-			int i = pair1.getFirst();
-			int x = pair1.getSecond();
-			Field f = dims[h];
-			if(!f.isVal())
-				if(set) {
-					var pair2 = eqs.getInstructionsFromField(dims[h - 1]);
-					int cell2 = pair2.getFirst();
-					list.addAll(pair2.getSecond());
-					list.add(Math("*", cell2, false, x, IGB_MA.TEMP_CELL_2));
-					list.add(Add(outCell, true, IGB_MA.TEMP_CELL_2, outCell));
-
-				} else {
-					if(waitingForNext) {
-						waitingForNext = false;
-						set = true;
-
-						var prevPair = eqs.getInstructionsFromField(dims[h - 1], IGB_MA.TEMP_CELL_3);
-						list.addAll(prevPair.getSecond());
-
-						var currPair = eqs.getInstructionsFromField(f, IGB_MA.TEMP_CELL_2);
-						list.addAll(currPair.getSecond());
-						list.add(Math("*", IGB_MA.TEMP_CELL_2, false, x, IGB_MA.TEMP_CELL_2));
-						list.add(Add(IGB_MA.TEMP_CELL_2, true, IGB_MA.TEMP_CELL_3, outCell));
-						continue;
-					}
-
-					if(cell == 0 && i == len_) {
-						waitingForNext = true;
-						continue;
-					}
-					var pair2 = eqs.getInstructionsFromField(f);
-					int cell1 = pair2.getFirst();
-					list.addAll(pair2.getSecond());
-					if(cell == 0)
-						list.add(Math("*", cell1, false, x, outCell));
-					else if(i == len_)
-						list.add(Add(cell1, false, cell, outCell));
-					else {
-						list.add(Math("*", cell1, false, x, outCell));
-						list.add(Add(outCell, false, cell, outCell));
-					}
-					set = true;
-				}
-		}
-		System.out.println(new TripleObject<>(false, outCell, list));
-		return new TripleObject<>(false, outCell, list);
-	}
-
-	public ArrayList<Instruction> getAccess(EqSolver eqs, Field[] dims, int outCell) {
-		var obj = getArrayCell(eqs, dims, outCell);
-		ArrayList<Instruction> list = obj.getValue3();
-		if(obj.getValue1()) {
-			list.add(Copy(cell, outCell));
-			return list;
-		}
-
-		list.add(Math_CC(obj.getValue2(), outCell));
-		return list;
-	}
-
-	public Pair<Integer, ArrayList<Instruction>> getAccess(EqSolver eqs, int tempCell, Field[] dims) {
-		var obj = getArrayCell(eqs, dims, tempCell);
-		ArrayList<Instruction> list = obj.getValue3();
-		if(obj.getValue1())
-			// list.add(Copy(cell, outCell));
-			return new Pair<>(tempCell, list);
-
-		list.add(Math_CC(obj.getValue2(), tempCell));
-		return new Pair<>(tempCell, list);
-	}
-
-	public ArrayList<Instruction> getWrite(EqSolver eqs, Field[] dims, double value) {
-		var obj = getArrayCell(eqs, dims, IGB_MA.TEMP_CELL_3);
-		ArrayList<Instruction> list = obj.getValue3();
-		list.add(Init(value, IGB_MA.TEMP_CELL_2));
-		list.add(Math_CW(IGB_MA.TEMP_CELL_3, IGB_MA.TEMP_CELL_2));
-		return list;
-	}
-
-	public ArrayList<Instruction> getWrite(EqSolver eqs, Field[] dims, int cell) {
-		var obj = getArrayCell(eqs, dims, IGB_MA.TEMP_CELL_3);
-		ArrayList<Instruction> list = obj.getValue3();
-		list.add(Math_CW(IGB_MA.TEMP_CELL_3, cell));
-		return list;
-	}
 
 }

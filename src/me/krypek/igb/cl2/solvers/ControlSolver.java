@@ -1,24 +1,28 @@
-package me.krypek.igb.cl2;
+package me.krypek.igb.cl2.solvers;
 
 import static me.krypek.igb.cl1.Instruction.Cell_Jump;
 import static me.krypek.igb.cl1.Instruction.Cell_Return;
 import static me.krypek.igb.cl1.Instruction.If;
 import static me.krypek.igb.cl1.Instruction.Pointer;
-import static me.krypek.igb.cl2.BracketType.*;
+import static me.krypek.igb.cl2.solvers.BracketType.*;
 
 import java.util.ArrayList;
 import java.util.Set;
 import java.util.Stack;
 
 import me.krypek.igb.cl1.Instruction;
-import me.krypek.igb.cl2.EqSolver.Field;
+import me.krypek.igb.cl2.IGB_CL2;
+import me.krypek.igb.cl2.IGB_CL2_Exception;
+import me.krypek.igb.cl2.RAM;
+import me.krypek.igb.cl2.datatypes.Field;
+import me.krypek.igb.cl2.datatypes.Function;
 import me.krypek.utils.Utils;
 
 enum BracketType {
 	Default, None, If, For, While, Function
 }
 
-class ControlSolver {
+public class ControlSolver {
 	static class Bracket {
 		private static int bracketIndex = 0;
 		private static int forIndex = 0;
@@ -39,7 +43,7 @@ class ControlSolver {
 		public String toString() { return startPointer.toString(); }
 
 		private Bracket() {
-			this.type = None;
+			type = None;
 			startPointer = Pointer(":bracket_" + bracketIndex + "_start");
 			endPointer = Pointer(":bracket_" + bracketIndex + "_end");
 			startList = new ArrayList<>();
@@ -59,7 +63,7 @@ class ControlSolver {
 		private Bracket(BracketType bt, ArrayList<Instruction> startList, ArrayList<Instruction> endList) {
 			this.startList = startList;
 			this.endList = endList;
-			this.type = bt;
+			type = bt;
 			switch (bt) {
 			case Default -> {
 				startPointer = Pointer("DEFAULT_LAYER_START");
@@ -98,7 +102,7 @@ class ControlSolver {
 		public static Bracket _func(Function func) { return new Bracket(func); }
 	}
 
-	static String[] booleanOperators = new String[] { "==", "!=", ">=", "<=", ">", "<", };
+	static String[] booleanOperators = { "==", "!=", ">=", "<=", ">", "<", };
 
 	private final IGB_CL2 cl2;
 	private final RAM ram;
@@ -109,7 +113,7 @@ class ControlSolver {
 	public ControlSolver(IGB_CL2 cl2) {
 		this.cl2 = cl2;
 		ram = cl2.getRAM();
-		this.eqsolver = cl2.getEqSolver();
+		eqsolver = cl2.getEqSolver();
 		// this.funcs = cl2.getFunctions();
 		bracketStack = new Stack<>();
 		bracketStack.push(Bracket._default());
@@ -146,10 +150,9 @@ class ControlSolver {
 		int found = 0;
 		for (int i = bracketStack.size() - 1; i >= 1; i--) {
 			Bracket br = bracketStack.get(i);
-			if(set.contains(br.type)) {
+			if(set.contains(br.type))
 				if(++found == amount)
 					return br;
-			}
 		}
 		throw new IGB_CL2_Exception("Didn't find " + amount + " layers of type: " + set);
 	}
@@ -169,42 +172,38 @@ class ControlSolver {
 			list.addAll(nextAdd.startList);
 			nextAdd = new Bracket();
 			return list;
-		} else if(cmd.equals("}")) {
+		}
+		if(cmd.equals("}")) {
 			ram.pop();
 			Bracket b = pop();
 			b.endList.add(b.endPointer);
 			return b.endList;
-		} else if(cmd.startsWith("break")) {
+		} else if(cmd.startsWith("break"))
 			return _break(cmd.substring(5).strip());
-		} else if(cmd.startsWith("redo")) {
+		else if(cmd.startsWith("redo"))
 			return _redo(cmd.substring(4).strip());
-		} else if(cmd.equals("return")) {
+		else if(cmd.equals("return"))
 			return _return();
-		} else if(cmd.startsWith("continue")) {
+		else if(cmd.startsWith("continue"))
 			return _continue(cmd.substring(8).strip());
-		} else if(cmd.startsWith("if")) {
+		else if(cmd.startsWith("if"))
 			return _if(cmd.substring(2).strip());
-		} else if(cmd.startsWith("while")) {
+		else if(cmd.startsWith("while"))
 			return _while(cmd.substring(5).strip());
-		} else if(cmd.startsWith("for")) {
+		else if(cmd.startsWith("for"))
 			return _for(cmd.substring(3).strip());
-		} else {
+		else {
 			int spaceIndex = cmd.indexOf(' ');
 			if(spaceIndex != -1) {
 				String first = cmd.substring(0, spaceIndex).strip();
-				if(first.equals("void") || IGB_CL2.varStr.contains(first)) {
+				if(first.equals("void") || IGB_CL2.varStr.contains(first))
 					return _function(cmd.substring(spaceIndex).strip());
-				}
-			} else if(cmd.contains("(")) {
-
+			} else if(cmd.contains("("))
 				try {
 					Field funcField = eqsolver.stringToField(cmd, false);
-					if(funcField.isFunction()) {
-						return funcField.funcCall.getCall();
-					}
+					if(funcField.isFunction())
+						return funcField.funcCall.getCall(eqsolver);
 				} catch (Exception e) {}
-
-			}
 		}
 
 		return null;
@@ -224,7 +223,7 @@ class ControlSolver {
 	}
 
 	private ArrayList<Instruction> _for(String rest) {
-		if(!(rest.startsWith("(") && rest.endsWith(")")))
+		if((!rest.startsWith("(") || !rest.endsWith(")")))
 			throw new IGB_CL2_Exception("While statement has to start with '(' and end with ')'.");
 
 		rest = rest.substring(1, rest.length() - 1).strip();
@@ -256,7 +255,7 @@ class ControlSolver {
 	}
 
 	private ArrayList<Instruction> _while(String rest) {
-		if(!(rest.startsWith("(") && rest.endsWith(")")))
+		if((!rest.startsWith("(") || !rest.endsWith(")")))
 			throw new IGB_CL2_Exception("While statement has to start with '(' and end with ')'.");
 
 		rest = rest.substring(1, rest.length() - 1).strip();
@@ -270,7 +269,7 @@ class ControlSolver {
 	}
 
 	private ArrayList<Instruction> _if(String rest) {
-		if(!(rest.startsWith("(") && rest.endsWith(")")))
+		if((!rest.startsWith("(") || !rest.endsWith(")")))
 			throw new IGB_CL2_Exception("If statement has to start with '(' and end with ')'.");
 
 		rest = rest.substring(1, rest.length() - 1).strip();
@@ -329,15 +328,14 @@ class ControlSolver {
 			case ">" -> val1 > val2;
 			case "<" -> val1 < val2;
 			default -> throw new IGB_CL2_Exception();
-			}) {
+			})
 				return new ArrayList<>();
-			} else
-				return Utils.listOf(Cell_Jump(pointerToJump));
+			return Utils.listOf(Cell_Jump(pointerToJump));
 		}
 
-		if(!nc1) {
+		if(!nc1)
 			list.add(If(revertOperator(ope), t2.getValue2(), false, t1.getValue1(), pointerToJump));
-		} else
+		else
 			list.add(If(ope, t1.getValue2(), nc2, nc2 ? t2.getValue2() : t2.getValue1(), pointerToJump));
 		return list;
 	}

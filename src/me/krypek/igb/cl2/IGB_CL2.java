@@ -11,6 +11,9 @@ import me.krypek.freeargparser.ParsedData;
 import me.krypek.freeargparser.ParserBuilder;
 import me.krypek.igb.cl1.IGB_L1;
 import me.krypek.igb.cl1.Instruction;
+import me.krypek.igb.cl2.solvers.ControlSolver;
+import me.krypek.igb.cl2.solvers.EqSolver;
+import me.krypek.igb.cl2.solvers.VarSolver;
 import me.krypek.utils.Utils;
 
 public class IGB_CL2 {
@@ -64,7 +67,7 @@ public class IGB_CL2 {
 			}
 	}
 
-	static final Set<String> varStr = Set.of("float", "double", "int");
+	public static final Set<String> varStr = Set.of("float", "double", "int");
 
 	String[] fileNames;
 	// String[][] in;
@@ -79,13 +82,13 @@ public class IGB_CL2 {
 	private VarSolver varsolver;
 	private ControlSolver cntrlsolver;
 
-	Functions getFunctions() { return functions; }
+	public Functions getFunctions() { return functions; }
 
-	RAM getRAM() { return ram; }
+	public RAM getRAM() { return ram; }
 
-	EqSolver getEqSolver() { return eqsolver; }
+	public EqSolver getEqSolver() { return eqsolver; }
 
-	VarSolver getVarSolver() { return varsolver; }
+	public VarSolver getVarSolver() { return varsolver; }
 
 	@SuppressWarnings("unused")
 	private boolean assu;
@@ -122,8 +125,7 @@ public class IGB_CL2 {
 				if(out == null)
 					throw new IGB_CL2_Exception("Unknown command: \"" + cmd + "\".");
 				// instList.add(Instruction.Pointer(":null"));
-				else
-					instList.addAll(out);
+				instList.addAll(out);
 			}
 			cntrlsolver.checkStack(fileNames[file]);
 

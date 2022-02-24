@@ -1,15 +1,20 @@
-package me.krypek.igb.cl2;
+package me.krypek.igb.cl2.solvers;
+
+import static me.krypek.igb.cl1.Instruction.Add;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 
 import me.krypek.igb.cl1.Instruction;
-import me.krypek.igb.cl2.EqSolver.Field;
+import me.krypek.igb.cl2.IGB_CL2;
+import me.krypek.igb.cl2.IGB_CL2_Exception;
+import me.krypek.igb.cl2.RAM;
+import me.krypek.igb.cl2.datatypes.Array;
+import me.krypek.igb.cl2.datatypes.Field;
+import me.krypek.igb.cl2.datatypes.Variable;
 import me.krypek.utils.Utils;
 
-import static me.krypek.igb.cl1.Instruction.*;
-
-class VarSolver {
+public class VarSolver {
 
 	private final IGB_CL2 cl2;
 	private final RAM ram;
@@ -70,12 +75,7 @@ class VarSolver {
 				// var init
 				String rest = cmd.substring(spaceIndex + 1).strip();
 				int equalsIndex = rest.indexOf('=');
-				if(equalsIndex == -1) {
-					if(rest.contains("(") || rest.contains(")"))
-						return null;
-					ram.newVar(rest);
-					return new ArrayList<>();
-				} else {
+				if(equalsIndex != -1) {
 					String name = rest.substring(0, equalsIndex).strip();
 					String eq = rest.substring(equalsIndex + 1).strip();
 					int cell = ram.reserve(1)[0];
@@ -83,6 +83,10 @@ class VarSolver {
 					ram.newVar(name, new Variable(cell));
 					return list;
 				}
+				if(rest.contains("(") || rest.contains(")"))
+					return null;
+				ram.newVar(rest);
+				return new ArrayList<>();
 			}
 			for (String str : IGB_CL2.varStr)
 				if(first.startsWith(str)) {

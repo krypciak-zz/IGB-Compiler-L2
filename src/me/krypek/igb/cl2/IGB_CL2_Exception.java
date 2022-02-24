@@ -6,19 +6,19 @@ public class IGB_CL2_Exception extends RuntimeException {
 
 	static IGB_CL2 igb_cl2;
 
-	IGB_CL2_Exception() { super("\nFile: " + igb_cl2.fileNames[igb_cl2.file] + "\nLine: " + (igb_cl2.lines[igb_cl2.file][igb_cl2.line] + 1)); }
+	public IGB_CL2_Exception() { super("\nFile: " + igb_cl2.fileNames[igb_cl2.file] + "\nLine: " + (igb_cl2.lines[igb_cl2.file][igb_cl2.line] + 1)); }
 
-	IGB_CL2_Exception(String str) {
+	public IGB_CL2_Exception(String str) {
 		super("\nFile: " + igb_cl2.fileNames[igb_cl2.file] + "\nLine: " + (igb_cl2.lines[igb_cl2.file][igb_cl2.line] + 1) + "\n" + str);
 	}
 
-	IGB_CL2_Exception(String str, Exception e) { super(str, e); }
+	public IGB_CL2_Exception(String str, Exception e) { super(str, e); }
 
-	IGB_CL2_Exception(int line, String str) {
+	public IGB_CL2_Exception(int line, String str) {
 		super("\nFile: " + igb_cl2.fileNames[igb_cl2.file] + "\nLine: " + (igb_cl2.lines[igb_cl2.file][line] + 1) + "\n" + str);
 	}
 
-	IGB_CL2_Exception(int file, int line, String str) {
+	public IGB_CL2_Exception(int file, int line, String str) {
 		super("\nFile: " + igb_cl2.fileNames[file] + "\nLine: " + (igb_cl2.lines[igb_cl2.file][line] + 1) + "\n" + str);
 	}
 
