@@ -2,7 +2,6 @@ package me.krypek.igb.cl2;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -10,6 +9,7 @@ import java.util.Set;
 import me.krypek.freeargparser.ArgType;
 import me.krypek.freeargparser.ParsedData;
 import me.krypek.freeargparser.ParserBuilder;
+import me.krypek.igb.cl1.IGB_CL1;
 import me.krypek.igb.cl1.IGB_L1;
 import me.krypek.igb.cl1.Instruction;
 import me.krypek.igb.cl2.solvers.ControlSolver;
@@ -98,7 +98,6 @@ public class IGB_CL2 {
 		String[][] formated = formatArray(inputs, fileNames);
 
 		this.fileNames = fileNames;
-		System.out.println(Arrays.toString(fileNames));
 		// log
 		for (int i = 0; i < formated.length; i++) {
 			System.out.println(fileNames[i] + " ->");

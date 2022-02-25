@@ -34,6 +34,13 @@ public class EqSolver {
 
 	public double solveFinalEq(String eq) { return ram.solveFinalEq(eq); }
 
+	public Pair<ArrayList<Instruction>, Double> getNumCell(Field f,  int outCell) {
+		if(f.isVal()) return new Pair<>(null, f.value);
+		if(f.isVar()) return new Pair<>(new ArrayList<>(), (double)f.cell);
+		Pair<Integer, ArrayList<Instruction>> pair = getInstructionsFromField(f, outCell);
+		return new Pair<>(pair.getSecond(), (double) pair.getFirst());
+	}
+	
 	public TripleObject<Double, Integer, ArrayList<Instruction>> solve(String eqS) {
 		tempCell1 = IGB_MA.CHARLIB_TEMP_START;
 		Equation eq = getEqFromString(eqS, false);
@@ -292,7 +299,6 @@ public class EqSolver {
 			if(!sb.isEmpty())
 				fieldStringList.add(sb.toString());
 		}
-		System.out.println(str + "\tlist: " + fieldStringList);
 
 		char[] operators = operatorList.stream().map(String::valueOf).collect(StringBuilder::new, StringBuilder::append, StringBuilder::append).toString()
 				.toCharArray();
@@ -306,7 +312,6 @@ public class EqSolver {
 	}
 
 	Field stringToField(final String str, boolean epicFail) {
-		System.out.println(str);
 		try {
 			double val = ram.solveFinalEq(str);
 			return new Field(val);

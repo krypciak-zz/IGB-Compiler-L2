@@ -243,4 +243,7 @@ public class RAM {
 
 	public double solveFinalEq(String eq) { return solveFinalEq(eq, finalVars); }
 
+	
+
+	
 }

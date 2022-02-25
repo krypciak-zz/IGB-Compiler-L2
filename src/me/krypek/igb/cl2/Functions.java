@@ -10,7 +10,6 @@ import me.krypek.igb.cl1.Instruction;
 import me.krypek.igb.cl2.datatypes.Field;
 import me.krypek.igb.cl2.datatypes.Function;
 import me.krypek.igb.cl2.solvers.EqSolver;
-import me.krypek.utils.Pair;
 import me.krypek.utils.Utils;
 
 public class Functions {
@@ -22,7 +21,6 @@ public class Functions {
 	public Function getFunction(String name, int argLength) {
 		HashMap<Integer, Function> map = functionMap.get(name);
 
-		System.out.println(file + ", " + line);
 		if(map == null)
 			throw new IGB_CL2_Exception("Function: \"" + name + "\" doesn't exist.");
 
@@ -107,16 +105,87 @@ public class Functions {
 			EqSolver eqs = obj.getValue1();
 			Field field = obj.getValue2()[0];
 
-			if(field.isVal())
-				return Utils.listOf(Device_Log(false, field.value));
-			else if(field.isVar())
-				return Utils.listOf(Device_Log(true, field.cell));
+			ArrayList<Instruction> list = new ArrayList<>();
+			var numcell1 = eqs.getNumCell(field, -1);
+			boolean isCell1 = numcell1.getFirst() != null;
+			if(isCell1)
+				list.addAll(numcell1.getFirst());
 
-			Pair<Integer, ArrayList<Instruction>> pair = eqs.getInstructionsFromField(field, -1);
-			ArrayList<Instruction> list = pair.getSecond();
-			list.add(Device_Log(true, pair.getFirst()));
+			list.add(Device_Log(isCell1, numcell1.getSecond()));
 			return list;
 		}, 1, false), false);
+
+		addFunction(new Function("setpixel", obj -> {
+			EqSolver eqs = obj.getValue1();
+			ArrayList<Instruction> list = new ArrayList<>();
+			Field f1 = obj.getValue2()[0], f2 = obj.getValue2()[1];
+
+			var numcell1 = eqs.getNumCell(f1, -1);
+			boolean isCell1 = numcell1.getFirst() != null;
+			if(isCell1)
+				list.addAll(numcell1.getFirst());
+
+			var numcell2 = eqs.getNumCell(f2, -1);
+			boolean isCell2 = numcell2.getFirst() != null;
+
+			if(isCell1 && isCell2 && !(f1.isVar() || f2.isVar()) && numcell1.getSecond().intValue() == numcell2.getSecond().intValue())
+				numcell1 = eqs.getNumCell(f1, IGB_MA.CHARLIB_TEMP_START + 9);
+
+			if(isCell2)
+				list.addAll(numcell2.getFirst());
+
+			list.add(Pixel(isCell1, numcell1.getSecond().intValue(), isCell2, numcell2.getSecond().intValue()));
+			return list;
+		}, 2, false), false);
+
+		addFunction(new Function("pixelcache", obj -> {
+			EqSolver eqs = obj.getValue1();
+			ArrayList<Instruction> list = new ArrayList<>();
+			Field f1 = obj.getValue2()[0];
+
+			var numcell1 = eqs.getNumCell(f1, -1);
+			boolean isCell1 = numcell1.getFirst() != null;
+			if(isCell1)
+				list.addAll(numcell1.getFirst());
+
+			if(!isCell1)
+				return Utils.listOf(Pixel_Cache_Raw(numcell1.getSecond().intValue()));
+
+			list.add(Pixel_Cache(numcell1.getSecond().intValue()));
+			return list;
+		}, 1, false), false);
+
+		addFunction(new Function("pixelcache", obj -> {
+			EqSolver eqs = obj.getValue1();
+			ArrayList<Instruction> list = new ArrayList<>();
+			Field f1 = obj.getValue2()[0], f2 = obj.getValue2()[1], f3 = obj.getValue2()[2];
+
+			var numcell1 = eqs.getNumCell(f1, -1);
+			boolean isCell1 = numcell1.getFirst() != null;
+			if(isCell1)
+				list.addAll(numcell1.getFirst());
+
+			var numcell2 = eqs.getNumCell(f2, -1);
+			boolean isCell2 = numcell2.getFirst() != null;
+			if(isCell2)
+				list.addAll(numcell2.getFirst());
+
+			var numcell3 = eqs.getNumCell(f3, -1);
+			boolean isCell3 = numcell3.getFirst() != null;
+			if(isCell3)
+				list.addAll(numcell3.getFirst());
+
+			System.out.println("f1: " + f1 + ", f2: " + f2 + ", f3: " + f3);
+			if((f1.isVal() || f1.isVar()) || (f2.isVal() || f2.isVar()) || (f3.isVal() || f3.isVar())) {
+				System.out.println("yes " + isCell1 + " " + isCell2 + " " + isCell3);
+				return Utils.listOf(Pixel_Cache(isCell1, isCell1 ? f1.cell : (int) f1.value, isCell2, isCell2 ? f2.cell : (int) f2.value, isCell3,
+						isCell3 ? f3.cell : (int) f3.value));
+			}
+
+			list.add(Pixel_Cache(isCell1, numcell1.getSecond().intValue(), isCell2, numcell2.getSecond().intValue(), isCell3,
+					numcell3.getSecond().intValue()));
+			return list;
+		}, 3, false), false);
 
 	}
 
@@ -134,7 +203,6 @@ public class Functions {
 
 		for (file = 0; file < inputs.length; file++) {
 			cl2.file = file;
-			System.out.println(file);
 			String[] input = inputs[file];
 			HashMap<String, Double> finalVars = new HashMap<>();
 

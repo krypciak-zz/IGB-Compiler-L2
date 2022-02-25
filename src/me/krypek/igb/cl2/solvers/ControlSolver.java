@@ -146,7 +146,6 @@ public class ControlSolver {
 
 	private Bracket lookFor(int amount, Set<BracketType> set) {
 		assert amount > 0;
-		System.out.println(bracketStack);
 		int found = 0;
 		for (int i = bracketStack.size() - 1; i >= 1; i--) {
 			Bracket br = bracketStack.get(i);
