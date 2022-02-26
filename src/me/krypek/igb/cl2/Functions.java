@@ -10,6 +10,7 @@ import me.krypek.igb.cl1.Instruction;
 import me.krypek.igb.cl2.datatypes.Field;
 import me.krypek.igb.cl2.datatypes.Function;
 import me.krypek.igb.cl2.solvers.EqSolver;
+import me.krypek.utils.Pair;
 import me.krypek.utils.Utils;
 
 public class Functions {
@@ -122,15 +123,14 @@ public class Functions {
 
 			var numcell1 = eqs.getNumCell(f1, -1);
 			boolean isCell1 = numcell1.getFirst() != null;
-			if(isCell1)
-				list.addAll(numcell1.getFirst());
 
 			var numcell2 = eqs.getNumCell(f2, -1);
 			boolean isCell2 = numcell2.getFirst() != null;
 
 			if(isCell1 && isCell2 && !(f1.isVar() || f2.isVar()) && numcell1.getSecond().intValue() == numcell2.getSecond().intValue())
 				numcell1 = eqs.getNumCell(f1, IGB_MA.CHARLIB_TEMP_START + 9);
-
+			if(isCell1)
+				list.addAll(numcell1.getFirst());
 			if(isCell2)
 				list.addAll(numcell2.getFirst());
 
@@ -175,9 +175,7 @@ public class Functions {
 			if(isCell3)
 				list.addAll(numcell3.getFirst());
 
-			System.out.println("f1: " + f1 + ", f2: " + f2 + ", f3: " + f3);
 			if((f1.isVal() || f1.isVar()) || (f2.isVal() || f2.isVar()) || (f3.isVal() || f3.isVar())) {
-				System.out.println("yes " + isCell1 + " " + isCell2 + " " + isCell3);
 				return Utils.listOf(Pixel_Cache(isCell1, isCell1 ? f1.cell : (int) f1.value, isCell2, isCell2 ? f2.cell : (int) f2.value, isCell3,
 						isCell3 ? f3.cell : (int) f3.value));
 			}
@@ -187,6 +185,79 @@ public class Functions {
 			return list;
 		}, 3, false), false);
 
+		addFunction(new Function("getpixel", obj -> {
+			EqSolver eqs = obj.getValue1();
+			Field f1 = obj.getValue2()[0], f2 = obj.getValue2()[1];
+			int cell = obj.getValue3();
+
+			ArrayList<Instruction> list = new ArrayList<>();
+
+			var numcell1 = eqs.getNumCell(f1, -1);
+			boolean isCell1 = numcell1.getFirst() != null;
+
+			var numcell2 = eqs.getNumCell(f2, -1);
+			boolean isCell2 = numcell2.getFirst() != null;
+
+			if(isCell1 && isCell2 && !(f1.isVar() || f2.isVar()) && numcell1.getSecond().intValue() == numcell2.getSecond().intValue())
+				numcell1 = eqs.getNumCell(f1, IGB_MA.CHARLIB_TEMP_START + 11);
+
+			if(isCell1)
+				list.addAll(numcell1.getFirst());
+			if(isCell2)
+				list.addAll(numcell2.getFirst());
+
+			list.add(Pixel_Get(isCell1, numcell1.getSecond().intValue(), isCell2, numcell2.getSecond().intValue(), cell));
+			return list;
+		}, 2, true), false);
+
+		addFunction(new Function("getpixel", obj -> {
+			EqSolver eqs = obj.getValue1();
+			Field f1 = obj.getValue2()[0], f2 = obj.getValue2()[1], f3 = obj.getValue2()[2], f4 = obj.getValue2()[3], f5 = obj.getValue2()[4];
+
+			Pair<Integer, ArrayList<Instruction>> pair = eqs.getInstructionsFromField(f3);
+			ArrayList<Instruction> list = pair.getSecond();
+
+			var numcell1 = eqs.getNumCell(f1, -1);
+			boolean isCell1 = numcell1.getFirst() != null;
+
+			var numcell2 = eqs.getNumCell(f2, -1);
+			boolean isCell2 = numcell2.getFirst() != null;
+
+			if(isCell1 && isCell2 && !(f1.isVar() || f2.isVar()) && numcell1.getSecond().intValue() == numcell2.getSecond().intValue())
+				numcell1 = eqs.getNumCell(f1, IGB_MA.CHARLIB_TEMP_START + 11);
+
+			if(isCell1)
+				list.addAll(numcell1.getFirst());
+			if(isCell2)
+				list.addAll(numcell2.getFirst());
+
+			int cell1 = switch (f3.fieldType) {
+			case Val -> (int) f3.value;
+			case Var -> f3.cell;
+			default -> throw new IGB_CL2_Exception("Getpixel rgb arg 3: R output cell has to be an integer or a variable.");
+			};
+			int cell2 = switch (f4.fieldType) {
+			case Val -> (int) f4.value;
+			case Var -> f4.cell;
+			default -> throw new IGB_CL2_Exception("Getpixel rgb arg 4: R output cell has to be an integer or a variable.");
+			};
+			int cell3 = switch (f5.fieldType) {
+			case Val -> (int) f5.value;
+			case Var -> f5.cell;
+			default -> throw new IGB_CL2_Exception("Getpixel rgb arg 5: B output cell has to be an integer or a variable.");
+			};
+
+			int outCell = (cell1 == cell2 - 1 && cell1 == cell3 - 2) ? cell1 : IGB_MA.CHARLIB_TEMP_START + 15;
+
+			list.add(Pixel_Get(isCell1, numcell1.getSecond().intValue(), isCell2, numcell2.getSecond().intValue(), outCell));
+			if(outCell == IGB_MA.CHARLIB_TEMP_START + 15) {
+				list.add(Copy(IGB_MA.CHARLIB_TEMP_START + 15, cell1));
+				list.add(Copy(IGB_MA.CHARLIB_TEMP_START + 16, cell2));
+				list.add(Copy(IGB_MA.CHARLIB_TEMP_START + 17, cell3));
+			}
+
+			return list;
+		}, 5, false), false);
 	}
 
 	RAM[] rams;
