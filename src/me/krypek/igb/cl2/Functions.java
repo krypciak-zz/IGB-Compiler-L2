@@ -127,7 +127,7 @@ public class Functions {
 			var numcell2 = eqs.getNumCell(f2, -1);
 			boolean isCell2 = numcell2.getFirst() != null;
 
-			if(isCell1 && isCell2 && !(f1.isVar() || f2.isVar()) && numcell1.getSecond().intValue() == numcell2.getSecond().intValue())
+			if(isCell1 && isCell2 && (!f1.isVar() && !f2.isVar()) && numcell1.getSecond().intValue() == numcell2.getSecond().intValue())
 				numcell1 = eqs.getNumCell(f1, IGB_MA.CHARLIB_TEMP_START + 9);
 			if(isCell1)
 				list.addAll(numcell1.getFirst());
@@ -175,10 +175,9 @@ public class Functions {
 			if(isCell3)
 				list.addAll(numcell3.getFirst());
 
-			if((f1.isVal() || f1.isVar()) || (f2.isVal() || f2.isVar()) || (f3.isVal() || f3.isVar())) {
+			if(f1.isVal() || f1.isVar() || f2.isVal() || f2.isVar() || f3.isVal() || f3.isVar())
 				return Utils.listOf(Pixel_Cache(isCell1, isCell1 ? f1.cell : (int) f1.value, isCell2, isCell2 ? f2.cell : (int) f2.value, isCell3,
 						isCell3 ? f3.cell : (int) f3.value));
-			}
 
 			list.add(Pixel_Cache(isCell1, numcell1.getSecond().intValue(), isCell2, numcell2.getSecond().intValue(), isCell3,
 					numcell3.getSecond().intValue()));
@@ -198,7 +197,7 @@ public class Functions {
 			var numcell2 = eqs.getNumCell(f2, -1);
 			boolean isCell2 = numcell2.getFirst() != null;
 
-			if(isCell1 && isCell2 && !(f1.isVar() || f2.isVar()) && numcell1.getSecond().intValue() == numcell2.getSecond().intValue())
+			if(isCell1 && isCell2 && (!f1.isVar() && !f2.isVar()) && numcell1.getSecond().intValue() == numcell2.getSecond().intValue())
 				numcell1 = eqs.getNumCell(f1, IGB_MA.CHARLIB_TEMP_START + 11);
 
 			if(isCell1)
@@ -223,7 +222,7 @@ public class Functions {
 			var numcell2 = eqs.getNumCell(f2, -1);
 			boolean isCell2 = numcell2.getFirst() != null;
 
-			if(isCell1 && isCell2 && !(f1.isVar() || f2.isVar()) && numcell1.getSecond().intValue() == numcell2.getSecond().intValue())
+			if(isCell1 && isCell2 && (!f1.isVar() && !f2.isVar()) && numcell1.getSecond().intValue() == numcell2.getSecond().intValue())
 				numcell1 = eqs.getNumCell(f1, IGB_MA.CHARLIB_TEMP_START + 11);
 
 			if(isCell1)
@@ -247,7 +246,7 @@ public class Functions {
 			default -> throw new IGB_CL2_Exception("Getpixel rgb arg 5: B output cell has to be an integer or a variable.");
 			};
 
-			int outCell = (cell1 == cell2 - 1 && cell1 == cell3 - 2) ? cell1 : IGB_MA.CHARLIB_TEMP_START + 15;
+			int outCell = cell1 == cell2 - 1 && cell1 == cell3 - 2 ? cell1 : IGB_MA.CHARLIB_TEMP_START + 15;
 
 			list.add(Pixel_Get(isCell1, numcell1.getSecond().intValue(), isCell2, numcell2.getSecond().intValue(), outCell));
 			if(outCell == IGB_MA.CHARLIB_TEMP_START + 15) {

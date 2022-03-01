@@ -17,10 +17,11 @@ public class IGB_CL2_Exception extends RuntimeException {
 		super("\nFile: " + igb_cl2.fileNames[igb_cl2.file] + "\nLine: " + (igb_cl2.lines[igb_cl2.file][line] + 1) + "\n" + str);
 	}
 
-	/*public IGB_CL2_Exception(int file, int line, String str) {
-		//super("\nFile: " + igb_cl2.fileNames[file] + "\nLine: " + (igb_cl2.lines[igb_cl2.file][line] + 1) + "\n" + str);
-		System.out.println(file + ", " + line + ", " + str);
-	}*/
+	/*
+	 * public IGB_CL2_Exception(int file, int line, String str) { //super("\nFile: "
+	 * + igb_cl2.fileNames[file] + "\nLine: " + (igb_cl2.lines[igb_cl2.file][line] +
+	 * 1) + "\n" + str); System.out.println(file + ", " + line + ", " + str); }
+	 */
 
 	public IGB_CL2_Exception(String fileName, int line, String str) { super("\nFile: " + fileName + "\nLine: " + line + "\n" + str); }
 

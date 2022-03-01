@@ -175,9 +175,14 @@ public class ControlSolver {
 		if(cmd.equals("}")) {
 			ram.pop();
 			Bracket b = pop();
-			b.endList.add(b.endPointer);
+			if(b.type == Function)
+				b.endList.add(0, b.endPointer);
+			else
+				b.endList.add(b.endPointer);
+
 			return b.endList;
-		} else if(cmd.startsWith("break"))
+		}
+		if(cmd.startsWith("break"))
 			return _break(cmd.substring(5).strip());
 		else if(cmd.startsWith("redo"))
 			return _redo(cmd.substring(4).strip());
@@ -223,7 +228,7 @@ public class ControlSolver {
 	}
 
 	private ArrayList<Instruction> _for(String rest) {
-		if((!rest.startsWith("(") || !rest.endsWith(")")))
+		if(!rest.startsWith("(") || !rest.endsWith(")"))
 			throw new IGB_CL2_Exception("While statement has to start with '(' and end with ')'.");
 
 		rest = rest.substring(1, rest.length() - 1).strip();
@@ -240,7 +245,7 @@ public class ControlSolver {
 		if(initSolved == null)
 			throw new IGB_CL2_Exception("Syntax error at for init field.");
 		startList.addAll(initSolved);
-		startList.addAll(solveIfEq(condi, nextAdd.endPointer.argS[0], false));
+		startList.addAll(solveIfEq(condi, nextAdd.endPointer.arg[0].str(), false));
 		startList.add(nextAdd.loopPointer);
 
 		ArrayList<Instruction> endList = nextAdd.endList;
@@ -249,33 +254,33 @@ public class ControlSolver {
 		if(addiSolved == null)
 			throw new IGB_CL2_Exception("Syntax error at for addition field.");
 		endList.addAll(addiSolved);
-		endList.addAll(solveIfEq(condi, nextAdd.loopPointer.argS[0], true));
+		endList.addAll(solveIfEq(condi, nextAdd.loopPointer.arg[0].str(), true));
 
 		return new ArrayList<>();
 	}
 
 	private ArrayList<Instruction> _while(String rest) {
-		if((!rest.startsWith("(") || !rest.endsWith(")")))
+		if(!rest.startsWith("(") || !rest.endsWith(")"))
 			throw new IGB_CL2_Exception("While statement has to start with '(' and end with ')'.");
 
 		rest = rest.substring(1, rest.length() - 1).strip();
 
 		nextAdd = Bracket._while();
-		nextAdd.startList.addAll(solveIfEq(rest, nextAdd.endPointer.argS[0], false));
+		nextAdd.startList.addAll(solveIfEq(rest, nextAdd.endPointer.arg[0].str(), false));
 		nextAdd.startList.add(nextAdd.loopPointer);
 		nextAdd.endList.add(nextAdd.checkPointer);
-		nextAdd.endList.addAll(solveIfEq(rest, nextAdd.loopPointer.argS[0], true));
+		nextAdd.endList.addAll(solveIfEq(rest, nextAdd.loopPointer.arg[0].str(), true));
 		return new ArrayList<>();
 	}
 
 	private ArrayList<Instruction> _if(String rest) {
-		if((!rest.startsWith("(") || !rest.endsWith(")")))
+		if(!rest.startsWith("(") || !rest.endsWith(")"))
 			throw new IGB_CL2_Exception("If statement has to start with '(' and end with ')'.");
 
 		rest = rest.substring(1, rest.length() - 1).strip();
 
 		nextAdd = Bracket._if();
-		nextAdd.startList.addAll(solveIfEq(rest, nextAdd.endPointer.argS[0], false));
+		nextAdd.startList.addAll(solveIfEq(rest, nextAdd.endPointer.arg[0].str(), false));
 
 		return new ArrayList<>();
 	}
@@ -361,7 +366,7 @@ public class ControlSolver {
 		}
 		Bracket br = lookFor(count, Set.of(For, While));
 
-		return Utils.listOf(Cell_Jump(br.type == For ? br.checkPointer.argS[0] : br.startPointer.argS[0]));
+		return Utils.listOf(Cell_Jump(br.type == For ? br.checkPointer.arg[0].str() : br.startPointer.arg[0].str()));
 
 	}
 
@@ -383,7 +388,7 @@ public class ControlSolver {
 			index = (int) val;
 		}
 		Bracket br = getBracket(index);
-		return Utils.listOf(Cell_Jump(br.endPointer.argS[0]));
+		return Utils.listOf(Cell_Jump(br.endPointer.arg[0].str()));
 	}
 
 	private ArrayList<Instruction> _redo(String rest) {
@@ -395,7 +400,7 @@ public class ControlSolver {
 			index = (int) val;
 		}
 		Bracket br = getBracket(index);
-		return Utils.listOf(Cell_Jump(br.startPointer.argS[0]));
+		return Utils.listOf(Cell_Jump(br.startPointer.arg[0].str()));
 	}
 
 }

@@ -34,13 +34,15 @@ public class EqSolver {
 
 	public double solveFinalEq(String eq) { return ram.solveFinalEq(eq); }
 
-	public Pair<ArrayList<Instruction>, Double> getNumCell(Field f,  int outCell) {
-		if(f.isVal()) return new Pair<>(null, f.value);
-		if(f.isVar()) return new Pair<>(new ArrayList<>(), (double)f.cell);
+	public Pair<ArrayList<Instruction>, Double> getNumCell(Field f, int outCell) {
+		if(f.isVal())
+			return new Pair<>(null, f.value);
+		if(f.isVar())
+			return new Pair<>(new ArrayList<>(), (double) f.cell);
 		Pair<Integer, ArrayList<Instruction>> pair = getInstructionsFromField(f, outCell);
 		return new Pair<>(pair.getSecond(), (double) pair.getFirst());
 	}
-	
+
 	public TripleObject<Double, Integer, ArrayList<Instruction>> solve(String eqS) {
 		tempCell1 = IGB_MA.CHARLIB_TEMP_START;
 		Equation eq = getEqFromString(eqS, false);

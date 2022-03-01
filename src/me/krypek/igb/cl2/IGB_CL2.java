@@ -2,14 +2,12 @@ package me.krypek.igb.cl2;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import me.krypek.freeargparser.ArgType;
 import me.krypek.freeargparser.ParsedData;
 import me.krypek.freeargparser.ParserBuilder;
-import me.krypek.igb.cl1.IGB_CL1;
 import me.krypek.igb.cl1.IGB_L1;
 import me.krypek.igb.cl1.Instruction;
 import me.krypek.igb.cl2.solvers.ControlSolver;
@@ -19,7 +17,6 @@ import me.krypek.utils.Utils;
 
 public class IGB_CL2 {
 
-	@SuppressWarnings("unused")
 	public static void main(String[] args) {
 		//@f:off
 		ParsedData data = new ParserBuilder()
@@ -46,32 +43,25 @@ public class IGB_CL2 {
 			fileNames[i] = new File(codePaths[i]).getName();
 		}
 
-		{
-			Set<String> duplicate = new HashSet<>();
-			for (String name : fileNames) {
-				if(duplicate.contains(name))
-					throw new IGB_CL2_Exception("Duplicate file names aren't supported: \"" + name + "\".");
-				duplicate.add(name);
+		IGB_CL2 igb_cl2 = new IGB_CL2();
+		IGB_L1[] compiled = igb_cl2.compile(inputs, fileNames, quiet);
+		if(outputPath != null) {
+			File outDir = new File(outputPath);
+			outDir.mkdirs();
+			for (int i = 0; i < compiled.length; i++) {
+				IGB_L1 l1 = compiled[i];
+				String fileName = Utils.getFileNameWithoutExtension(fileNames[i]);
+				Utils.serialize(l1, outputPath + File.separator + fileName + ".igb_l1");
+				if(readableOutput)
+					Utils.writeIntoFile(outputPath + File.separator + fileName + ".igb_l1_readable", l1.toString());
+
 			}
 		}
-
-		IGB_CL2 igb_cl2 = new IGB_CL2();
-		IGB_L1[] compiled = igb_cl2.compile(inputs, fileNames);
-
-		if(!quiet)
-			for (int i = 0; i < compiled.length; i++) {
-				Instruction[] code = compiled[i].code;
-				System.out.println("File: " + fileNames[i] + " ->");
-				for (Instruction element : code)
-					System.out.println(element);
-				System.out.println("\n");
-			}
 	}
 
 	public static final Set<String> varStr = Set.of("float", "double", "int");
 
 	String[] fileNames;
-	// String[][] in;
 	int[][] lines;
 
 	public int file;
@@ -93,22 +83,22 @@ public class IGB_CL2 {
 
 	public IGB_CL2() { IGB_CL2_Exception.igb_cl2 = this; }
 
-	public IGB_L1[] compile(String[] inputs, String[] fileNames) {
+	public IGB_L1[] compile(String[] inputs, String[] fileNames, boolean quiet) {
 		IGB_L1[] arr = new IGB_L1[inputs.length];
 		String[][] formated = formatArray(inputs, fileNames);
 
 		this.fileNames = fileNames;
 		// log
-		for (int i = 0; i < formated.length; i++) {
-			System.out.println(fileNames[i] + " ->");
-			for (int x = 0; x < formated[i].length; x++)
-				System.out.println("  " + (lines[i][x] + 1) + ": " + formated[i][x]);
-		}
+		/*
+		 * for (int i = 0; i < formated.length; i++) { System.out.println(fileNames[i] +
+		 * " ->"); for (int x = 0; x < formated[i].length; x++) System.out.println("  "
+		 * + (lines[i][x] + 1) + ": " + formated[i][x]); }
+		 */
 		// endlog
 
 		functions = new Functions(formated, fileNames, this);
-		System.out.println(functions);
-		System.out.println("\n\n");
+		// System.out.println(functions);
+		// System.out.println("\n\n");
 
 		for (file = 0; file < formated.length; file++) {
 			ArrayList<Instruction> instList = new ArrayList<>();
@@ -119,7 +109,7 @@ public class IGB_CL2 {
 			for (line = 0; line < formated[file].length; line++) {
 				String cmd = formated[file][line];
 				ArrayList<Instruction> out = cmd(cmd);
-				System.out.println("cmd:  " + cmd + " -> " + out);
+				// System.out.println("cmd: " + cmd + " -> " + out);
 				if(out == null)
 					throw new IGB_CL2_Exception("Unknown command: \"" + cmd + "\".");
 				// instList.add(Instruction.Pointer(":null"));
@@ -127,7 +117,7 @@ public class IGB_CL2 {
 			}
 			cntrlsolver.checkStack(fileNames[file]);
 
-			System.out.println(ram);
+			// System.out.println(ram);
 			if(instList.size() > functions.lenlimits[file])
 				throw new IGB_CL2_Exception(true, "\nFile: " + fileNames[file] + "\n Instruction length limit reached: " + instList.size() + " out of "
 						+ functions.lenlimits[file] + ".");
@@ -135,6 +125,14 @@ public class IGB_CL2 {
 			arr[file] = new IGB_L1(functions.startlines[file], instList.toArray(Instruction[]::new));
 		}
 
+		if(!quiet)
+			for (int i = 0; i < arr.length; i++) {
+				Instruction[] code = arr[i].code;
+				System.out.println("File: " + fileNames[i] + " ->");
+				for (Instruction element : code)
+					System.out.println(element);
+				System.out.println("\n");
+			}
 		return arr;
 	}
 
