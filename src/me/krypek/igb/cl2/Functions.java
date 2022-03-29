@@ -4,6 +4,7 @@ import static me.krypek.igb.cl1.Instruction.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 import me.krypek.igb.cl1.IGB_MA;
 import me.krypek.igb.cl1.Instruction;
@@ -14,10 +15,13 @@ import me.krypek.utils.Pair;
 import me.krypek.utils.Utils;
 
 public class Functions {
+
 	private final HashMap<String, HashMap<Integer, Function>> functionMap;
 
 	private int file;
 	private int line;
+
+	List<Instruction>[] startInstructions;
 
 	public Function getFunction(String name, int argLength) {
 		HashMap<Integer, Function> map = functionMap.get(name);
@@ -75,7 +79,14 @@ public class Functions {
 		String startPointer = ":f_" + funcName + "_" + splited.length + "_start";
 		String endPointer = ":f_" + funcName + "_" + splited.length + "_end";
 		Function func = new Function(funcName, startPointer, endPointer, splited, returnType, ram);
+
 		addFunction(func, false);
+
+		if(funcName.startsWith("main")) {
+			if(localmain != null)
+				throw new IGB_CL2_Exception("Cannot have 2 main functions in one file.");
+			localmain = func;
+		}
 	}
 
 	private void initCompilerFunctions() {
@@ -142,7 +153,7 @@ public class Functions {
 			EqSolver eqs = obj.getValue1();
 			ArrayList<Instruction> list = new ArrayList<>();
 			Field f1 = obj.getValue2()[0];
-
+			
 			var numcell1 = eqs.getNumCell(f1, -1);
 			boolean isCell1 = numcell1.getFirst() != null;
 			if(isCell1)
@@ -259,15 +270,18 @@ public class Functions {
 		}, 5, false), false);
 	}
 
+	private Function localmain;
 	RAM[] rams;
 	int[] startlines;
 	int[] lenlimits;
 
+	@SuppressWarnings("unchecked")
 	public Functions(String[][] inputs, String[] fileNames, IGB_CL2 cl2) {
 		functionMap = new HashMap<>();
 		rams = new RAM[inputs.length];
 		startlines = new int[inputs.length];
 		lenlimits = new int[inputs.length];
+		startInstructions = new List[inputs.length];
 
 		initCompilerFunctions();
 
@@ -278,6 +292,8 @@ public class Functions {
 
 			int startline = -1, lenlimit = -1, thread = 0, ramcell = -1, ramlimit = -1;
 			boolean ramInited = false;
+
+			localmain = null;
 
 			for (line = 0; line < input.length; line++) {
 				cl2.line = line;
@@ -379,8 +395,15 @@ public class Functions {
 				}
 
 			}
+
+			if(localmain != null)
+				startInstructions[file] = Utils.listOf(Instruction.Cell_Call(localmain.startPointerName), Instruction.Cell_Jump(-2));
+			else
+				startInstructions[file] = new ArrayList<>();
+
 			rams[file].setFinalVariables(finalVars);
 		}
+
 	}
 
 	@Override

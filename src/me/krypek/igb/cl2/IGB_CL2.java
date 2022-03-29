@@ -84,6 +84,7 @@ public class IGB_CL2 {
 	public IGB_CL2() { IGB_CL2_Exception.igb_cl2 = this; }
 
 	public IGB_L1[] compile(String[] inputs, String[] fileNames, boolean quiet) {
+		assert inputs.length == fileNames.length;
 		IGB_L1[] arr = new IGB_L1[inputs.length];
 		String[][] formated = formatArray(inputs, fileNames);
 
@@ -102,6 +103,7 @@ public class IGB_CL2 {
 
 		for (file = 0; file < formated.length; file++) {
 			ArrayList<Instruction> instList = new ArrayList<>();
+			instList.addAll(functions.startInstructions[file]);
 			ram = functions.rams[file];
 			eqsolver = new EqSolver(ram, functions);
 			varsolver = new VarSolver(this);

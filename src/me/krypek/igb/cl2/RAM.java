@@ -47,9 +47,9 @@ public class RAM {
 
 	private void addCompilerVariables() {
 		newVar("keyboard", new Variable(IGB_MA.KEYBOARD_INPUT));
-		newVar("screenWidth", new Variable(IGB_MA.SCREEN_WIDTH));
-		newVar("screenHeight", new Variable(IGB_MA.SCREEN_HEIGHT));
-		newVar("screenType", new Variable(IGB_MA.SCREEN_TYPE, str -> {
+		newVar("width", new Variable(IGB_MA.SCREEN_WIDTH));
+		newVar("height", new Variable(IGB_MA.SCREEN_HEIGHT));
+		newVar("stype", new Variable(IGB_MA.SCREEN_TYPE, str -> {
 			String str1 = str.toLowerCase().strip();
 			if(str1.equals("rgb") || str1.equals("1"))
 				return Utils.listOf(Init(1, IGB_MA.SCREEN_TYPE), Device_ScreenUpdate());
