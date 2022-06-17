@@ -275,7 +275,7 @@ public class PrecompilationFile {
 		char[] charA = input.toCharArray();
 		StringBuilder sb = new StringBuilder(stringBuilderSize);
 
-		boolean isQuote = false, wasLastSemi = false;
+		boolean isQuote = false, wasLastSemi = false, ignore = false;
 		int bracket = 0, line = 0;
 
 		Err.updateLine(0);
@@ -284,6 +284,20 @@ public class PrecompilationFile {
 			char c = charA[i];
 			char pc = i == 0 ? '?' : charA[i - 1];
 
+			if(ignore) {
+				if(c == '/' && pc == '*')
+					ignore = false;
+				continue;
+			}
+
+			if(!isQuote && c == '*' && pc == '/') {
+				// deletes the last char
+				sb.setLength(Math.max(sb.length() - 1, 0));
+				
+				ignore = true;
+				continue;
+			}
+			
 			if(!isQuote && c == '/' && pc == '/') {
 				sb = new StringBuilder(stringBuilderSize);
 				for (; charA[i] != '\n'; i++) {}
@@ -321,8 +335,9 @@ public class PrecompilationFile {
 				lineList.add(line);
 				sb = new StringBuilder(stringBuilderSize);
 			} else if(c == '}') {
-				if(!sb.isEmpty())
-					throw Err.normal("Sytnax Error (DEBUG INFO: \"" + sb.toString() + "\")");
+				sb = new StringBuilder(stringBuilderSize);
+				// if(!sb.isEmpty())
+				// throw Err.normal("Sytnax Error (DEBUG INFO: \"" + sb.toString() + "\")");
 				list.add("}");
 				lineList.add(line);
 			} else if(c == ';') {

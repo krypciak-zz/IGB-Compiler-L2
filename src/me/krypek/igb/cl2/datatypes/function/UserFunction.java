@@ -11,6 +11,7 @@ import me.krypek.igb.cl2.IGB_CL2_Exception.Err;
 import me.krypek.igb.cl2.RAM;
 import me.krypek.igb.cl2.datatypes.Variable;
 import me.krypek.igb.cl2.datatypes.function.FunctionNormalField.FunctionCallNormalField;
+import me.krypek.igb.cl2.datatypes.function.FunctionStringField.FunctionCallStringField;
 import me.krypek.utils.Utils;
 
 public class UserFunction extends Function {
@@ -30,10 +31,10 @@ public class UserFunction extends Function {
 		ArrayList<Instruction> list = new ArrayList<>();
 		for (int i = 0; i < call.fields.length; i++) {
 			FunctionCallField field = call.fields[i];
-			if(field instanceof FunctionStringField)
+			if(field instanceof FunctionCallStringField)
 				throw Err.normal("Function argument " + i + ": Strings aren't accepted for user functions.");
 
-			if(!(field instanceof FunctionNormalField))
+			if(!(field instanceof FunctionCallNormalField))
 				throw Err.normal("Function argument " + i + " i forgor to implement handling");
 
 			FunctionCallNormalField fcnf = (FunctionCallNormalField) field;

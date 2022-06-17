@@ -58,13 +58,8 @@ public class EqSolver {
 
 	public ArrayList<Instruction> solve(final String eqS, int outCell) {
 		tempCell1 = IGB_MA.CHARLIB_TEMP_START;
-		// System.out.print(eqS);
 		Equation eq = getEqFromString(eqS, false);
 
-		// System.out.println(eq + " -> " + outCell + " ->");
-		// for (Instruction inst : list)
-		// System.out.println(inst);
-		// System.out.println();
 		return getInstructionListFromEq(eq, outCell);
 	}
 

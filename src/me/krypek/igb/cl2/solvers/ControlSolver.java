@@ -158,7 +158,6 @@ public class ControlSolver {
 			fields[i] = func.fields[i].get(split[i], eqsolver);
 
 		FunctionCall call = new FunctionCall(fields, func, eqsolver);
-
 		return call.call();
 	}
 
