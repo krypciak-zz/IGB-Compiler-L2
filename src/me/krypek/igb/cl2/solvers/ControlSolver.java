@@ -3,118 +3,46 @@ package me.krypek.igb.cl2.solvers;
 import static me.krypek.igb.cl1.Instruction.Cell_Jump;
 import static me.krypek.igb.cl1.Instruction.Cell_Return;
 import static me.krypek.igb.cl1.Instruction.If;
-import static me.krypek.igb.cl1.Instruction.Pointer;
-import static me.krypek.igb.cl2.solvers.BracketType.*;
+import static me.krypek.igb.cl2.datatypes.BracketType.*;
 
 import java.util.ArrayList;
 import java.util.Set;
 import java.util.Stack;
 
 import me.krypek.igb.cl1.Instruction;
-import me.krypek.igb.cl2.IGB_CL2;
-import me.krypek.igb.cl2.IGB_CL2_Exception;
+import me.krypek.igb.cl2.Functions;
+import me.krypek.igb.cl2.IGB_CL2_Exception.Err;
 import me.krypek.igb.cl2.RAM;
-import me.krypek.igb.cl2.datatypes.Field;
-import me.krypek.igb.cl2.datatypes.Function;
+import me.krypek.igb.cl2.datatypes.Bracket;
+import me.krypek.igb.cl2.datatypes.BracketType;
+import me.krypek.igb.cl2.datatypes.function.Function;
+import me.krypek.igb.cl2.datatypes.function.FunctionCall;
+import me.krypek.igb.cl2.datatypes.function.FunctionCallField;
+import me.krypek.igb.cl2.datatypes.function.UserFunction;
 import me.krypek.utils.Utils;
 
-enum BracketType {
-	Default, None, If, For, While, Function
-}
-
 public class ControlSolver {
-	static class Bracket {
-		private static int bracketIndex = 0;
-		private static int forIndex = 0;
-		private static int whileIndex = 0;
-		private static int ifIndex = 0;
 
-		public final BracketType type;
-		public final ArrayList<Instruction> startList;
-		public final ArrayList<Instruction> endList;
-		public final Instruction startPointer;
-		public final Instruction endPointer;
-		public Instruction loopPointer;
-		public Instruction checkPointer;
+	public static String[] booleanOperators = { "==", "!=", ">=", "<=", ">", "<", };
 
-		public Runnable onBracket = () -> {};
-
-		@Override
-		public String toString() { return startPointer.toString(); }
-
-		private Bracket() {
-			type = None;
-			startPointer = Pointer(":bracket_" + bracketIndex + "_start");
-			endPointer = Pointer(":bracket_" + bracketIndex + "_end");
-			startList = new ArrayList<>();
-			endList = new ArrayList<>();
-		}
-
-		public void accessBracket() { bracketIndex++; }
-
-		private Bracket(Function func) {
-			type = Function;
-			startPointer = Pointer(func.startPointerName);
-			endPointer = Pointer(func.endPointerName);
-			startList = new ArrayList<>();
-			endList = Utils.listOf(Cell_Return());
-		}
-
-		private Bracket(BracketType bt, ArrayList<Instruction> startList, ArrayList<Instruction> endList) {
-			this.startList = startList;
-			this.endList = endList;
-			type = bt;
-			switch (bt) {
-			case Default -> {
-				startPointer = Pointer("DEFAULT_LAYER_START");
-				endPointer = Pointer("DEFAULT_LAYER_END");
-			}
-			case For -> {
-				startPointer = Pointer(":for_" + forIndex + "_start");
-				endPointer = Pointer(":for_" + forIndex + "_end");
-				checkPointer = Pointer(":for_" + forIndex + "_check");
-				loopPointer = Pointer(":for_" + forIndex++ + "_loop");
-			}
-			case While -> {
-				startPointer = Pointer(":while_" + whileIndex + "_start");
-				endPointer = Pointer(":while_" + whileIndex + "_end");
-				loopPointer = Pointer(":while_" + whileIndex + "_loop");
-				checkPointer = Pointer(":while_" + whileIndex++ + "_check");
-			}
-			case If -> {
-				startPointer = Pointer(":if_" + ifIndex + "_start");
-				endPointer = Pointer(":if_" + ifIndex++ + "_end");
-			}
-			default -> throw new IGB_CL2_Exception();
-			}
-		}
-
-		public static Bracket _bracket() { return new Bracket(); }
-
-		public static Bracket _default() { return new Bracket(Default, null, null); }
-
-		public static Bracket _if() { return new Bracket(If, new ArrayList<>(), new ArrayList<>()); }
-
-		public static Bracket _for() { return new Bracket(For, new ArrayList<>(), new ArrayList<>()); }
-
-		public static Bracket _while() { return new Bracket(While, new ArrayList<>(), new ArrayList<>()); }
-
-		public static Bracket _func(Function func) { return new Bracket(func); }
-	}
-
-	static String[] booleanOperators = { "==", "!=", ">=", "<=", ">", "<", };
-
-	private final IGB_CL2 cl2;
-	private final RAM ram;
+	private final Functions functions;
+	private final VarSolver varsolver;
 	private final EqSolver eqsolver;
+	private final RAM ram;
+	private final String[] cmd;
 
 	Stack<Bracket> bracketStack;
 
-	public ControlSolver(IGB_CL2 cl2) {
-		this.cl2 = cl2;
-		ram = cl2.getRAM();
-		eqsolver = cl2.getEqSolver();
-		// this.funcs = cl2.getFunctions();
+	private boolean isInElseIfChain = false;
+
+	private int line;
+
+	public ControlSolver(Functions functions, VarSolver varsolver, EqSolver eqsolver, RAM ram, String[] cmd) {
+		this.cmd = cmd;
+		this.ram = ram;
+		this.eqsolver = eqsolver;
+		this.functions = functions;
+		this.varsolver = varsolver;
 		bracketStack = new Stack<>();
 		bracketStack.push(Bracket._default());
 	}
@@ -122,25 +50,25 @@ public class ControlSolver {
 	private Bracket pop() {
 		Bracket bt = bracketStack.pop();
 		if(bt.type == Default)
-			throw new IGB_CL2_Exception("Too many brackets.");
+			throw Err.normal("Too many brackets.");
 		return bt;
 	}
 
 	private void push(Bracket bt) { bracketStack.push(bt); }
 
-	public void checkStack(String fileName) {
+	public void checkStack() {
 		if(bracketStack.size() != 1)
-			throw new IGB_CL2_Exception(true, "\nFile: " + fileName + "\nToo little brackets.");
+			throw Err.noLine("Too little brackets.");
 	}
 
 	private Bracket getBracket(int depth) {
 		assert depth > -1;
 		if(depth == 0)
-			throw new IGB_CL2_Exception("Cannot reach through 0 layers.");
+			throw Err.normal("Cannot reach through 0 layers.");
 		final int stackSize = bracketStack.size();
 		final int index = stackSize - depth;
 		if(index <= 0)
-			throw new IGB_CL2_Exception("Cannot reach that many layers of brackets.");
+			throw Err.normal("Cannot reach that many layers of brackets.");
 		return bracketStack.get(index);
 	}
 
@@ -153,12 +81,13 @@ public class ControlSolver {
 				if(++found == amount)
 					return br;
 		}
-		throw new IGB_CL2_Exception("Didn't find " + amount + " layers of type: " + set);
+		throw Err.normal("Didn't find " + amount + " layers of type: " + set);
 	}
 
-	private Bracket nextAdd = new Bracket();
+	private Bracket nextAdd = Bracket._none();
 
-	public ArrayList<Instruction> cmd(String cmd) {
+	public ArrayList<Instruction> cmd(String cmd, int line) {
+		this.line = line;
 		// System.out.println(bracketStack);
 		if(cmd.equals("{")) {
 			ram.next();
@@ -169,7 +98,7 @@ public class ControlSolver {
 
 			ArrayList<Instruction> list = Utils.listOf(nextAdd.startPointer);
 			list.addAll(nextAdd.startList);
-			nextAdd = new Bracket();
+			nextAdd = Bracket._none();
 			return list;
 		}
 		if(cmd.equals("}")) {
@@ -196,31 +125,67 @@ public class ControlSolver {
 			return _while(cmd.substring(5).strip());
 		else if(cmd.startsWith("for"))
 			return _for(cmd.substring(3).strip());
+		else if(cmd.startsWith("else"))
+			return _else(cmd.substring(4).strip());
+		else if(cmd.startsWith("raw"))
+			return _raw(cmd.substring(3).strip());
 		else {
 			int spaceIndex = cmd.indexOf(' ');
 			if(spaceIndex != -1) {
 				String first = cmd.substring(0, spaceIndex).strip();
-				if(first.equals("void") || IGB_CL2.varStr.contains(first))
+				if(first.equals("void") || VarSolver.typeSet.contains(first))
 					return _function(cmd.substring(spaceIndex).strip());
 			}
 			if(cmd.contains("(")) {
-				Field funcField = eqsolver.stringToField(cmd, false);
-
-				if(funcField.isFunction())
-					return funcField.funcCall.getCall(eqsolver);
+				return _functionCall(cmd);
 			}
 		}
 
 		return null;
 	}
 
+	private ArrayList<Instruction> _raw(String cmd) {
+		return Utils.listOf(Instruction.stringToInstruction(cmd, str -> { return Err.normal("Raw instruction syntax Error."); }));
+	}
+
+	private ArrayList<Instruction> _functionCall(String cmd) {
+		String functionName = cmd.substring(0, cmd.indexOf('(')).strip();
+		String args = cmd.substring(cmd.indexOf('(') + 1, cmd.lastIndexOf(')')).strip();
+		String[] split = args.split(",");
+		Function func = functions.getFunction(functionName, split.length);
+		FunctionCallField[] fields = new FunctionCallField[split.length];
+		for (int i = 0; i < split.length; i++)
+			fields[i] = func.fields[i].get(split[i], eqsolver);
+
+		FunctionCall call = new FunctionCall(fields, func, eqsolver);
+
+		return call.call();
+	}
+
+	private ArrayList<Instruction> _else(String rest) {
+		if(!isInElseIfChain)
+			throw Err.normal("Cannot use else in non if chains.");
+
+		if(rest.isBlank()) {
+			isInElseIfChain = false;
+			nextAdd = Bracket._none(new ArrayList<>(), Utils.listOf(Instruction.Pointer(Bracket.getElseIfPointer())));
+			Bracket.elseIfIndex++;
+			return new ArrayList<>();
+		} else {
+			rest = rest.strip();
+			if(rest.startsWith("if")) {
+				return _if(rest.substring(2).strip());
+			} else
+				throw Err.normal("Syntax Error.");
+		}
+	}
+
 	private ArrayList<Instruction> _function(String rest) {
 		int bracketIndex = rest.indexOf('(');
-		if(bracketIndex == -1)
-			throw new IGB_CL2_Exception();
+		assert bracketIndex != -1;
 		String name = rest.substring(0, bracketIndex);
 		int argsLen = Utils.getArrayElementsFromString(rest.substring(bracketIndex - 1), '(', ')', ",").length;
-		Function func = cl2.getFunctions().getFunction(name, argsLen);
+		UserFunction func = (UserFunction) functions.getFunction(name, argsLen);
 
 		nextAdd = Bracket._func(func);
 		nextAdd.onBracket = () -> { func.initVariables(ram); };
@@ -229,30 +194,30 @@ public class ControlSolver {
 
 	private ArrayList<Instruction> _for(String rest) {
 		if(!rest.startsWith("(") || !rest.endsWith(")"))
-			throw new IGB_CL2_Exception("While statement has to start with '(' and end with ')'.");
+			throw Err.normal("While statement has to start with '(' and end with ')'.");
 
 		rest = rest.substring(1, rest.length() - 1).strip();
 
 		String[] split = rest.split(";");
 		if(split.length != 3)
-			throw new IGB_CL2_Exception("For requires 3 fields.");
+			throw Err.normal("For requires 3 fields.");
 		String init = split[0].strip();
 		String condi = split[1].strip();
 		String addi = split[2].strip();
 		nextAdd = Bracket._for();
 		ArrayList<Instruction> startList = nextAdd.startList;
-		ArrayList<Instruction> initSolved = cl2.getVarSolver().cmd(init, false);
+		ArrayList<Instruction> initSolved = varsolver.cmd(init, false);
 		if(initSolved == null)
-			throw new IGB_CL2_Exception("Syntax error at for init field.");
+			throw Err.normal("Syntax Error at for init field.");
 		startList.addAll(initSolved);
 		startList.addAll(solveIfEq(condi, nextAdd.endPointer.arg[0].str(), false));
 		startList.add(nextAdd.loopPointer);
 
 		ArrayList<Instruction> endList = nextAdd.endList;
 		endList.add(nextAdd.checkPointer);
-		ArrayList<Instruction> addiSolved = cl2.getVarSolver().cmd(addi, true);
+		ArrayList<Instruction> addiSolved = varsolver.cmd(addi, true);
 		if(addiSolved == null)
-			throw new IGB_CL2_Exception("Syntax error at for addition field.");
+			throw Err.normal("Syntax Error at for addition field.");
 		endList.addAll(addiSolved);
 		endList.addAll(solveIfEq(condi, nextAdd.loopPointer.arg[0].str(), true));
 
@@ -261,7 +226,7 @@ public class ControlSolver {
 
 	private ArrayList<Instruction> _while(String rest) {
 		if(!rest.startsWith("(") || !rest.endsWith(")"))
-			throw new IGB_CL2_Exception("While statement has to start with '(' and end with ')'.");
+			throw Err.normal("While statement has to start with '(' and end with ')'.");
 
 		rest = rest.substring(1, rest.length() - 1).strip();
 
@@ -275,19 +240,19 @@ public class ControlSolver {
 
 	private ArrayList<Instruction> _if(String rest) {
 		if(!rest.startsWith("(") || !rest.endsWith(")"))
-			throw new IGB_CL2_Exception("If statement has to start with '(' and end with ')'.");
+			throw Err.normal("If statement has to start with '(' and end with ')'.");
 
 		rest = rest.substring(1, rest.length() - 1).strip();
-
 		nextAdd = Bracket._if();
-		nextAdd.startList.addAll(solveIfEq(rest, nextAdd.endPointer.arg[0].str(), false));
+		solveIfEqElse(rest, nextAdd.endPointer.arg[0].str(), false);
 
 		return new ArrayList<>();
 	}
 
 	private ArrayList<Instruction> solveIfEq(String eq, String pointerToJump, boolean revertOperator) {
-		if(eq.equals("false") || eq.equals("0"))
+		if(eq.equals("false") || eq.equals("0")) {
 			return Utils.listOf(Cell_Jump(pointerToJump));
+		}
 		if(eq.equals("true") || eq.equals("1"))
 			return new ArrayList<>();
 
@@ -302,7 +267,7 @@ public class ControlSolver {
 			}
 		}
 		if(index == -1)
-			throw new IGB_CL2_Exception("Unknown boolean operator in: \"" + eq + "\".");
+			throw Err.normal("Unknown boolean operator in: \"" + eq + "\".");
 
 		if(revertOperator)
 			ope = revertOperator(ope);
@@ -332,7 +297,7 @@ public class ControlSolver {
 			case "<=" -> val1 <= val2;
 			case ">" -> val1 > val2;
 			case "<" -> val1 < val2;
-			default -> throw new IGB_CL2_Exception();
+			default -> throw Err.notPossible();
 			})
 				return new ArrayList<>();
 			return Utils.listOf(Cell_Jump(pointerToJump));
@@ -345,14 +310,117 @@ public class ControlSolver {
 		return list;
 	}
 
+	private boolean lookForElse(int line) {
+		int bracket = 0;
+		for (int i = ++line; i < cmd.length; i++) {
+			String l = cmd[i];
+			if(l.equals("{"))
+				bracket++;
+			else if(l.equals("}"))
+				bracket--;
+			else if(bracket == 0)
+				return l.startsWith("else");
+		}
+		return false;
+	}
+
+	private void returnFromIfEqElse(boolean isElse, ArrayList<Instruction> startList, ArrayList<Instruction> endList) {
+		if(!isElse) {
+			if(isInElseIfChain) {
+				isInElseIfChain = false;
+				endList.add(Instruction.Pointer(Bracket.getElseIfPointer()));
+				Bracket.elseIfIndex++;
+				nextAdd.startList.addAll(startList);
+				nextAdd.endList.addAll(endList);
+			} else {
+				nextAdd.startList.addAll(startList);
+				nextAdd.endList.addAll(endList);
+			}
+		} else {
+			isInElseIfChain = true;
+			endList.add(0, Instruction.Cell_Jump(Bracket.getElseIfPointer()));
+			nextAdd.startList.addAll(startList);
+			nextAdd.endList.addAll(endList);
+		}
+	}
+
+	private void solveIfEqElse(String eq, String pointerToJump, boolean revertOperator) {
+		boolean isElse = lookForElse(line);
+
+		if(eq.equals("false") || eq.equals("0")) {
+			returnFromIfEqElse(isElse, Utils.listOf(Cell_Jump(pointerToJump)), null);
+			return;
+		}
+		if(eq.equals("true") || eq.equals("1")) {
+			returnFromIfEqElse(isElse, new ArrayList<>(), null);
+			return;
+		}
+
+		ArrayList<Instruction> list = new ArrayList<>();
+		int index = -1;
+		String ope = null;
+		for (String ope1 : booleanOperators) {
+			index = eq.indexOf(ope1);
+			if(index != -1) {
+				ope = ope1;
+				break;
+			}
+		}
+		if(index == -1)
+			throw Err.normal("Unknown boolean operator in: \"" + eq + "\".");
+
+		if(revertOperator)
+			ope = revertOperator(ope);
+
+		String f1 = eq.substring(0, index).strip();
+		String f2 = eq.substring(index + ope.length()).strip();
+
+		var t1 = eqsolver.solve(f1);
+		boolean nc1 = t1.getValue1() == null;
+		list.addAll(t1.getValue3());
+
+		var t2 = eqsolver.solve(f2);
+		boolean nc2 = t2.getValue1() == null;
+		if(nc1 && nc2 && t2.getValue2() == t1.getValue2()) {
+			t2.setValue2(ram.IF_TEMP2);
+			list.addAll(eqsolver.solve(f2, ram.IF_TEMP2));
+		} else
+			list.addAll(t2.getValue3());
+
+		if(!nc1 && !nc2) {
+			double val1 = t1.getValue1();
+			double val2 = t2.getValue1();
+			if(switch (ope) {
+			case "==" -> val1 == val2;
+			case "!=" -> val1 != val2;
+			case ">=" -> val1 >= val2;
+			case "<=" -> val1 <= val2;
+			case ">" -> val1 > val2;
+			case "<" -> val1 < val2;
+			default -> throw Err.notPossible();
+			}) {
+				returnFromIfEqElse(isElse, new ArrayList<>(), null);
+				return;
+			}
+			returnFromIfEqElse(isElse, Utils.listOf(Cell_Jump(pointerToJump)), null);
+			return;
+		}
+
+		if(!nc1)
+			list.add(If(revertOperator(ope), t2.getValue2(), false, t1.getValue1(), pointerToJump));
+		else
+			list.add(If(ope, t1.getValue2(), nc2, nc2 ? t2.getValue2() : t2.getValue1(), pointerToJump));
+		returnFromIfEqElse(isElse, list, new ArrayList<>());
+	}
+
 	private String revertOperator(String ope) {
 		return switch (ope) {
 		case "==", "!=" -> ope;
-		case ">" -> "<";
-		case "<" -> ">";
-		case ">=" -> "<=";
-		case "<=" -> ">=";
-		default -> throw new IGB_CL2_Exception();
+		case ">" -> "<=";
+		case "<" -> ">=";
+		case ">=" -> "<";
+		case "<=" -> ">";
+		default -> throw Err.notPossible();
 		};
 	}
 
@@ -361,7 +429,7 @@ public class ControlSolver {
 		if(!rest.isBlank()) {
 			double val = ram.solveFinalEq(rest);
 			if(val % 1 != 0)
-				throw new IGB_CL2_Exception("Continure count has to be an integer.");
+				throw Err.normal("Continure count has to be an integer.");
 			count = (int) val;
 		}
 		Bracket br = lookFor(count, Set.of(For, While));
@@ -374,7 +442,7 @@ public class ControlSolver {
 		try {
 			lookFor(1, Set.of(Function));
 		} catch (Exception e) {
-			throw new IGB_CL2_Exception("Cannot return outside of functions.");
+			throw Err.normal("Cannot return outside of functions.");
 		}
 		return Utils.listOf(Cell_Return());
 	}
@@ -384,7 +452,7 @@ public class ControlSolver {
 		if(!rest.isBlank()) {
 			double val = ram.solveFinalEq(rest);
 			if(val % 1 != 0)
-				throw new IGB_CL2_Exception("Break count has to be an integer.");
+				throw Err.normal("Break count has to be an integer.");
 			index = (int) val;
 		}
 		Bracket br = getBracket(index);
@@ -396,7 +464,7 @@ public class ControlSolver {
 		if(!rest.isBlank()) {
 			double val = ram.solveFinalEq(rest);
 			if(val % 1 != 0)
-				throw new IGB_CL2_Exception("Redo count has to be an integer.");
+				throw Err.normal("Redo count has to be an integer.");
 			index = (int) val;
 		}
 		Bracket br = getBracket(index);

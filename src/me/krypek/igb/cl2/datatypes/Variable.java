@@ -7,11 +7,11 @@ import me.krypek.utils.Utils.Generator;
 
 public class Variable {
 	public final int cell;
-	public Generator<ArrayList<Instruction>, String> action;
+	public Generator<String, ArrayList<Instruction>> action;
 
 	public Variable(int cell) { this.cell = cell; }
 
-	public Variable(int cell, Generator<ArrayList<Instruction>, String> setAction) {
+	public Variable(int cell, Generator<String, ArrayList<Instruction>> setAction) {
 		this.cell = cell;
 		action = setAction;
 	}

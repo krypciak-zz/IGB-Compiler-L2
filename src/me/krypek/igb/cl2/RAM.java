@@ -3,12 +3,14 @@ package me.krypek.igb.cl2;
 import static me.krypek.igb.cl1.Instruction.Device_ScreenUpdate;
 import static me.krypek.igb.cl1.Instruction.Init;
 
+import java.util.AbstractMap;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
 
 import me.krypek.igb.cl1.IGB_MA;
+import me.krypek.igb.cl2.IGB_CL2_Exception.Err;
 import me.krypek.igb.cl2.datatypes.Array;
 import me.krypek.igb.cl2.datatypes.Variable;
 import me.krypek.utils.Utils;
@@ -16,8 +18,8 @@ import net.objecthunter.exp4j.Expression;
 import net.objecthunter.exp4j.ExpressionBuilder;
 
 public class RAM {
-	static final String[] illegalCharacters = { "{", "}", "(", ")", "[", "]", ";", "$", "=", "|" };
-	static final Set<String> illegalNames = Set.of("else");
+	public static final String[] illegalCharacters = { "{", "}", "(", ")", "[", "]", ";", "$", "=", "|", ">", "<" };
+	public static final Set<String> illegalNames = Set.of("else", "if", "for", "while");
 
 	private final boolean[] allocationArray;
 
@@ -32,7 +34,7 @@ public class RAM {
 	public RAM(int ramSize, int allocStart, int thread) {
 		this.thread = thread;
 		this.allocStart = allocStart;
-		finalVars = new HashMap<>();
+		finalVars = getDefaultFinalVars();
 		allocationArray = new boolean[ramSize];
 		variableStack = new Stack<>();
 		arrayStack = new Stack<>();
@@ -55,7 +57,7 @@ public class RAM {
 				return Utils.listOf(Init(1, IGB_MA.SCREEN_TYPE), Device_ScreenUpdate());
 			if(str1.equals("16c") || str1.equals("0"))
 				return Utils.listOf(Init(0, IGB_MA.SCREEN_TYPE), Device_ScreenUpdate());
-			throw new IGB_CL2_Exception("Invalid value: \"" + str + "\" screenType can be only \"rgb\", \"16c\", \"0\" or \"1\".");
+			throw Err.normal("Invalid value: \"" + str + "\" screenType can be only \"rgb\", \"16c\", \"0\" or \"1\".");
 		}));
 	}
 
@@ -63,7 +65,7 @@ public class RAM {
 		for1: for (int i = 0; i < allocationArray.length; i++) {
 			final int _i = size + i;
 			if(_i >= allocationArray.length)
-				throw new IGB_CL2_Exception("Ran out of space in RAM!");
+				throw Err.normal("Ran out of space in RAM!");
 			final int startI = i;
 			for (; i < _i; i++)
 				if(allocationArray[i])
@@ -75,7 +77,7 @@ public class RAM {
 			return startI + allocStart;
 		}
 
-		throw new IGB_CL2_Exception("Ran out of space in RAM!");
+		throw Err.normal("Ran out of space in RAM!");
 	}
 
 	public int checkName(String name) {
@@ -83,20 +85,20 @@ public class RAM {
 		if(name.endsWith("|")) {
 			String[] split1 = name.split("\\|");
 			if(split1.length != 2)
-				throw new IGB_CL2_Exception("Variable cell syntax error.");
+				throw Err.normal("Variable cell syntax Error.");
 			val = (int) solveFinalEq(split1[1]);
 			if(val < 0)
-				throw new IGB_CL2_Exception("Variable cell cannot be negative.");
+				throw Err.normal("Variable cell cannot be negative.");
 		}
 		if(finalVars.containsKey(name))
-			throw new IGB_CL2_Exception("Cannot create a variable that is named the same as a final variable.");
+			throw Err.normal("Cannot create a variable that is named the same as a final variable.");
 
 		if(illegalNames.contains(name))
-			throw new IGB_CL2_Exception("Illegal variable name: \"" + name + "\".");
+			throw Err.normal("Illegal variable name: \"" + name + "\".");
 
 		for (String c : illegalCharacters)
 			if(name.contains(c) && (!c.equals("" + '|') || val == -1))
-				throw new IGB_CL2_Exception("Variable name \"" + name + "\" contains illegal character: \"" + c + "\".");
+				throw Err.normal("Variable name \"" + name + "\" contains illegal character: \"" + c + "\".");
 
 		return val;
 	}
@@ -180,7 +182,7 @@ public class RAM {
 				return var.cell;
 		}
 
-		throw new IGB_CL2_Exception("Variable \"" + name + "\" doesn't exist.");
+		throw Err.normal("Variable \"" + name + "\" doesn't exist.");
 	}
 
 	public Variable getVariable(String name) {
@@ -190,7 +192,7 @@ public class RAM {
 				return var;
 		}
 
-		throw new IGB_CL2_Exception("Variable \"" + name + "\" doesn't exist.");
+		throw Err.normal("Variable \"" + name + "\" doesn't exist.");
 	}
 
 	public int getVariableCellNoExc(String name) {
@@ -209,7 +211,7 @@ public class RAM {
 			if(var != null)
 				return var;
 		}
-		throw new IGB_CL2_Exception("Variable \"" + name + "\" doesn't exist.");
+		throw Err.normal("Variable \"" + name + "\" doesn't exist.");
 	}
 
 	public void next() {
@@ -225,6 +227,7 @@ public class RAM {
 	public boolean isEQ_TEMP1_used = false;
 	public final int EQ_TEMP2 = switch(thread) {case 0->IGB_MA.IF_TEMP2_THREAD0; case 1->IGB_MA.IF_TEMP2_THREAD1; default -> -1;};
 	public boolean isEQ_TEMP2_used = false;
+	public final int TEMP1 = switch(thread) {case 0->IGB_MA.IF_TEMP3_THREAD0; case 1->IGB_MA.IF_TEMP3_THREAD1; default -> -1;};
 
 	public static double solveFinalEq(String eq, HashMap<String, Double> finalVars) {
 		// net.objecthunter.exp4j
@@ -237,13 +240,39 @@ public class RAM {
 				.setVariables(finalVars);
 		return e.evaluate();
 		} catch(Exception e) {
-			throw new IGB_CL2_Exception("Syntax error: \"" + eq + "\".", e);
+			throw Err.normal("Syntax Error: \"" + eq + "\".", e);
 		}
 	}
 
 	public double solveFinalEq(String eq) { return solveFinalEq(eq, finalVars); }
 
 
+	private static double getMCRGBValue(int r, int g, int b) { return (r << 16) + (g << 8) + b; }
 
+	//@f:off
+	private final Map<String, Double> color_map = Map.ofEntries(
+            new AbstractMap.SimpleEntry<>("rgb_white",		getMCRGBValue(249, 255, 255)), 
+            new AbstractMap.SimpleEntry<>("rgb_yellow", 	getMCRGBValue(255, 216, 61)), 
+            new AbstractMap.SimpleEntry<>("rgb_orange", 	getMCRGBValue(249, 128, 29)), 
+            new AbstractMap.SimpleEntry<>("rgb_red", 		getMCRGBValue(176, 46, 38)), 
+            new AbstractMap.SimpleEntry<>("rgb_magenta", 	getMCRGBValue(198, 79, 189)), 
+            new AbstractMap.SimpleEntry<>("rgb_purple", 	getMCRGBValue(137, 50, 183)), 
+            new AbstractMap.SimpleEntry<>("rgb_blue", 		getMCRGBValue(60, 68, 169)), 
+            new AbstractMap.SimpleEntry<>("rgb_lightBlue", 	getMCRGBValue(58, 179, 218)), 
+            new AbstractMap.SimpleEntry<>("rgb_lime", 		getMCRGBValue(128, 199, 31)), 
+            new AbstractMap.SimpleEntry<>("rgb_green",		getMCRGBValue(93, 124, 21)), 
+            new AbstractMap.SimpleEntry<>("rgb_brown", 		getMCRGBValue(130, 84, 50)), 
+            new AbstractMap.SimpleEntry<>("rgb_cyan", 		getMCRGBValue(22, 156, 157)), 
+            new AbstractMap.SimpleEntry<>("rgb_lightGray", 	getMCRGBValue(156, 157, 151)), 
+            new AbstractMap.SimpleEntry<>("rgb_pink", 		getMCRGBValue(172, 81, 114)), 
+            new AbstractMap.SimpleEntry<>("rgb_gray", 		getMCRGBValue(71, 79, 82)), 
+            new AbstractMap.SimpleEntry<>("rgb_black", 		getMCRGBValue(29, 28, 33)) );
+    //@f:on
+
+	public HashMap<String, Double> getDefaultFinalVars() {
+		HashMap<String, Double> fvars = new HashMap<>();
+		fvars.putAll(color_map);
+		return fvars;
+	}
 
 }

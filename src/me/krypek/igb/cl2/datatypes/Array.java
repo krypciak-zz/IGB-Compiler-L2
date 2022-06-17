@@ -6,7 +6,7 @@ import java.util.ArrayList;
 
 import me.krypek.igb.cl1.IGB_MA;
 import me.krypek.igb.cl1.Instruction;
-import me.krypek.igb.cl2.IGB_CL2_Exception;
+import me.krypek.igb.cl2.IGB_CL2_Exception.Err;
 import me.krypek.igb.cl2.solvers.EqSolver;
 import me.krypek.utils.Pair;
 import me.krypek.utils.TripleObject;
@@ -28,7 +28,7 @@ public class Array {
 
 	public TripleObject<Boolean, Integer, ArrayList<Instruction>> getArrayCell(EqSolver eqs, Field[] dims, int outCell) {
 		if(dims.length != size.length)
-			throw new IGB_CL2_Exception("Expected " + size.length + " array dimensions, insted got " + dims.length + ".");
+			throw Err.normal("Expected " + size.length + " array dimensions, insted got " + dims.length + ".");
 
 		boolean isAllVal = true;
 		int cell = 0;
@@ -42,10 +42,10 @@ public class Array {
 			} else {
 				double val = f.value;
 				if(val % 1 != 0)
-					throw new IGB_CL2_Exception("Array dimension has to be an int, insted got: \"" + val + "\".");
+					throw Err.normal("Array dimension has to be an int, insted got: \"" + val + "\".");
 				int val1 = (int) val;
 				if(val1 >= size[i])
-					throw new IGB_CL2_Exception("Index out of bounds: " + val1 + " out of " + size[i] + ".");
+					throw Err.normal("Index out of bounds: " + val1 + " out of " + size[i] + ".");
 
 				cell += val1 * x;
 			}

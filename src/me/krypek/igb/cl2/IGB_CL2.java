@@ -1,69 +1,59 @@
 package me.krypek.igb.cl2;
 
-import java.io.File;
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
 
 import me.krypek.freeargparser.ArgType;
 import me.krypek.freeargparser.ParsedData;
 import me.krypek.freeargparser.ParserBuilder;
 import me.krypek.igb.cl1.IGB_L1;
 import me.krypek.igb.cl1.Instruction;
+import me.krypek.igb.cl2.IGB_CL2_Exception.Err;
 import me.krypek.igb.cl2.solvers.ControlSolver;
 import me.krypek.igb.cl2.solvers.EqSolver;
 import me.krypek.igb.cl2.solvers.VarSolver;
-import me.krypek.utils.Utils;
 
 public class IGB_CL2 {
 
 	public static void main(String[] args) {
 		//@f:off
 		ParsedData data = new ParserBuilder()
-				.add("cp", "codepath", 		true,	false, 	ArgType.StringArray, 	"Array of paths to code files.")
+				.add("cp", "codepath", 		true,	false, 	ArgType.String, 		"The path to the main file.")
 				.add("op", "outputpath", 	false,	false, 	ArgType.String, 		"Path to a directory, l1 files will be saved here.")
 				.add("ro", "readableOutput",false, 	false,	ArgType.None, 			"If selected, will also save readable l1 files.")
 				.add("q", "quiet", 			false,	false,	ArgType.None, 			"If selected, won't print output to terminal.")
 				.parse(args);
 		//@f:on
 
-		final String[] codePaths = data.getStringArray("cp");
+		final String mainPath = data.getString("cp");
 		final String outputPath = data.getStringOrDef("op", null);
 		final boolean readableOutput = data.has("ro");
 		final boolean quiet = data.has("q");
 
-		String[] inputs = new String[codePaths.length];
-		String[] fileNames = new String[codePaths.length];
-		for (int i = 0; i < inputs.length; i++) {
-			String readden = Utils.readFromFile(codePaths[i], "\n");
-			if(readden == null)
-				throw new IGB_CL2_Exception("Error reading file: \"" + codePaths[i] + "\".");
-			inputs[i] = readden;
-
-			fileNames[i] = new File(codePaths[i]).getName();
-		}
+		/*
+		 * for (int i = 0; i < inputs.length; i++) { String readden =
+		 * Utils.readFromFile(codePaths[i], "\n"); if(readden == null) throw new
+		 * IGB_CL2_Exception("Error reading file: \"" + codePaths[i] + "\"."); inputs[i]
+		 * = readden;
+		 * 
+		 * fileNames[i] = new File(codePaths[i]).getName(); }
+		 */
 
 		IGB_CL2 igb_cl2 = new IGB_CL2();
-		IGB_L1[] compiled = igb_cl2.compile(inputs, fileNames, quiet);
-		if(outputPath != null) {
-			File outDir = new File(outputPath);
-			outDir.mkdirs();
-			for (int i = 0; i < compiled.length; i++) {
-				IGB_L1 l1 = compiled[i];
-				String fileName = Utils.getFileNameWithoutExtension(fileNames[i]);
-				Utils.serialize(l1, outputPath + File.separator + fileName + ".igb_l1");
-				if(readableOutput)
-					Utils.writeIntoFile(outputPath + File.separator + fileName + ".igb_l1_readable", l1.toString());
+		IGB_L1[] compiled = igb_cl2.compile(mainPath, outputPath, quiet);
 
-			}
-		}
+		/*
+		 * if(outputPath != null) { File outDir = new File(outputPath); outDir.mkdirs();
+		 * for (int i = 0; i < compiled.length; i++) { IGB_L1 l1 = compiled[i]; String
+		 * fileName = Utils.getFileNameWithoutExtension(fileNames[i]);
+		 * Utils.serialize(l1, outputPath + File.separator + fileName + ".igb_l1");
+		 * if(readableOutput) Utils.writeIntoFile(outputPath + File.separator + fileName
+		 * + ".igb_l1_readable", l1.toString());
+		 * 
+		 * } }
+		 */
 	}
 
-	public static final Set<String> varStr = Set.of("float", "double", "int");
-
-	String[] fileNames;
-	int[][] lines;
-
+	public PrecompilationFile[] precfA;
 	public int file;
 	public int line;
 
@@ -81,56 +71,51 @@ public class IGB_CL2 {
 
 	public VarSolver getVarSolver() { return varsolver; }
 
-	public IGB_CL2() { IGB_CL2_Exception.igb_cl2 = this; }
+	// public PrecompilationFile getCurrentPrecompilationFile() { return
+	// precfA[file]; }
 
-	public IGB_L1[] compile(String[] inputs, String[] fileNames, boolean quiet) {
-		assert inputs.length == fileNames.length;
-		IGB_L1[] arr = new IGB_L1[inputs.length];
-		String[][] formated = formatArray(inputs, fileNames);
+	public IGB_CL2() {}
 
-		this.fileNames = fileNames;
-		// log
-		/*
-		 * for (int i = 0; i < formated.length; i++) { System.out.println(fileNames[i] +
-		 * " ->"); for (int x = 0; x < formated[i].length; x++) System.out.println("  "
-		 * + (lines[i][x] + 1) + ": " + formated[i][x]); }
-		 */
-		// endlog
+	public IGB_L1[] compile(String mainPath, String outputPath, boolean quiet) {
+		Precompilation prec = new Precompilation(mainPath, quiet);
+		this.functions = prec.functions;
+		this.precfA = prec.precfA;
 
-		functions = new Functions(formated, fileNames, this);
+		IGB_L1[] arr = new IGB_L1[precfA.length];
 		// System.out.println(functions);
 		// System.out.println("\n\n");
 
-		for (file = 0; file < formated.length; file++) {
+		for (file = 0; file < precfA.length; file++) {
+			PrecompilationFile precf = precfA[file];
+
 			ArrayList<Instruction> instList = new ArrayList<>();
-			instList.addAll(functions.startInstructions[file]);
-			ram = functions.rams[file];
+			instList.addAll(precf.startInstructions);
+			ram = precf.ram;
 			eqsolver = new EqSolver(ram, functions);
-			varsolver = new VarSolver(this);
-			cntrlsolver = new ControlSolver(this);
-			for (line = 0; line < formated[file].length; line++) {
-				String cmd = formated[file][line];
+			varsolver = new VarSolver(eqsolver, ram);
+			cntrlsolver = new ControlSolver(functions, varsolver, eqsolver, ram, precf.cmd);
+			for (line = 0; line < precf.cmd.length; line++) {
+				String cmd = precf.cmd[line];
 				ArrayList<Instruction> out = cmd(cmd);
 				// System.out.println("cmd: " + cmd + " -> " + out);
 				if(out == null)
-					throw new IGB_CL2_Exception("Unknown command: \"" + cmd + "\".");
+					throw Err.normal("Unknown command: \"" + cmd + "\".");
 				// instList.add(Instruction.Pointer(":null"));
 				instList.addAll(out);
 			}
-			cntrlsolver.checkStack(fileNames[file]);
+			cntrlsolver.checkStack();
 
 			// System.out.println(ram);
-			if(instList.size() > functions.lenlimits[file])
-				throw new IGB_CL2_Exception(true, "\nFile: " + fileNames[file] + "\n Instruction length limit reached: " + instList.size() + " out of "
-						+ functions.lenlimits[file] + ".");
+			if(instList.size() > precf.lenlimit)
+				throw Err.noLine("Instruction length limit reached: " + instList.size() + " out of " + precf.lenlimit + ".");
 
-			arr[file] = new IGB_L1(functions.startlines[file], instList.toArray(Instruction[]::new));
+			arr[file] = new IGB_L1(precf.startline, instList.toArray(Instruction[]::new));
 		}
 
 		if(!quiet)
-			for (int i = 0; i < arr.length; i++) {
-				Instruction[] code = arr[i].code;
-				System.out.println("File: " + fileNames[i] + " ->");
+			for (file = 0; file < arr.length; file++) {
+				Instruction[] code = arr[file].code;
+				System.out.println("File: " + precfA[file].fileName + " ->");
 				for (Instruction element : code)
 					System.out.println(element);
 				System.out.println("\n");
@@ -148,94 +133,12 @@ public class IGB_CL2 {
 				return var;
 		}
 		{
-			ArrayList<Instruction> cntrl = cntrlsolver.cmd(cmd);
+			ArrayList<Instruction> cntrl = cntrlsolver.cmd(cmd, line);
 			if(cntrl != null)
 				return cntrl;
 		}
 
 		return null;
-	}
-
-	private String[][] formatArray(String[] inputs, String[] fileNames) {
-		lines = new int[inputs.length][];
-		String[][] arr = new String[inputs.length][];
-		for (int i = 0; i < inputs.length; i++)
-			arr[i] = format(inputs[i], fileNames[i], i);
-		return arr;
-	}
-
-	private String[] format(String input, String fileName, int index) {
-		final int stringBuilderSize = 30;
-		List<String> list = new ArrayList<>();
-		List<Integer> lineList = new ArrayList<>();
-
-		char[] charA = input.toCharArray();
-		StringBuilder sb = new StringBuilder(stringBuilderSize);
-
-		boolean isQuote = false, isQuote1 = false, wasLastSemi = false;
-		int bracket = 0, line = 0;
-
-		for (int i = 0; i < charA.length; i++) {
-			char c = charA[i];
-			char pc = i == 0 ? '?' : charA[i - 1];
-
-			if(c == '"' && pc != '\\')
-				isQuote = !isQuote;
-			else if(c == '\'' && pc != '\\')
-				isQuote1 = !isQuote1;
-			else if(isQuote || isQuote1)
-				sb.append(c);
-			else if(c == '\n') {
-				line++;
-				if(sb.length() >= 2 && sb.charAt(0) == '/' && sb.charAt(1) == '/')
-					sb = new StringBuilder(stringBuilderSize);
-
-			} else if(c == ' ' && (pc == ' ' || wasLastSemi) || c == '\t' || c == '\u000B' || c == '\f' || c == '\r')
-				continue;
-			else if(c == '(') {
-				sb.append('(');
-				bracket++;
-			} else if(c == ')') {
-				bracket--;
-				sb.append(')');
-			} else if(c == '{') {
-				if(sb.length() != 0) {
-					list.add(sb.toString());
-					lineList.add(line);
-				}
-				list.add("{");
-				lineList.add(line);
-				sb = new StringBuilder(stringBuilderSize);
-			} else if(c == '}') {
-				if(sb.length() != 0)
-					throw new IGB_CL2_Exception(fileName, line, "Sytnax error");
-				list.add("}");
-				lineList.add(line);
-			} else if(c == ';') {
-				if(sb.length() >= 2 && sb.charAt(0) == '/' && sb.charAt(1) == '/') {
-					sb = new StringBuilder(stringBuilderSize);
-					sb.append("//");
-				} else {
-					if(bracket == 0) {
-						if(sb.length() != 0) {
-							list.add(sb.toString());
-							lineList.add(line);
-						}
-						sb = new StringBuilder(stringBuilderSize);
-						wasLastSemi = true;
-						continue;
-					}
-					sb.append(';');
-				}
-			} else
-				sb.append(c);
-
-			wasLastSemi = false;
-		}
-
-		lines[index] = lineList.stream().mapToInt(i -> i).toArray();
-
-		return list.toArray(String[]::new);
 	}
 
 }

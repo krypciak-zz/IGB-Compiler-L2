@@ -11,13 +11,15 @@ import me.krypek.igb.cl1.IGB_MA;
 import me.krypek.igb.cl1.Instruction;
 import me.krypek.igb.cl2.Functions;
 import me.krypek.igb.cl2.IGB_CL2_Exception;
+import me.krypek.igb.cl2.IGB_CL2_Exception.Err;
 import me.krypek.igb.cl2.RAM;
 import me.krypek.igb.cl2.datatypes.Array;
 import me.krypek.igb.cl2.datatypes.ArrayAccess;
 import me.krypek.igb.cl2.datatypes.Equation;
 import me.krypek.igb.cl2.datatypes.Field;
-import me.krypek.igb.cl2.datatypes.Function;
-import me.krypek.igb.cl2.datatypes.FunctionCall;
+import me.krypek.igb.cl2.datatypes.function.Function;
+import me.krypek.igb.cl2.datatypes.function.FunctionCall;
+import me.krypek.igb.cl2.datatypes.function.FunctionNormalField.FunctionCallNormalField;
 import me.krypek.utils.Pair;
 import me.krypek.utils.TripleObject;
 import me.krypek.utils.Utils;
@@ -30,6 +32,7 @@ public class EqSolver {
 		this.funcs = funcs;
 		temp1 = ram.EQ_TEMP1;
 		temp2 = ram.EQ_TEMP2;
+		temp3 = ram.TEMP1;
 	}
 
 	public double solveFinalEq(String eq) { return ram.solveFinalEq(eq); }
@@ -69,8 +72,9 @@ public class EqSolver {
 	private final RAM ram;
 	private final Functions funcs;
 
-	private final int temp1;
-	private final int temp2;
+	public final int temp1;
+	public final int temp2;
+	public final int temp3;
 	private int tempCell1;
 
 	private ArrayList<Instruction> getInstructionListFromEq(Equation eq, int outCell) {
@@ -172,7 +176,7 @@ public class EqSolver {
 					ram.isEQ_TEMP2_used = false;
 			}
 			if(tempCell1 >= IGB_MA.CHARLIB_CHAR)
-				throw new IGB_CL2_Exception("This equation is too long.");
+				throw Err.normal("This equation is too long.");
 		}
 
 		return list;
@@ -262,16 +266,8 @@ public class EqSolver {
 		}
 		case Func -> {
 			FunctionCall fc = f.funcCall;
-			Function func = fc.func;
-			Field[] args = fc.args;
-			final int outCell;
-			if(directCell == -1) {
-				outCell = IGB_MA.FUNC_RETURN;
-				list.addAll(func.getCall(eqs, args));
-			} else {
-				list.addAll(func.getCall(eqs, args, directCell));
-				outCell = directCell;
-			}
+			final int outCell = directCell == -1 ? IGB_MA.FUNC_RETURN : directCell;
+			list.addAll(fc.call());
 			return new Pair<>(outCell, list);
 		}
 		}
@@ -285,6 +281,9 @@ public class EqSolver {
 			int bracket = 0;
 			char[] charA = str.toCharArray();
 			StringBuilder sb = new StringBuilder(32);
+
+			boolean canBeNegative = true;
+
 			for (char c : charA) {
 				if(c == '(')
 					bracket++;
@@ -292,7 +291,13 @@ public class EqSolver {
 					bracket--;
 
 				if(operators.contains(c) && bracket == 0) {
+					if(canBeNegative && c == '-') {
+						canBeNegative = false;
+						sb.append(c);
+						continue;
+					}
 					operatorList.add(c);
+					canBeNegative = true;
 					fieldStringList.add(sb.toString());
 					sb = new StringBuilder(32);
 				} else if(!Character.isWhitespace(c))
@@ -313,7 +318,7 @@ public class EqSolver {
 		return new Equation(operators, fields);
 	}
 
-	Field stringToField(final String str, boolean epicFail) {
+	public Field stringToField(final String str, boolean epicFail) {
 		try {
 			double val = ram.solveFinalEq(str);
 			return new Field(val);
@@ -330,25 +335,29 @@ public class EqSolver {
 
 				Field[] fa = stringArrayToFieldArray(args);
 
-				return new Field(new FunctionCall(fa, funcs.getFunction(funcName, args.length)));
+				FunctionCallNormalField[] callFields = fieldArrayToFunctionCallNormalFieldArray(fa);
+				Function func = this.funcs.getFunction(funcName, callFields.length);
+
+				FunctionCall call = new FunctionCall(callFields, func, this);
+				return new Field(call);
 			}
-			throw new IGB_CL2_Exception("Please enter a valid amount of brackets.");
+			throw Err.normal("Please enter a valid amount of brackets.");
 		}
 
 		if(str.endsWith("]") && str.contains("[")) {
 			int index = str.indexOf('[');
 			String arrName = str.substring(0, index).stripTrailing();
 
-			String[] dimsS = Utils.getArrayElementsFromString(str, '[', ']', new IGB_CL2_Exception("Array syntax error"));
+			String[] dimsS = Utils.getArrayElementsFromString(str, '[', ']', Err.normal("Array syntax error"));
 
 			Field[] fa = stringArrayToFieldArray(dimsS);
 
 			Array arr = ram.getArray(arrName);
 			if(arr == null)
-				throw new IGB_CL2_Exception("Array: \"" + arrName + "\" doesn't exist.");
+				throw Err.normal("Array: \"" + arrName + "\" doesn't exist.");
 
 			if(fa.length != arr.size.length)
-				throw new IGB_CL2_Exception("Array: \"" + arrName + "\" Expected " + arr.size.length + " dimensions, got " + fa.length + ".");
+				throw Err.normal("Array: \"" + arrName + "\" Expected " + arr.size.length + " dimensions, got " + fa.length + ".");
 
 			return new Field(new ArrayAccess(arrName, arr, fa));
 		}
@@ -364,7 +373,7 @@ public class EqSolver {
 				throw e;
 			}
 
-		throw new IGB_CL2_Exception("Unknown variable: \"" + str + "\".");
+		throw Err.normal("Unknown variable: \"" + str + "\".");
 	}
 
 	private Field[] stringArrayToFieldArray(String[] arr) {
@@ -372,6 +381,12 @@ public class EqSolver {
 		for (int i = 0; i < arr.length; i++)
 			fa[i] = stringToField(arr[i], false);
 		return fa;
+	}
+
+	private static FunctionCallNormalField[] fieldArrayToFunctionCallNormalFieldArray(Field[] array) {
+		FunctionCallNormalField[] returnArray = new FunctionCallNormalField[array.length];
+		for (int i = 0; i < array.length; i++) { returnArray[i] = new FunctionCallNormalField(array[i]); }
+		return returnArray;
 	}
 
 }

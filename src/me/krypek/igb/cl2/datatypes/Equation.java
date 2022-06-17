@@ -1,6 +1,6 @@
 package me.krypek.igb.cl2.datatypes;
 
-import me.krypek.igb.cl2.IGB_CL2_Exception;
+import me.krypek.igb.cl2.IGB_CL2_Exception.Err;
 
 public class Equation {
 	public final char[] operators;
@@ -8,7 +8,7 @@ public class Equation {
 
 	public Equation(char[] operators, Field[] fields) {
 		if(operators.length != fields.length - 1)
-			throw new IGB_CL2_Exception("Equation syntax error.");
+			throw Err.normal("Equation syntax error.");
 		this.operators = operators;
 		this.fields = fields;
 	}

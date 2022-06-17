@@ -2,7 +2,8 @@ package me.krypek.igb.cl2.datatypes;
 
 import static me.krypek.igb.cl2.datatypes.FieldType.*;
 
-import me.krypek.igb.cl2.IGB_CL2_Exception;
+import me.krypek.igb.cl2.IGB_CL2_Exception.Err;
+import me.krypek.igb.cl2.datatypes.function.FunctionCall;
 
 public class Field {
 	public final FieldType fieldType;
@@ -11,6 +12,7 @@ public class Field {
 	public Equation eq;
 	public FunctionCall funcCall;
 	public ArrayAccess arrAccess;
+	public String str;
 
 	public Field(int cell) {
 		fieldType = Var;
@@ -29,7 +31,7 @@ public class Field {
 		Field[] fields = eq1.fields;
 		char[] opes = eq1.operators;
 		if(fields.length == 0)
-			throw new IGB_CL2_Exception("Equation syntax error");
+			throw Err.normal("Equation syntax error");
 		if(fields.length == 1) {
 			Field f = fields[0];
 			switch (f.fieldType) {
@@ -37,7 +39,7 @@ public class Field {
 				fieldType = Array;
 				arrAccess = f.arrAccess;
 			}
-			case Eq -> throw new IGB_CL2_Exception("how");
+			case Eq -> throw Err.notPossible();
 			case Func -> {
 				fieldType = Func;
 				funcCall = f.funcCall;
@@ -50,7 +52,7 @@ public class Field {
 				fieldType = Var;
 				cell = f.cell;
 			}
-			default -> throw new IGB_CL2_Exception("how");
+			default -> throw Err.notPossible();
 
 			}
 		} else {
