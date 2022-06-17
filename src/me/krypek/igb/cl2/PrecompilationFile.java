@@ -1,5 +1,8 @@
 package me.krypek.igb.cl2;
 
+import static me.krypek.igb.cl1.Instruction.Cell_Call;
+import static me.krypek.igb.cl1.Instruction.Cell_Jump;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -14,7 +17,6 @@ import me.krypek.igb.cl2.datatypes.function.UserFunction;
 import me.krypek.igb.cl2.solvers.VarSolver;
 import me.krypek.utils.Pair;
 import me.krypek.utils.Utils;
-import static me.krypek.igb.cl1.Instruction.*;
 
 public class PrecompilationFile {
 	private static int DEFAULT_RAMLIMIT = 100;
@@ -23,6 +25,8 @@ public class PrecompilationFile {
 	private static final Map<String, String> libMap = Map.of("charlib", "$res charlib.igb_l2");
 
 	private final Functions functions;
+	// private final String mainPath;
+	private final String mainParentPath;
 	private UserFunction main;
 	public RAM ram;
 	public int startline = -1;
@@ -38,9 +42,11 @@ public class PrecompilationFile {
 	public final String path;
 	public final String fileName;
 
-	public PrecompilationFile(String path, Functions functions) {
+	public PrecompilationFile(String path, String mainPath, Functions functions) {
 		this.functions = functions;
 		this.path = path;
+		// this.mainPath = mainPath;
+		this.mainParentPath = new File(mainPath).getParent() + "/";
 		this.fileName = Utils.getFileName(path);
 		dependencies = new LinkedHashSet<>();
 		startInstructions = new ArrayList<>();
@@ -85,28 +91,34 @@ public class PrecompilationFile {
 				_function(true, rest);
 			else if(first.equals("final"))
 				_finalvar(rest);
-			else if(first.equals("#include"))
-				_include(rest);
 		}
 	}
 
-	private void _include(String filePath) {
-		filePath = filePath.strip();
-		if(filePath.startsWith("<") && filePath.endsWith(">")) {
-			String libName = filePath.substring(0, filePath.length() - 1);
-			String libPath = libMap.get(libName);
-			if(libPath == null)
-				throw Err.normal("Library <" + libName + "> doesn't exist.");
-
-			dependencies.add(libPath);
-			return;
+	private File findDependency(final String path) {
+		String ext = Utils.getFileExtension(path);
+		{
+			File file = new File(path);
+			if(file.exists())
+				return file;
+		}
+		if(ext.equals("")) {
+			File file = new File(path + ".igb_l2");
+			if(file.exists())
+				return file;
+		}
+		String path1 = mainParentPath + path;
+		{
+			File file = new File(path1);
+			if(file.exists())
+				return file;
+		}
+		if(ext.equals("")) {
+			File file = new File(path1 + ".igb_l2");
+			if(file.exists())
+				return file;
 		}
 
-		File file = new File(filePath);
-		if(!file.exists())
-			throw Err.normal("File: \"" + file.getAbsolutePath() + "\" doesn't exist.");
-
-		dependencies.add(file.getAbsolutePath());
+		throw Err.normal("File: \"" + path + "\" doesn't exist.");
 	}
 
 	private void _function(boolean returnType, String rest) {
@@ -188,7 +200,28 @@ public class PrecompilationFile {
 		ram = new RAM(ramlimit, ramcell, thread);
 	}
 
+	private void _include(String filePath) {
+		filePath = filePath.strip();
+		if(filePath.startsWith("<") && filePath.endsWith(">")) {
+			String libName = filePath.substring(0, filePath.length() - 1);
+			String libPath = libMap.get(libName);
+			if(libPath == null)
+				throw Err.normal("Library <" + libName + "> doesn't exist.");
+
+			dependencies.add(libPath);
+			return;
+		}
+		File file = findDependency(filePath);
+
+		dependencies.add(file.getAbsolutePath());
+	}
+
 	private void _compiler(String cmd) {
+		if(cmd.startsWith("$include")) {
+			_include(cmd.substring("$include".length()));
+			return;
+		}
+
 		String[] split = cmd.split("=");
 		if(split.length == 1)
 			throw Err.normal("Compiler variable has to be set.");

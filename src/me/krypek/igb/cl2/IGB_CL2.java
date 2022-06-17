@@ -39,7 +39,7 @@ public class IGB_CL2 {
 		 */
 
 		IGB_CL2 igb_cl2 = new IGB_CL2();
-		IGB_L1[] compiled = igb_cl2.compile(mainPath, outputPath, quiet);
+		IGB_L1[] compiled = igb_cl2.compile(mainPath, quiet);
 
 		/*
 		 * if(outputPath != null) { File outDir = new File(outputPath); outDir.mkdirs();
@@ -76,7 +76,7 @@ public class IGB_CL2 {
 
 	public IGB_CL2() {}
 
-	public IGB_L1[] compile(String mainPath, String outputPath, boolean quiet) {
+	public IGB_L1[] compile(String mainPath, boolean quiet) {
 		Precompilation prec = new Precompilation(mainPath, quiet);
 		this.functions = prec.functions;
 		this.precfA = prec.precfA;
@@ -109,7 +109,7 @@ public class IGB_CL2 {
 			if(instList.size() > precf.lenlimit)
 				throw Err.noLine("Instruction length limit reached: " + instList.size() + " out of " + precf.lenlimit + ".");
 
-			arr[file] = new IGB_L1(precf.startline, instList.toArray(Instruction[]::new));
+			arr[file] = new IGB_L1(precf.startline, instList.toArray(Instruction[]::new), precf.path);
 		}
 
 		if(!quiet)
