@@ -1,5 +1,6 @@
 package me.krypek.igb.cl2;
 
+import java.io.File;
 import java.util.ArrayList;
 
 import me.krypek.freeargparser.ArgType;
@@ -11,6 +12,7 @@ import me.krypek.igb.cl2.IGB_CL2_Exception.Err;
 import me.krypek.igb.cl2.solvers.ControlSolver;
 import me.krypek.igb.cl2.solvers.EqSolver;
 import me.krypek.igb.cl2.solvers.VarSolver;
+import me.krypek.utils.Utils;
 
 public class IGB_CL2 {
 
@@ -41,16 +43,18 @@ public class IGB_CL2 {
 		IGB_CL2 igb_cl2 = new IGB_CL2();
 		IGB_L1[] compiled = igb_cl2.compile(mainPath, quiet);
 
-		/*
-		 * if(outputPath != null) { File outDir = new File(outputPath); outDir.mkdirs();
-		 * for (int i = 0; i < compiled.length; i++) { IGB_L1 l1 = compiled[i]; String
-		 * fileName = Utils.getFileNameWithoutExtension(fileNames[i]);
-		 * Utils.serialize(l1, outputPath + File.separator + fileName + ".igb_l1");
-		 * if(readableOutput) Utils.writeIntoFile(outputPath + File.separator + fileName
-		 * + ".igb_l1_readable", l1.toString());
-		 *
-		 * } }
-		 */
+		if(outputPath != null) {
+			File outDir = new File(outputPath);
+			outDir.mkdirs();
+			for (int i = 0; i < compiled.length; i++) {
+				IGB_L1 l1 = compiled[i];
+				String fileName = Utils.getFileNameWithoutExtension(compiled[i].path);
+				Utils.serialize(l1, outputPath + File.separator + fileName + ".igb_l1");
+				if(readableOutput)
+					Utils.writeIntoFile(outputPath + File.separator + fileName + ".igb_l1_readable", l1.toString());
+			}
+		}
+
 	}
 
 	public PrecompilationFile[] precfA;
