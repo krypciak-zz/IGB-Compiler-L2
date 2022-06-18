@@ -152,7 +152,6 @@ public class Array {
 		var obj = getArrayCell(eqs, dims, tempCell);
 		ArrayList<Instruction> list = obj.getValue3();
 		if(obj.getValue1())
-			// list.add(Copy(cell, outCell));
 			return new Pair<>(tempCell, list);
 
 		list.add(Math_CC(obj.getValue2(), tempCell));

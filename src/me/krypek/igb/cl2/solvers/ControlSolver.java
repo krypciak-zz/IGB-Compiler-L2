@@ -88,7 +88,6 @@ public class ControlSolver {
 
 	public ArrayList<Instruction> cmd(String cmd, int line) {
 		this.line = line;
-		// System.out.println(bracketStack);
 		if(cmd.equals("{")) {
 			ram.next();
 			push(nextAdd);
@@ -113,7 +112,7 @@ public class ControlSolver {
 		}
 		if(cmd.startsWith("break"))
 			return _break(cmd.substring(5).strip());
-		else if(cmd.startsWith("redo"))
+		if(cmd.startsWith("redo"))
 			return _redo(cmd.substring(4).strip());
 		else if(cmd.equals("return"))
 			return _return();
@@ -136,16 +135,15 @@ public class ControlSolver {
 				if(first.equals("void") || VarSolver.typeSet.contains(first))
 					return _function(cmd.substring(spaceIndex).strip());
 			}
-			if(cmd.contains("(")) {
+			if(cmd.contains("("))
 				return _functionCall(cmd);
-			}
 		}
 
 		return null;
 	}
 
 	private ArrayList<Instruction> _raw(String cmd) {
-		return Utils.listOf(Instruction.stringToInstruction(cmd, str -> { return Err.normal("Raw instruction syntax Error."); }));
+		return Utils.listOf(Instruction.stringToInstruction(cmd, str -> Err.normal("Raw instruction syntax Error.")));
 	}
 
 	private ArrayList<Instruction> _functionCall(String cmd) {
@@ -170,13 +168,12 @@ public class ControlSolver {
 			nextAdd = Bracket._none(new ArrayList<>(), Utils.listOf(Instruction.Pointer(Bracket.getElseIfPointer())));
 			Bracket.elseIfIndex++;
 			return new ArrayList<>();
-		} else {
-			rest = rest.strip();
-			if(rest.startsWith("if")) {
-				return _if(rest.substring(2).strip());
-			} else
-				throw Err.normal("Syntax Error.");
 		}
+		rest = rest.strip();
+		if(rest.startsWith("if"))
+			return _if(rest.substring(2).strip());
+		else
+			throw Err.normal("Syntax Error.");
 	}
 
 	private ArrayList<Instruction> _function(String rest) {
@@ -249,9 +246,8 @@ public class ControlSolver {
 	}
 
 	private ArrayList<Instruction> solveIfEq(String eq, String pointerToJump, boolean revertOperator) {
-		if(eq.equals("false") || eq.equals("0")) {
+		if(eq.equals("false") || eq.equals("0"))
 			return Utils.listOf(Cell_Jump(pointerToJump));
-		}
 		if(eq.equals("true") || eq.equals("1"))
 			return new ArrayList<>();
 

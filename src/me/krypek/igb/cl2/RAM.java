@@ -251,27 +251,26 @@ public class RAM {
 
 	//@f:off
 	private final Map<String, Double> color_map = Map.ofEntries(
-            new AbstractMap.SimpleEntry<>("rgb_white",		getMCRGBValue(249, 255, 255)), 
-            new AbstractMap.SimpleEntry<>("rgb_yellow", 	getMCRGBValue(255, 216, 61)), 
-            new AbstractMap.SimpleEntry<>("rgb_orange", 	getMCRGBValue(249, 128, 29)), 
-            new AbstractMap.SimpleEntry<>("rgb_red", 		getMCRGBValue(176, 46, 38)), 
-            new AbstractMap.SimpleEntry<>("rgb_magenta", 	getMCRGBValue(198, 79, 189)), 
-            new AbstractMap.SimpleEntry<>("rgb_purple", 	getMCRGBValue(137, 50, 183)), 
-            new AbstractMap.SimpleEntry<>("rgb_blue", 		getMCRGBValue(60, 68, 169)), 
-            new AbstractMap.SimpleEntry<>("rgb_lightBlue", 	getMCRGBValue(58, 179, 218)), 
-            new AbstractMap.SimpleEntry<>("rgb_lime", 		getMCRGBValue(128, 199, 31)), 
-            new AbstractMap.SimpleEntry<>("rgb_green",		getMCRGBValue(93, 124, 21)), 
-            new AbstractMap.SimpleEntry<>("rgb_brown", 		getMCRGBValue(130, 84, 50)), 
-            new AbstractMap.SimpleEntry<>("rgb_cyan", 		getMCRGBValue(22, 156, 157)), 
-            new AbstractMap.SimpleEntry<>("rgb_lightGray", 	getMCRGBValue(156, 157, 151)), 
-            new AbstractMap.SimpleEntry<>("rgb_pink", 		getMCRGBValue(172, 81, 114)), 
-            new AbstractMap.SimpleEntry<>("rgb_gray", 		getMCRGBValue(71, 79, 82)), 
+            new AbstractMap.SimpleEntry<>("rgb_white",		getMCRGBValue(249, 255, 255)),
+            new AbstractMap.SimpleEntry<>("rgb_yellow", 	getMCRGBValue(255, 216, 61)),
+            new AbstractMap.SimpleEntry<>("rgb_orange", 	getMCRGBValue(249, 128, 29)),
+            new AbstractMap.SimpleEntry<>("rgb_red", 		getMCRGBValue(176, 46, 38)),
+            new AbstractMap.SimpleEntry<>("rgb_magenta", 	getMCRGBValue(198, 79, 189)),
+            new AbstractMap.SimpleEntry<>("rgb_purple", 	getMCRGBValue(137, 50, 183)),
+            new AbstractMap.SimpleEntry<>("rgb_blue", 		getMCRGBValue(60, 68, 169)),
+            new AbstractMap.SimpleEntry<>("rgb_lightBlue", 	getMCRGBValue(58, 179, 218)),
+            new AbstractMap.SimpleEntry<>("rgb_lime", 		getMCRGBValue(128, 199, 31)),
+            new AbstractMap.SimpleEntry<>("rgb_green",		getMCRGBValue(93, 124, 21)),
+            new AbstractMap.SimpleEntry<>("rgb_brown", 		getMCRGBValue(130, 84, 50)),
+            new AbstractMap.SimpleEntry<>("rgb_cyan", 		getMCRGBValue(22, 156, 157)),
+            new AbstractMap.SimpleEntry<>("rgb_lightGray", 	getMCRGBValue(156, 157, 151)),
+            new AbstractMap.SimpleEntry<>("rgb_pink", 		getMCRGBValue(172, 81, 114)),
+            new AbstractMap.SimpleEntry<>("rgb_gray", 		getMCRGBValue(71, 79, 82)),
             new AbstractMap.SimpleEntry<>("rgb_black", 		getMCRGBValue(29, 28, 33)) );
     //@f:on
 
 	public HashMap<String, Double> getDefaultFinalVars() {
-		HashMap<String, Double> fvars = new HashMap<>();
-		fvars.putAll(color_map);
+		HashMap<String, Double> fvars = new HashMap<>(color_map);
 		return fvars;
 	}
 

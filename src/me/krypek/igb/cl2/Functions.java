@@ -56,8 +56,7 @@ public class Functions {
 		FunctionCallField f1 = call.fields[index];
 		if(f1 instanceof FunctionCallCompilerField)
 			return ((FunctionCallCompilerField) f1).field;
-		else
-			throw Err.notPossible();
+		throw Err.notPossible();
 	}
 
 	private void initCompilerFunctions() {
@@ -107,7 +106,7 @@ public class Functions {
 			var numcell2 = call.eqsolver.getNumCell(f2, call.eqsolver.temp2);
 			boolean isCell2 = numcell2.getFirst() != null;
 
-			if(isCell1 && isCell2 && (!f1.isVar() && !f2.isVar()) && numcell1.getSecond().intValue() == numcell2.getSecond().intValue())
+			if(isCell1 && isCell2 && !f1.isVar() && !f2.isVar() && numcell1.getSecond().intValue() == numcell2.getSecond().intValue())
 				numcell1 = call.eqsolver.getNumCell(f1, IGB_MA.CHARLIB_TEMP_START + 9);
 			if(isCell1)
 				list.addAll(numcell1.getFirst());
@@ -171,7 +170,7 @@ public class Functions {
 			var numcell2 = call.eqsolver.getNumCell(f2, call.eqsolver.temp2);
 			boolean isCell2 = numcell2.getFirst() != null;
 
-			if(isCell1 && isCell2 && (!f1.isVar() && !f2.isVar()) && numcell1.getSecond().intValue() == numcell2.getSecond().intValue())
+			if(isCell1 && isCell2 && !f1.isVar() && !f2.isVar() && numcell1.getSecond().intValue() == numcell2.getSecond().intValue())
 				numcell1 = call.eqsolver.getNumCell(f1, IGB_MA.CHARLIB_TEMP_START + 11);
 
 			if(isCell1)
@@ -197,7 +196,7 @@ public class Functions {
 					var numcell2 = call.eqsolver.getNumCell(f2, call.eqsolver.temp2);
 					boolean isCell2 = numcell2.getFirst() != null;
 
-					if(isCell1 && isCell2 && (!f1.isVar() && !f2.isVar()) && numcell1.getSecond().intValue() == numcell2.getSecond().intValue())
+					if(isCell1 && isCell2 && !f1.isVar() && !f2.isVar() && numcell1.getSecond().intValue() == numcell2.getSecond().intValue())
 						numcell1 = call.eqsolver.getNumCell(f1, IGB_MA.CHARLIB_TEMP_START + 11);
 
 					if(isCell1)
@@ -233,10 +232,7 @@ public class Functions {
 				}));
 
 		addFunction(new CompilerFunction("drawchar", true,
-				Function.fieldsOf(new FunctionCompilerField(), new FunctionCompilerField(), new FunctionCompilerField()), call -> {
-
-					return null;
-				}));
+				Function.fieldsOf(new FunctionCompilerField(), new FunctionCompilerField(), new FunctionCompilerField()), call -> null));
 
 		/*
 		 * addFunction(new Function("comment", obj -> { FunctionActionInputString faif =

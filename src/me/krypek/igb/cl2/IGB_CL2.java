@@ -34,7 +34,7 @@ public class IGB_CL2 {
 		 * Utils.readFromFile(codePaths[i], "\n"); if(readden == null) throw new
 		 * IGB_CL2_Exception("Error reading file: \"" + codePaths[i] + "\"."); inputs[i]
 		 * = readden;
-		 * 
+		 *
 		 * fileNames[i] = new File(codePaths[i]).getName(); }
 		 */
 
@@ -48,7 +48,7 @@ public class IGB_CL2 {
 		 * Utils.serialize(l1, outputPath + File.separator + fileName + ".igb_l1");
 		 * if(readableOutput) Utils.writeIntoFile(outputPath + File.separator + fileName
 		 * + ".igb_l1_readable", l1.toString());
-		 * 
+		 *
 		 * } }
 		 */
 	}
@@ -71,25 +71,19 @@ public class IGB_CL2 {
 
 	public VarSolver getVarSolver() { return varsolver; }
 
-	// public PrecompilationFile getCurrentPrecompilationFile() { return
-	// precfA[file]; }
-
 	public IGB_CL2() {}
 
 	public IGB_L1[] compile(String mainPath, boolean quiet) {
 		Precompilation prec = new Precompilation(mainPath, quiet);
-		this.functions = prec.functions;
-		this.precfA = prec.precfA;
+		functions = prec.functions;
+		precfA = prec.precfA;
 
 		IGB_L1[] arr = new IGB_L1[precfA.length];
-		// System.out.println(functions);
-		// System.out.println("\n\n");
 
 		for (file = 0; file < precfA.length; file++) {
 			PrecompilationFile precf = precfA[file];
 
-			ArrayList<Instruction> instList = new ArrayList<>();
-			instList.addAll(precf.startInstructions);
+			ArrayList<Instruction> instList = new ArrayList<>(precf.startInstructions);
 			ram = precf.ram;
 			eqsolver = new EqSolver(ram, functions);
 			varsolver = new VarSolver(eqsolver, ram);
@@ -100,12 +94,10 @@ public class IGB_CL2 {
 				// System.out.println("cmd: " + cmd + " -> " + out);
 				if(out == null)
 					throw Err.normal("Unknown command: \"" + cmd + "\".");
-				// instList.add(Instruction.Pointer(":null"));
 				instList.addAll(out);
 			}
 			cntrlsolver.checkStack();
 
-			// System.out.println(ram);
 			if(instList.size() > precf.lenlimit)
 				throw Err.noLine("Instruction length limit reached: " + instList.size() + " out of " + precf.lenlimit + ".");
 

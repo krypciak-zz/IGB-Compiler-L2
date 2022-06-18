@@ -25,7 +25,6 @@ public class PrecompilationFile {
 	private static final Map<String, String> libMap = Map.of("charlib", "$res charlib.igb_l2");
 
 	private final Functions functions;
-	// private final String mainPath;
 	private final String mainParentPath;
 	private UserFunction main;
 	public RAM ram;
@@ -45,9 +44,8 @@ public class PrecompilationFile {
 	public PrecompilationFile(String path, String mainPath, Functions functions) {
 		this.functions = functions;
 		this.path = path;
-		// this.mainPath = mainPath;
-		this.mainParentPath = new File(mainPath).getParent() + "/";
-		this.fileName = Utils.getFileName(path);
+		mainParentPath = new File(mainPath).getParent() + "/";
+		fileName = Utils.getFileName(path);
 		dependencies = new LinkedHashSet<>();
 		startInstructions = new ArrayList<>();
 
@@ -293,11 +291,11 @@ public class PrecompilationFile {
 			if(!isQuote && c == '*' && pc == '/') {
 				// deletes the last char
 				sb.setLength(Math.max(sb.length() - 1, 0));
-				
+
 				ignore = true;
 				continue;
 			}
-			
+
 			if(!isQuote && c == '/' && pc == '/') {
 				sb = new StringBuilder(stringBuilderSize);
 				for (; charA[i] != '\n'; i++) {}
@@ -314,9 +312,9 @@ public class PrecompilationFile {
 				}
 			} else if(isQuote)
 				sb.append(c);
-			else if(c == '\n') {
+			else if(c == '\n')
 				Err.updateLine(++line);
-			} else if(c == ' ' && (pc == ' ' || wasLastSemi) || (c == ' ' && sb.isEmpty()) || (c != ' ' && Character.isWhitespace(c)))
+			else if(c == ' ' && (pc == ' ' || wasLastSemi) || c == ' ' && sb.isEmpty() || c != ' ' && Character.isWhitespace(c))
 				continue;
 			else if(c == '(') {
 				sb.append('(');
@@ -335,9 +333,9 @@ public class PrecompilationFile {
 				lineList.add(line);
 				sb = new StringBuilder(stringBuilderSize);
 			} else if(c == '}') {
-				sb = new StringBuilder(stringBuilderSize);
-				// if(!sb.isEmpty())
-				// throw Err.normal("Sytnax Error (DEBUG INFO: \"" + sb.toString() + "\")");
+				// sb = new StringBuilder(stringBuilderSize);
+				if(!sb.isEmpty())
+					throw Err.normal("Sytnax Error (DEBUG INFO: \"" + sb.toString() + "\")");
 				list.add("}");
 				lineList.add(line);
 			} else if(c == ';') {
@@ -357,6 +355,6 @@ public class PrecompilationFile {
 			wasLastSemi = false;
 		}
 
-		return new Pair<String[], int[]>(list.toArray(String[]::new), lineList.stream().mapToInt(i -> i).toArray());
+		return new Pair<>(list.toArray(String[]::new), lineList.stream().mapToInt(i -> i).toArray());
 	}
 }

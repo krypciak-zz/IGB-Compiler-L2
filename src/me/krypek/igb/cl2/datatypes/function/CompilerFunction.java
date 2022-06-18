@@ -16,6 +16,7 @@ public class CompilerFunction extends Function {
 		this.generator = generator;
 	}
 
+	@Override
 	public ArrayList<Instruction> call(FunctionCall call) { return generator.get(call); }
 
 	public int getArgumentLength() { return fields.length; }

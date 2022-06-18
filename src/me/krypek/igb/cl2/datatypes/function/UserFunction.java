@@ -26,6 +26,7 @@ public class UserFunction extends Function {
 		this.endPointer = endPointer;
 	}
 
+	@Override
 	public ArrayList<Instruction> call(FunctionCall call) {
 
 		ArrayList<Instruction> list = new ArrayList<>();
@@ -34,10 +35,8 @@ public class UserFunction extends Function {
 			if(field instanceof FunctionCallStringField)
 				throw Err.normal("Function argument " + i + ": Strings aren't accepted for user functions.");
 
-			if(!(field instanceof FunctionCallNormalField))
+			if(!(field instanceof FunctionCallNormalField fcnf))
 				throw Err.normal("Function argument " + i + " i forgor to implement handling");
-
-			FunctionCallNormalField fcnf = (FunctionCallNormalField) field;
 
 			var obj = call.eqsolver.getInstructionsFromField(fcnf.field, fields[i].cell);
 			if(obj.getSecond() != null)
@@ -52,7 +51,10 @@ public class UserFunction extends Function {
 
 	public int getArgumentLength() { return fields.length; }
 
-	public void initVariables(RAM ram) { for (int i = 0; i < fields.length; i++) { ram.newVar(fields[i].name, new Variable(fields[i].cell)); } }
+	public void initVariables(RAM ram) {
+		for (FunctionNormalField field : fields)
+			ram.newVar(field.name, new Variable(field.cell));
+	}
 
 	@Override
 	public String toString() { return startPointer + ", \t" + name + Utils.arrayToString(fields, '(', ')', ",") + " " + returnType; }

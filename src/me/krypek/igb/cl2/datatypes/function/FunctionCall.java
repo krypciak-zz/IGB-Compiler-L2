@@ -17,7 +17,7 @@ public class FunctionCall {
 		this.fields = fields;
 		this.func = func;
 		this.eqsolver = eqsolver;
-		this.outputCell = -1;
+		outputCell = -1;
 	}
 
 	public FunctionCall(FunctionCallField[] fields, Function func, EqSolver eqsolver, int outputCell) {

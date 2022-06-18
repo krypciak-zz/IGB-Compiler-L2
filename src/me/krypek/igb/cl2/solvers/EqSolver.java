@@ -334,7 +334,7 @@ public class EqSolver {
 				Field[] fa = stringArrayToFieldArray(args);
 
 				FunctionCallNormalField[] callFields = fieldArrayToFunctionCallNormalFieldArray(fa);
-				Function func = this.funcs.getFunction(funcName, callFields.length);
+				Function func = funcs.getFunction(funcName, callFields.length);
 
 				FunctionCall call = new FunctionCall(callFields, func, this);
 				return new Field(call);
@@ -383,7 +383,8 @@ public class EqSolver {
 
 	private static FunctionCallNormalField[] fieldArrayToFunctionCallNormalFieldArray(Field[] array) {
 		FunctionCallNormalField[] returnArray = new FunctionCallNormalField[array.length];
-		for (int i = 0; i < array.length; i++) { returnArray[i] = new FunctionCallNormalField(array[i]); }
+		for (int i = 0; i < array.length; i++)
+			returnArray[i] = new FunctionCallNormalField(array[i]);
 		return returnArray;
 	}
 

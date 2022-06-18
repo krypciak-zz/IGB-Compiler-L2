@@ -13,6 +13,7 @@ public class FunctionNormalField implements FunctionField {
 		this.cell = cell;
 	}
 
+	@Override
 	public FunctionCallField get(String str, EqSolver eqsolver) {
 		Field field = eqsolver.stringToField(str, false);
 		return new FunctionCallCompilerField(field);

@@ -22,19 +22,17 @@ public abstract class Function {
 
 	private void checkNames() {
 		checkName(name);
-		for (FunctionField ff : fields) {
+		for (FunctionField ff : fields)
 			if(ff instanceof FunctionNormalField)
 				checkName(((FunctionNormalField) ff).name);
-		}
 	}
 
 	private static void checkName(String name) {
 		if(RAM.illegalNames.contains(name))
 			throw Err.normal("Illegal function name: \"" + name + "\".");
-		for (String c : RAM.illegalCharacters) {
+		for (String c : RAM.illegalCharacters)
 			if(name.contains(c))
 				throw Err.normal("Name contains illegal character: \"" + name + "\".");
-		}
 
 	}
 

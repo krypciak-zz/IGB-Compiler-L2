@@ -9,9 +9,9 @@ public class Precompilation {
 	public final Functions functions;
 	public final PrecompilationFile[] precfA;
 
-	private ArrayList<PrecompilationFile> precfList;
-	private HashSet<String> processed;
-	private String mainPath;
+	private final ArrayList<PrecompilationFile> precfList;
+	private final HashSet<String> processed;
+	private final String mainPath;
 
 	public Precompilation(String mainPath, boolean quiet) {
 		this.mainPath = mainPath;
@@ -34,7 +34,7 @@ public class Precompilation {
 		PrecompilationFile precf = new PrecompilationFile(path, mainPath, functions);
 		precfList.add(precf);
 
-		precf.dependencies.forEach(path1 -> processFile(path1));
+		precf.dependencies.forEach(this::processFile);
 	}
 
 }
