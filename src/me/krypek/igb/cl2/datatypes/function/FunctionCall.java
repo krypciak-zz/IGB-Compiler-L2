@@ -30,6 +30,11 @@ public class FunctionCall {
 		this.outputCell = outputCell;
 	}
 
+	public FunctionCall cloneWithOutputCell(int outputCell) {
+		assert outputCell != -1;
+		return new FunctionCall(fields, func, eqsolver, outputCell);
+	}
+
 	public ArrayList<Instruction> call() { return func.call(this); }
 
 	public ArrayList<Instruction> callReturn(EqSolver eqs) {
@@ -39,5 +44,5 @@ public class FunctionCall {
 	}
 
 	@Override
-	public String toString() { return func.name + Utils.arrayToString(fields, '(', ')', ","); }
+	public String toString() { return func.name + Utils.arrayToString(fields, '(', ')', ",") + " -> " + outputCell; }
 }

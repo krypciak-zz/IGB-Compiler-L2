@@ -261,8 +261,11 @@ public class EqSolver {
 		}
 		case Func -> {
 			FunctionCall fc = f.funcCall;
+			System.out.println(fc);
 			final int outCell = directCell == -1 ? IGB_MA.FUNC_RETURN : directCell;
+			fc = fc.cloneWithOutputCell(outCell);
 			list.addAll(fc.call());
+
 			return new Pair<>(outCell, list);
 		}
 		}
