@@ -12,7 +12,6 @@ import me.krypek.igb.cl2.RAM;
 import me.krypek.igb.cl2.datatypes.Variable;
 import me.krypek.igb.cl2.datatypes.function.FunctionNormalField.FunctionCallNormalField;
 import me.krypek.igb.cl2.datatypes.function.FunctionStringField.FunctionCallStringField;
-import me.krypek.utils.Utils;
 
 public class UserFunction extends Function {
 	public final String startPointer;
@@ -56,6 +55,4 @@ public class UserFunction extends Function {
 			ram.newVar(field.name, new Variable(field.cell));
 	}
 
-	@Override
-	public String toString() { return startPointer + ", \t" + name + Utils.arrayToString(fields, '(', ')', ",") + " " + returnType; }
 }

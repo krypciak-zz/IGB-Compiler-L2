@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Set;
 import java.util.Stack;
 
+import me.krypek.igb.cl1.IGB_MA;
 import me.krypek.igb.cl1.Instruction;
 import me.krypek.igb.cl2.Functions;
 import me.krypek.igb.cl2.IGB_CL2_Exception.Err;
@@ -111,23 +112,23 @@ public class ControlSolver {
 			return b.endList;
 		}
 		if(cmd.startsWith("break"))
-			return _break(cmd.substring(5).strip());
+			return _break(cmd.substring(5).stripTrailing());
 		if(cmd.startsWith("redo"))
-			return _redo(cmd.substring(4).strip());
-		else if(cmd.equals("return"))
-			return _return();
+			return _redo(cmd.substring(4).stripTrailing());
+		else if(cmd.startsWith("return"))
+			return _return(cmd.substring(6).stripTrailing());
 		else if(cmd.startsWith("continue"))
-			return _continue(cmd.substring(8).strip());
+			return _continue(cmd.substring(8).stripTrailing());
 		else if(cmd.startsWith("if"))
-			return _if(cmd.substring(2).strip());
+			return _if(cmd.substring(2).stripTrailing());
 		else if(cmd.startsWith("while"))
-			return _while(cmd.substring(5).strip());
+			return _while(cmd.substring(5).stripTrailing());
 		else if(cmd.startsWith("for"))
-			return _for(cmd.substring(3).strip());
+			return _for(cmd.substring(3).stripTrailing());
 		else if(cmd.startsWith("else"))
-			return _else(cmd.substring(4).strip());
+			return _else(cmd.substring(4).stripTrailing());
 		else if(cmd.startsWith("raw"))
-			return _raw(cmd.substring(3).strip());
+			return _raw(cmd.substring(3).stripTrailing());
 		else {
 			int spaceIndex = cmd.indexOf(' ');
 			if(spaceIndex != -1) {
@@ -433,13 +434,18 @@ public class ControlSolver {
 
 	}
 
-	private ArrayList<Instruction> _return() {
+	private ArrayList<Instruction> _return(String rest) {
 		try {
 			lookFor(1, Set.of(Function));
 		} catch (Exception e) {
 			throw Err.normal("Cannot return outside of functions.");
 		}
-		return Utils.listOf(Cell_Return());
+		ArrayList<Instruction> list = new ArrayList<>();
+		if(!rest.isBlank()) {
+			list.addAll(eqsolver.solve(rest.strip(), IGB_MA.FUNC_RETURN));
+		}
+		list.add(Cell_Return());
+		return list;
 	}
 
 	private ArrayList<Instruction> _break(String rest) {

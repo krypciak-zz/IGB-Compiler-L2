@@ -253,9 +253,11 @@ public class Functions {
 		StringBuilder sb = new StringBuilder("Functions: {\n");
 		functionMap.forEach((k, v) -> {
 			v.forEach((k1, v1) -> {
-				sb.append("\t");
-				sb.append(v1.toString());
-				sb.append("\n");
+				if(!(v1 instanceof CompilerFunction)) {
+					sb.append("\t");
+					sb.append(v1.toString());
+					sb.append("\n");
+				}
 
 			});
 		});

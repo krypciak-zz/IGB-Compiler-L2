@@ -3,12 +3,16 @@ package me.krypek.igb.cl2;
 import static me.krypek.igb.cl1.Instruction.Cell_Call;
 import static me.krypek.igb.cl1.Instruction.Cell_Jump;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import me.krypek.igb.cl1.Instruction;
 import me.krypek.igb.cl2.IGB_CL2_Exception.Err;
@@ -50,14 +54,25 @@ public class PrecompilationFile {
 		startInstructions = new ArrayList<>();
 
 		Err.updateFile(fileName, path);
-
-		String contents = readFromFile(path);
+		String contents;
+		if(path.startsWith("$res")) {
+			path = path.substring(5);
+			InputStream is = getClass().getClassLoader().getResourceAsStream(path);
+			try {
+				BufferedReader r = new BufferedReader(new InputStreamReader(is, "UTF-8"));
+				contents = r.lines().collect(Collectors.joining("\n"));
+			} catch (Exception e) {
+				e.printStackTrace();
+				contents = null;
+			}
+		} else
+			contents = readFromFile(path);
 
 		var formatPair = format(contents);
 		cmd = formatPair.getFirst();
 		lines = formatPair.getSecond();
 
-		for (int i = 0; i < cmd.length; i++) { Err.updateLine(i); processCmd(cmd[i]); }
+		for (int i = 0; i < cmd.length; i++) { Err.updateLine(i); cmd(cmd[i]); }
 	}
 
 	private String readFromFile(String path) {
@@ -67,7 +82,7 @@ public class PrecompilationFile {
 		return str;
 	}
 
-	private void processCmd(String cmd) {
+	private void cmd(String cmd) {
 		int spaceIndex = cmd.indexOf(' ');
 		if(spaceIndex == -1)
 			spaceIndex = cmd.length();
@@ -125,7 +140,6 @@ public class PrecompilationFile {
 		String[] splited = Utils.getArrayElementsFromString(rest.substring(bracketIndex), '(', ')', ",");
 
 		FunctionNormalField[] fields = new FunctionNormalField[splited.length];
-		int[] cells = ram.reserve(splited.length);
 
 		for (int i = 0; i < splited.length; i++) {
 			String arg = splited[i];
@@ -137,7 +151,7 @@ public class PrecompilationFile {
 			if(!VarSolver.typeSet.contains(type))
 				throw Err.normal("Invalid type: \"" + type + "\".");
 			String argName = arg.substring(spaceIndex + 1);
-			fields[i] = new FunctionNormalField(argName, cells[i]);
+			fields[i] = new FunctionNormalField(argName, ram);
 		}
 		int argsLen = splited.length;
 		String startPointer = PointerNames.functionStart(name, argsLen);
@@ -198,10 +212,10 @@ public class PrecompilationFile {
 		ram = new RAM(ramlimit, ramcell, thread);
 	}
 
-	private void _include(String filePath) {
+	private void _import(String filePath) {
 		filePath = filePath.strip();
 		if(filePath.startsWith("<") && filePath.endsWith(">")) {
-			String libName = filePath.substring(0, filePath.length() - 1);
+			String libName = filePath.substring(1, filePath.length() - 1);
 			String libPath = libMap.get(libName);
 			if(libPath == null)
 				throw Err.normal("Library <" + libName + "> doesn't exist.");
@@ -215,8 +229,8 @@ public class PrecompilationFile {
 	}
 
 	private void _compiler(String cmd) {
-		if(cmd.startsWith("$include")) {
-			_include(cmd.substring("$include".length()));
+		if(cmd.startsWith("$import")) {
+			_import(cmd.substring("$import".length()));
 			return;
 		}
 
@@ -357,4 +371,27 @@ public class PrecompilationFile {
 
 		return new Pair<>(list.toArray(String[]::new), lineList.stream().mapToInt(i -> i).toArray());
 	}
+
+	@Override
+	//@f:off
+	public String toString() {
+		IGB_CL2.toStringTabs++;
+		StringBuilder sb = new StringBuilder();
+		sb.append(IGB_CL2.getTabs()+"PrecompilationFile: {\n");
+		IGB_CL2.toStringTabs++;
+		sb.append(
+				IGB_CL2.getTabs()+"path: \"" + path + "\"\n" +
+				IGB_CL2.getTabs()+"dependencies: "+dependencies+"\n"+
+				IGB_CL2.getTabs()+"startline: " + startline + "\n" +
+				IGB_CL2.getTabs()+"lenlimit: " + lenlimit + "\n" +
+				ram.toString() + "\n" +
+				//IGB_CL2.getTabs()+"main: " + main + "\n" +
+				""
+				);
+		IGB_CL2.toStringTabs--;
+		sb.append("\n"+IGB_CL2.getTabs()+"}");
+		IGB_CL2.toStringTabs--;
+		return sb.toString();
+	}
+	//@f:on
 }

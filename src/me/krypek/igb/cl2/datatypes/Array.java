@@ -24,7 +24,10 @@ public class Array {
 	}
 
 	@Override
-	public String toString() { return cell + "c " + totalSize + " == " + Utils.arrayToString(size, '[', ']'); }
+	public String toString() {
+
+		return "|" + cell + "| " + Utils.arrayToString(size, '[', ']') + " (" + totalSize + ")";
+	}
 
 	public TripleObject<Boolean, Integer, ArrayList<Instruction>> getArrayCell(EqSolver eqs, Field[] dims, int outCell) {
 		if(dims.length != size.length)

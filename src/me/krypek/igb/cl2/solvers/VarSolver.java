@@ -80,9 +80,9 @@ public class VarSolver {
 				if(equalsIndex != -1) {
 					String name = rest.substring(0, equalsIndex).strip();
 					String eq = rest.substring(equalsIndex + 1).strip();
-					int cell = ram.reserve(1)[0];
-					list.addAll(eqsolver.solve(eq, cell));
-					ram.newVar(name, new Variable(cell));
+					var pair = ram.preNewVar(name);
+					list.addAll(eqsolver.solve(eq, pair.getSecond()));
+					ram.newVar(pair.getFirst(), new Variable(pair.getSecond()));
 					return list;
 				}
 				if(rest.contains("(") || rest.contains(")"))

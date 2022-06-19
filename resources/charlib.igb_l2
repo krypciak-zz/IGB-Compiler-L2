@@ -1,0 +1,1086 @@
+$ramcell = 0;
+$ramlimit = 0;
+$startLine = 0;
+$lenlimit = 3500;
+$thread = 0;
+int drawChar(int w0|57|, int h0|58|, int c|56|) {
+	pixelcache(0, 0, 0);
+	int w1 |21| = w0 + 1 ;
+	int w2 |22| = w0 + 2 ;
+	int w3 |23| = w0 + 3 ;
+	int w4 |24| = w0 + 4 ;
+	int w5 |25| = w0 + 5 ;
+	int w6 |26| = w0 + 6 ;
+	int w7 |27| = w0 + 7 ;
+	int w8 |28| = w0 + 8 ;
+	int w9 |29| = w0 + 9 ;
+	int w10|30| = w0 + 10;
+
+	int h1 |31| = h0 + 1 ;
+	int h2 |32| = h0 + 2 ;
+	int h3 |33| = h0 + 3 ;
+	int h4 |34| = h0 + 4 ;
+	int h5 |35| = h0 + 5 ;
+	int h6 |36| = h0 + 6 ;
+	int h7 |37| = h0 + 7 ;
+	int h8 |38| = h0 + 8 ;
+	int h9 |39| = h0 + 9 ;
+	int h10|40| = h0 + 10;
+	int h11|41| = h0 + 11;
+	int h12|42| = h0 + 12;
+	int h13|43| = h0 + 13;
+	int h14|44| = h0 + 14;
+	int h15|45| = h0 + 15;
+	int h16|46| = h0 + 16;
+	if(c==' ') {
+		return 3;
+	}
+	if(c=='!') {
+		                    setpixel(w1, h1);                       
+		                    setpixel(w1, h2);                       
+		                    setpixel(w1, h3);                       
+		                    setpixel(w1, h4);                       
+		                    setpixel(w1, h5);                       
+		                    setpixel(w1, h6);                       
+		                    setpixel(w1, h8);                       
+		                    setpixel(w1, h9);                       
+		return 3;
+	}
+	if(c=='"') {
+		                    setpixel(w1, h1);                       setpixel(w3, h1);                       
+		                    setpixel(w1, h2);                       setpixel(w3, h2);                       
+		                    setpixel(w1, h3);                       setpixel(w3, h3);                       
+		return 5;
+	}
+	if(c=='#') {
+		                                                            setpixel(w3, h1);                       setpixel(w5, h1);                                           
+		                                                            setpixel(w3, h2);                       setpixel(w5, h2);                                           
+		                    setpixel(w1, h3);   setpixel(w2, h3);   setpixel(w3, h3);   setpixel(w4, h3);   setpixel(w5, h3);   setpixel(w6, h3);                       
+		                                        setpixel(w2, h4);                                           setpixel(w5, h4);                                           
+		                                        setpixel(w2, h5);                                           setpixel(w5, h5);                                           
+		setpixel(w0, h6);   setpixel(w1, h6);   setpixel(w2, h6);   setpixel(w3, h6);   setpixel(w4, h6);   setpixel(w5, h6);   setpixel(w6, h6);                       
+		                                        setpixel(w2, h7);                       setpixel(w4, h7);                                                               
+		                    setpixel(w1, h8);                                           setpixel(w4, h8);                                                               
+		                    setpixel(w1, h9);                                           setpixel(w4, h9);                                                               
+		return 8;
+	}
+	if(c=='$') {
+		                                                            setpixel(w3, h0);                                                               
+		                                        setpixel(w2, h1);   setpixel(w3, h1);   setpixel(w4, h1);   setpixel(w5, h1);                       
+		                    setpixel(w1, h2);                       setpixel(w3, h2);                       setpixel(w5, h2);                       
+		                    setpixel(w1, h3);                       setpixel(w3, h3);                                                               
+		                    setpixel(w1, h4);   setpixel(w2, h4);   setpixel(w3, h4);                                                               
+		                                                            setpixel(w3, h5);   setpixel(w4, h5);   setpixel(w5, h5);                       
+		                                                            setpixel(w3, h6);                       setpixel(w5, h6);                       
+		                    setpixel(w1, h7);                       setpixel(w3, h7);                       setpixel(w5, h7);                       
+		                    setpixel(w1, h8);   setpixel(w2, h8);   setpixel(w3, h8);   setpixel(w4, h8);                                           
+		                                                            setpixel(w3, h9);                                                               
+		return 7;
+	}
+	if(c=='%') {
+		                    setpixel(w1, h1);   setpixel(w2, h1);                                                                                   setpixel(w7, h1);                                           
+		                    setpixel(w1, h2);                       setpixel(w3, h2);                                           setpixel(w6, h2);                                                               
+		                    setpixel(w1, h3);                       setpixel(w3, h3);                                           setpixel(w6, h3);                                                               
+		                    setpixel(w1, h4);                       setpixel(w3, h4);                       setpixel(w5, h4);   setpixel(w6, h4);   setpixel(w7, h4);   setpixel(w8, h4);                       
+		                    setpixel(w1, h5);                       setpixel(w3, h5);   setpixel(w4, h5);                       setpixel(w6, h5);                       setpixel(w8, h5);                       
+		                    setpixel(w1, h6);   setpixel(w2, h6);                       setpixel(w4, h6);                       setpixel(w6, h6);                       setpixel(w8, h6);                       
+		                                                            setpixel(w3, h7);                                           setpixel(w6, h7);                       setpixel(w8, h7);                       
+		                                                            setpixel(w3, h8);                                           setpixel(w6, h8);                       setpixel(w8, h8);                       
+		                                        setpixel(w2, h9);                                                               setpixel(w6, h9);   setpixel(w7, h9);   setpixel(w8, h9);                       
+		return 10;
+	}
+	if(c=='&') {
+		                                        setpixel(w2, h1);   setpixel(w3, h1);   setpixel(w4, h1);                                                                                   
+		                    setpixel(w1, h2);   setpixel(w2, h2);                                           setpixel(w5, h2);                                                               
+		                                        setpixel(w2, h3);                       setpixel(w4, h3);   setpixel(w5, h3);                                                               
+		                                        setpixel(w2, h4);   setpixel(w3, h4);                                                                                                       
+		                    setpixel(w1, h5);   setpixel(w2, h5);   setpixel(w3, h5);   setpixel(w4, h5);                                           setpixel(w7, h5);                       
+		                    setpixel(w1, h6);                                           setpixel(w4, h6);   setpixel(w5, h6);                       setpixel(w7, h6);                       
+		                    setpixel(w1, h7);                                                               setpixel(w5, h7);   setpixel(w6, h7);                                           
+		                    setpixel(w1, h8);                                                               setpixel(w5, h8);   setpixel(w6, h8);                                           
+		                                        setpixel(w2, h9);   setpixel(w3, h9);   setpixel(w4, h9);                                           setpixel(w7, h9);   setpixel(w8, h9);   
+		return 9;
+	}
+	if(c==''') {
+		                    setpixel(w1, h1);                       
+		                    setpixel(w1, h2);                       
+		                    setpixel(w1, h3);                       
+		return 3;
+	}
+	if(c=='(') {
+		                                        setpixel(w2, h1);                       
+		                    setpixel(w1, h2);                                           
+		                    setpixel(w1, h3);                                           
+		                    setpixel(w1, h4);                                           
+		                    setpixel(w1, h5);                                           
+		setpixel(w0, h6);   setpixel(w1, h6);                                           
+		                    setpixel(w1, h7);                                           
+		                    setpixel(w1, h8);                                           
+		                    setpixel(w1, h9);                                           
+		                    setpixel(w1, h10);                                          
+		                                        setpixel(w2, h11);                      
+		return 4;
+	}
+	if(c==')') {
+		setpixel(w0, h1);   setpixel(w1, h1);                                           
+		                    setpixel(w1, h2);                                           
+		                                        setpixel(w2, h3);                       
+		                                        setpixel(w2, h4);                       
+		                                        setpixel(w2, h5);                       
+		                                        setpixel(w2, h6);                       
+		                                        setpixel(w2, h7);                       
+		                                        setpixel(w2, h8);                       
+		                                        setpixel(w2, h9);                       
+		                    setpixel(w1, h10);                                          
+		setpixel(w0, h11);  setpixel(w1, h11);                                          
+		return 4;
+	}
+	if(c=='*') {
+		                                                            setpixel(w3, h0);                                                               
+		                                                            setpixel(w3, h1);                                                               
+		setpixel(w0, h2);   setpixel(w1, h2);   setpixel(w2, h2);   setpixel(w3, h2);   setpixel(w4, h2);   setpixel(w5, h2);                       
+		                                        setpixel(w2, h3);   setpixel(w3, h3);                                                               
+		                                        setpixel(w2, h4);                       setpixel(w4, h4);                                           
+		                    setpixel(w1, h5);   setpixel(w2, h5);                       setpixel(w4, h5);                                           
+		return 7;
+	}
+	if(c=='+') {
+		                                                            setpixel(w3, h3);                                                               
+		                                                            setpixel(w3, h4);                                                               
+		                    setpixel(w1, h5);   setpixel(w2, h5);   setpixel(w3, h5);   setpixel(w4, h5);   setpixel(w5, h5);                       
+		                                                            setpixel(w3, h6);                                                               
+		                                                            setpixel(w3, h7);                                                               
+		                                                            setpixel(w3, h8);                                                               
+		return 7;
+	}
+	if(c==',') {
+		                    setpixel(w1, h9);                       
+		                    setpixel(w1, h10);                      
+		setpixel(w0, h11);  setpixel(w1, h11);                      
+		return 3;
+	}
+	if(c=='-') {
+		setpixel(w0, h6);   setpixel(w1, h6);   setpixel(w2, h6);                       
+		return 4;
+	}
+	if(c=='.') {
+		                    setpixel(w1, h8);                       
+		                    setpixel(w1, h9);                       
+		return 3;
+	}
+	if(c=='/') {
+		                                                            setpixel(w3, h1);   
+		                                                            setpixel(w3, h2);   
+		                                        setpixel(w2, h3);                       
+		                                        setpixel(w2, h4);                       
+		                                        setpixel(w2, h5);                       
+		                    setpixel(w1, h6);                                           
+		                    setpixel(w1, h7);                                           
+		                    setpixel(w1, h8);                                           
+		setpixel(w0, h9);                                                               
+		return 4;
+	}
+	if(c=='0') {
+		                                        setpixel(w2, h1);   setpixel(w3, h1);   setpixel(w4, h1);                                           
+		                    setpixel(w1, h2);                                                               setpixel(w5, h2);                       
+		                    setpixel(w1, h3);                                                               setpixel(w5, h3);                       
+		                    setpixel(w1, h4);                                                               setpixel(w5, h4);                       
+		                    setpixel(w1, h5);                                                               setpixel(w5, h5);                       
+		                    setpixel(w1, h6);                                                               setpixel(w5, h6);                       
+		                    setpixel(w1, h7);                                                               setpixel(w5, h7);                       
+		                    setpixel(w1, h8);                                                               setpixel(w5, h8);                       
+		                                        setpixel(w2, h9);   setpixel(w3, h9);   setpixel(w4, h9);                                           
+		return 7;
+	}
+	if(c=='1') {
+		                                                            setpixel(w3, h1);                                                               
+		                                        setpixel(w2, h2);   setpixel(w3, h2);                                                               
+		                    setpixel(w1, h3);                       setpixel(w3, h3);                                                               
+		                                                            setpixel(w3, h4);                                                               
+		                                                            setpixel(w3, h5);                                                               
+		                                                            setpixel(w3, h6);                                                               
+		                                                            setpixel(w3, h7);                                                               
+		                                                            setpixel(w3, h8);                                                               
+		                                                            setpixel(w3, h9);                                                               
+		return 7;
+	}
+	if(c=='2') {
+		                    setpixel(w1, h1);   setpixel(w2, h1);   setpixel(w3, h1);   setpixel(w4, h1);                                           
+		                    setpixel(w1, h2);                                                               setpixel(w5, h2);                       
+		                                                                                                    setpixel(w5, h3);                       
+		                                                                                                    setpixel(w5, h4);                       
+		                                                                                setpixel(w4, h5);                                           
+		                                                            setpixel(w3, h6);                                                               
+		                                        setpixel(w2, h7);                                                                                   
+		                    setpixel(w1, h8);                                                                                                       
+		                    setpixel(w1, h9);   setpixel(w2, h9);   setpixel(w3, h9);   setpixel(w4, h9);   setpixel(w5, h9);                       
+		return 7;
+	}
+	if(c=='3') {
+		                    setpixel(w1, h1);   setpixel(w2, h1);   setpixel(w3, h1);   setpixel(w4, h1);                                           
+		                    setpixel(w1, h2);                                                               setpixel(w5, h2);                       
+		                                                                                                    setpixel(w5, h3);                       
+		                                                                                setpixel(w4, h4);   setpixel(w5, h4);                       
+		                                        setpixel(w2, h5);   setpixel(w3, h5);   setpixel(w4, h5);                                           
+		                                                                                                    setpixel(w5, h6);                       
+		                                                                                                    setpixel(w5, h7);                       
+		                                                                                                    setpixel(w5, h8);                       
+		                    setpixel(w1, h9);   setpixel(w2, h9);   setpixel(w3, h9);   setpixel(w4, h9);                                           
+		return 7;
+	}
+	if(c=='4') {
+		                                                                                setpixel(w4, h1);                                           
+		                                                            setpixel(w3, h2);   setpixel(w4, h2);                                           
+		                                                            setpixel(w3, h3);   setpixel(w4, h3);                                           
+		                                        setpixel(w2, h4);                       setpixel(w4, h4);                                           
+		                    setpixel(w1, h5);                                           setpixel(w4, h5);                                           
+		                    setpixel(w1, h6);                                           setpixel(w4, h6);                                           
+		setpixel(w0, h7);   setpixel(w1, h7);   setpixel(w2, h7);   setpixel(w3, h7);   setpixel(w4, h7);   setpixel(w5, h7);   setpixel(w6, h7);   
+		                                                                                setpixel(w4, h8);                                           
+		                                                                                setpixel(w4, h9);                                           
+		return 7;
+	}
+	if(c=='5') {
+		                    setpixel(w1, h1);   setpixel(w2, h1);   setpixel(w3, h1);   setpixel(w4, h1);   setpixel(w5, h1);                       
+		                    setpixel(w1, h2);                                                                                                       
+		                    setpixel(w1, h3);                                                                                                       
+		                    setpixel(w1, h4);   setpixel(w2, h4);   setpixel(w3, h4);   setpixel(w4, h4);                                           
+		                                                                                                    setpixel(w5, h5);                       
+		                                                                                                    setpixel(w5, h6);                       
+		                                                                                                    setpixel(w5, h7);                       
+		                    setpixel(w1, h8);                                                               setpixel(w5, h8);                       
+		                    setpixel(w1, h9);   setpixel(w2, h9);   setpixel(w3, h9);   setpixel(w4, h9);                                           
+		return 7;
+	}
+	if(c=='6') {
+		                                                            setpixel(w3, h1);   setpixel(w4, h1);   setpixel(w5, h1);                       
+		                    setpixel(w1, h2);   setpixel(w2, h2);                                                                                   
+		                    setpixel(w1, h3);                                                                                                       
+		                    setpixel(w1, h4);   setpixel(w2, h4);   setpixel(w3, h4);   setpixel(w4, h4);                                           
+		                    setpixel(w1, h5);                                                               setpixel(w5, h5);                       
+		                    setpixel(w1, h6);                                                               setpixel(w5, h6);                       
+		                    setpixel(w1, h7);                                                               setpixel(w5, h7);                       
+		                    setpixel(w1, h8);                                                               setpixel(w5, h8);                       
+		                                        setpixel(w2, h9);   setpixel(w3, h9);   setpixel(w4, h9);                                           
+		return 7;
+	}
+	if(c=='7') {
+		                    setpixel(w1, h1);   setpixel(w2, h1);   setpixel(w3, h1);   setpixel(w4, h1);   setpixel(w5, h1);                       
+		                                                                                                    setpixel(w5, h2);                       
+		                                                                                setpixel(w4, h3);   setpixel(w5, h3);                       
+		                                                                                setpixel(w4, h4);                                           
+		                                                                                setpixel(w4, h5);                                           
+		                                                            setpixel(w3, h6);                                                               
+		                                                            setpixel(w3, h7);                                                               
+		                                        setpixel(w2, h8);                                                                                   
+		                                        setpixel(w2, h9);                                                                                   
+		return 7;
+	}
+	if(c=='8') {
+		                                        setpixel(w2, h1);   setpixel(w3, h1);   setpixel(w4, h1);                                           
+		                    setpixel(w1, h2);                                                               setpixel(w5, h2);                       
+		                    setpixel(w1, h3);                                                               setpixel(w5, h3);                       
+		                    setpixel(w1, h4);   setpixel(w2, h4);                       setpixel(w4, h4);                                           
+		                                        setpixel(w2, h5);   setpixel(w3, h5);   setpixel(w4, h5);                                           
+		                    setpixel(w1, h6);                                                               setpixel(w5, h6);                       
+		                    setpixel(w1, h7);                                                               setpixel(w5, h7);                       
+		                    setpixel(w1, h8);                                                               setpixel(w5, h8);                       
+		                    setpixel(w1, h9);   setpixel(w2, h9);   setpixel(w3, h9);   setpixel(w4, h9);                                           
+		return 7;
+	}
+	if(c=='9') {
+		                                        setpixel(w2, h1);   setpixel(w3, h1);   setpixel(w4, h1);                                           
+		                    setpixel(w1, h2);                                                               setpixel(w5, h2);                       
+		                    setpixel(w1, h3);                                                               setpixel(w5, h3);                       
+		                    setpixel(w1, h4);                                                               setpixel(w5, h4);                       
+		                    setpixel(w1, h5);                                                               setpixel(w5, h5);                       
+		                                        setpixel(w2, h6);   setpixel(w3, h6);   setpixel(w4, h6);   setpixel(w5, h6);                       
+		                                                                                                    setpixel(w5, h7);                       
+		                                                                                setpixel(w4, h8);                                           
+		                    setpixel(w1, h9);   setpixel(w2, h9);   setpixel(w3, h9);                                                               
+		return 7;
+	}
+	if(c==':') {
+		                    setpixel(w1, h3);                       
+		                    setpixel(w1, h4);                       
+		                    setpixel(w1, h8);                       
+		                    setpixel(w1, h9);                       
+		return 3;
+	}
+	if(c==';') {
+		                    setpixel(w1, h3);                       
+		                    setpixel(w1, h4);                       
+		                    setpixel(w1, h9);                       
+		                    setpixel(w1, h10);                      
+		setpixel(w0, h11);                                          
+		return 3;
+	}
+	if(c=='<') {
+		                                                                                                    setpixel(w5, h3);                       
+		                                                            setpixel(w3, h4);   setpixel(w4, h4);                                           
+		                    setpixel(w1, h5);   setpixel(w2, h5);                                                                                   
+		                    setpixel(w1, h6);   setpixel(w2, h6);   setpixel(w3, h6);                                                               
+		                                                                                setpixel(w4, h7);   setpixel(w5, h7);                       
+		                                                                                                    setpixel(w5, h8);                       
+		return 7;
+	}
+	if(c=='=') {
+		                    setpixel(w1, h3);   setpixel(w2, h3);   setpixel(w3, h3);   setpixel(w4, h3);   setpixel(w5, h3);                       
+		                    setpixel(w1, h6);   setpixel(w2, h6);   setpixel(w3, h6);   setpixel(w4, h6);   setpixel(w5, h6);                       
+		return 7;
+	}
+	if(c=='>') {
+		                    setpixel(w1, h3);                                                                                                       
+		                                        setpixel(w2, h4);   setpixel(w3, h4);                                                               
+		                                                                                setpixel(w4, h5);   setpixel(w5, h5);                       
+		                                                            setpixel(w3, h6);   setpixel(w4, h6);                                           
+		                    setpixel(w1, h7);   setpixel(w2, h7);                                                                                   
+		                    setpixel(w1, h8);                                                                                                       
+		return 7;
+	}
+	if(c=='?') {
+		setpixel(w0, h1);   setpixel(w1, h1);   setpixel(w2, h1);   setpixel(w3, h1);                       
+		                                                                                setpixel(w4, h2);   
+		                                                                                setpixel(w4, h3);   
+		                                                            setpixel(w3, h4);                       
+		                                        setpixel(w2, h5);                                           
+		                                        setpixel(w2, h6);                                           
+		                                        setpixel(w2, h8);                                           
+		                    setpixel(w1, h9);   setpixel(w2, h9);                                           
+		return 5;
+	}
+	if(c=='@') {
+		                                                            setpixel(w3, h1);   setpixel(w4, h1);   setpixel(w5, h1);   setpixel(w6, h1);   setpixel(w7, h1);                                                               
+		                                        setpixel(w2, h2);                                                                                                       setpixel(w8, h2);                                           
+		                    setpixel(w1, h3);                                           setpixel(w4, h3);   setpixel(w5, h3);   setpixel(w6, h3);                                           setpixel(w9, h3);                       
+		                    setpixel(w1, h4);                       setpixel(w3, h4);                                           setpixel(w6, h4);                                           setpixel(w9, h4);                       
+		                    setpixel(w1, h5);                       setpixel(w3, h5);                                           setpixel(w6, h5);                                           setpixel(w9, h5);                       
+		                    setpixel(w1, h6);                       setpixel(w3, h6);                                           setpixel(w6, h6);                                           setpixel(w9, h6);                       
+		                    setpixel(w1, h7);                                           setpixel(w4, h7);   setpixel(w5, h7);                       setpixel(w7, h7);   setpixel(w8, h7);                                           
+		                    setpixel(w1, h8);                                                                                                                                                                                       
+		                                        setpixel(w2, h9);                                                                                   setpixel(w7, h9);                                                               
+		                                                            setpixel(w3, h10);  setpixel(w4, h10);  setpixel(w5, h10);  setpixel(w6, h10);  setpixel(w7, h10);                                                              
+		return 11;
+	}
+	if(c=='A') {
+		                                                            setpixel(w3, h1);                                                                                   
+		                                                            setpixel(w3, h2);   setpixel(w4, h2);                                                               
+		                                        setpixel(w2, h3);                       setpixel(w4, h3);                                                               
+		                                        setpixel(w2, h4);                                           setpixel(w5, h4);                                           
+		                                        setpixel(w2, h5);                                           setpixel(w5, h5);                                           
+		                    setpixel(w1, h6);   setpixel(w2, h6);   setpixel(w3, h6);   setpixel(w4, h6);   setpixel(w5, h6);                                           
+		                    setpixel(w1, h7);                                                                                   setpixel(w6, h7);                       
+		                    setpixel(w1, h8);                                                                                   setpixel(w6, h8);                       
+		setpixel(w0, h9);                                                                                                       setpixel(w6, h9);   setpixel(w7, h9);   
+		return 8;
+	}
+	if(c=='B') {
+		                    setpixel(w1, h1);   setpixel(w2, h1);   setpixel(w3, h1);   setpixel(w4, h1);   setpixel(w5, h1);                                           
+		                    setpixel(w1, h2);                                                               setpixel(w5, h2);   setpixel(w6, h2);                       
+		                    setpixel(w1, h3);                                                                                   setpixel(w6, h3);                       
+		                    setpixel(w1, h4);                                                               setpixel(w5, h4);   setpixel(w6, h4);                       
+		                    setpixel(w1, h5);   setpixel(w2, h5);   setpixel(w3, h5);   setpixel(w4, h5);   setpixel(w5, h5);                                           
+		                    setpixel(w1, h6);                                                                                   setpixel(w6, h6);                       
+		                    setpixel(w1, h7);                                                                                   setpixel(w6, h7);                       
+		                    setpixel(w1, h8);                                                                                   setpixel(w6, h8);                       
+		                    setpixel(w1, h9);   setpixel(w2, h9);   setpixel(w3, h9);   setpixel(w4, h9);   setpixel(w5, h9);                                           
+		return 8;
+	}
+	if(c=='C') {
+		                                                            setpixel(w3, h1);   setpixel(w4, h1);   setpixel(w5, h1);   setpixel(w6, h1);                       
+		                                        setpixel(w2, h2);                                                               setpixel(w6, h2);                       
+		                    setpixel(w1, h3);                                                                                                                           
+		                    setpixel(w1, h4);                                                                                                                           
+		                    setpixel(w1, h5);                                                                                                                           
+		                    setpixel(w1, h6);                                                                                                                           
+		                    setpixel(w1, h7);                                                                                                                           
+		                                        setpixel(w2, h8);                                                                                                       
+		                                                            setpixel(w3, h9);   setpixel(w4, h9);   setpixel(w5, h9);   setpixel(w6, h9);                       
+		return 8;
+	}
+	if(c=='D') {
+		                    setpixel(w1, h1);   setpixel(w2, h1);   setpixel(w3, h1);   setpixel(w4, h1);   setpixel(w5, h1);                                                               
+		                    setpixel(w1, h2);                                                                                   setpixel(w6, h2);                                           
+		                    setpixel(w1, h3);                                                                                                       setpixel(w7, h3);                       
+		                    setpixel(w1, h4);                                                                                                       setpixel(w7, h4);                       
+		                    setpixel(w1, h5);                                                                                                       setpixel(w7, h5);                       
+		                    setpixel(w1, h6);                                                                                                       setpixel(w7, h6);                       
+		                    setpixel(w1, h7);                                                                                   setpixel(w6, h7);   setpixel(w7, h7);                       
+		                    setpixel(w1, h8);                                                                                   setpixel(w6, h8);                                           
+		                    setpixel(w1, h9);   setpixel(w2, h9);   setpixel(w3, h9);   setpixel(w4, h9);   setpixel(w5, h9);                                                               
+		return 9;
+	}
+	if(c=='E') {
+		                    setpixel(w1, h1);   setpixel(w2, h1);   setpixel(w3, h1);   setpixel(w4, h1);   setpixel(w5, h1);                       
+		                    setpixel(w1, h2);                                                                                                       
+		                    setpixel(w1, h3);                                                                                                       
+		                    setpixel(w1, h4);                                                                                                       
+		                    setpixel(w1, h5);   setpixel(w2, h5);   setpixel(w3, h5);   setpixel(w4, h5);   setpixel(w5, h5);                       
+		                    setpixel(w1, h6);                                                                                                       
+		                    setpixel(w1, h7);                                                                                                       
+		                    setpixel(w1, h8);                                                                                                       
+		                    setpixel(w1, h9);   setpixel(w2, h9);   setpixel(w3, h9);   setpixel(w4, h9);   setpixel(w5, h9);                       
+		return 7;
+	}
+	if(c=='F') {
+		                    setpixel(w1, h1);   setpixel(w2, h1);   setpixel(w3, h1);   setpixel(w4, h1);   setpixel(w5, h1);   
+		                    setpixel(w1, h2);                                                                                   
+		                    setpixel(w1, h3);                                                                                   
+		                    setpixel(w1, h4);                                                                                   
+		                    setpixel(w1, h5);   setpixel(w2, h5);   setpixel(w3, h5);   setpixel(w4, h5);   setpixel(w5, h5);   
+		                    setpixel(w1, h6);                                                                                   
+		                    setpixel(w1, h7);                                                                                   
+		                    setpixel(w1, h8);                                                                                   
+		                    setpixel(w1, h9);                                                                                   
+		return 6;
+	}
+	if(c=='G') {
+		                                                            setpixel(w3, h1);   setpixel(w4, h1);   setpixel(w5, h1);   setpixel(w6, h1);   setpixel(w7, h1);                       
+		                                        setpixel(w2, h2);                                                                                                                           
+		                    setpixel(w1, h3);                                                                                                                                               
+		                    setpixel(w1, h4);                                                                                                                                               
+		                    setpixel(w1, h5);                                                               setpixel(w5, h5);   setpixel(w6, h5);   setpixel(w7, h5);                       
+		                    setpixel(w1, h6);                                                                                                       setpixel(w7, h6);                       
+		                    setpixel(w1, h7);                                                                                                       setpixel(w7, h7);                       
+		                                        setpixel(w2, h8);                                                                                   setpixel(w7, h8);                       
+		                                                            setpixel(w3, h9);   setpixel(w4, h9);   setpixel(w5, h9);   setpixel(w6, h9);   setpixel(w7, h9);                       
+		return 9;
+	}
+	if(c=='H') {
+		                    setpixel(w1, h1);                                                                                                       setpixel(w7, h1);                       
+		                    setpixel(w1, h2);                                                                                                       setpixel(w7, h2);                       
+		                    setpixel(w1, h3);                                                                                                       setpixel(w7, h3);                       
+		                    setpixel(w1, h4);                                                                                                       setpixel(w7, h4);                       
+		                    setpixel(w1, h5);   setpixel(w2, h5);   setpixel(w3, h5);   setpixel(w4, h5);   setpixel(w5, h5);   setpixel(w6, h5);   setpixel(w7, h5);                       
+		                    setpixel(w1, h6);                                                                                                       setpixel(w7, h6);                       
+		                    setpixel(w1, h7);                                                                                                       setpixel(w7, h7);                       
+		                    setpixel(w1, h8);                                                                                                       setpixel(w7, h8);                       
+		                    setpixel(w1, h9);                                                                                                       setpixel(w7, h9);                       
+		return 9;
+	}
+	if(c=='I') {
+		setpixel(w0, h1);   setpixel(w1, h1);   setpixel(w2, h1);   setpixel(w3, h1);   
+		                    setpixel(w1, h2);   setpixel(w2, h2);                       
+		                    setpixel(w1, h3);   setpixel(w2, h3);                       
+		                    setpixel(w1, h4);   setpixel(w2, h4);                       
+		                    setpixel(w1, h5);   setpixel(w2, h5);                       
+		                    setpixel(w1, h6);   setpixel(w2, h6);                       
+		                    setpixel(w1, h7);   setpixel(w2, h7);                       
+		                    setpixel(w1, h8);   setpixel(w2, h8);                       
+		setpixel(w0, h9);   setpixel(w1, h9);   setpixel(w2, h9);   setpixel(w3, h9);   
+		return 4;
+	}
+	if(c=='J') {
+		                    setpixel(w1, h1);                       
+		                    setpixel(w1, h2);                       
+		                    setpixel(w1, h3);                       
+		                    setpixel(w1, h4);                       
+		                    setpixel(w1, h5);                       
+		                    setpixel(w1, h6);                       
+		                    setpixel(w1, h7);                       
+		                    setpixel(w1, h8);                       
+		                    setpixel(w1, h9);                       
+		                    setpixel(w1, h10);                      
+		                    setpixel(w1, h11);                      
+		setpixel(w0, h12);                                          
+		return 3;
+	}
+	if(c=='K') {
+		                    setpixel(w1, h1);                                                                                   setpixel(w6, h1);   
+		                    setpixel(w1, h2);                                                               setpixel(w5, h2);                       
+		                    setpixel(w1, h3);                                           setpixel(w4, h3);                                           
+		                    setpixel(w1, h4);                       setpixel(w3, h4);                                                               
+		                    setpixel(w1, h5);   setpixel(w2, h5);   setpixel(w3, h5);                                                               
+		                    setpixel(w1, h6);                                           setpixel(w4, h6);                                           
+		                    setpixel(w1, h7);                                           setpixel(w4, h7);   setpixel(w5, h7);                       
+		                    setpixel(w1, h8);                                                               setpixel(w5, h8);                       
+		                    setpixel(w1, h9);                                                                                   setpixel(w6, h9);   
+		return 7;
+	}
+	if(c=='L') {
+		                    setpixel(w1, h1);                                                                                   
+		                    setpixel(w1, h2);                                                                                   
+		                    setpixel(w1, h3);                                                                                   
+		                    setpixel(w1, h4);                                                                                   
+		                    setpixel(w1, h5);                                                                                   
+		                    setpixel(w1, h6);                                                                                   
+		                    setpixel(w1, h7);                                                                                   
+		                    setpixel(w1, h8);                                                                                   
+		                    setpixel(w1, h9);   setpixel(w2, h9);   setpixel(w3, h9);   setpixel(w4, h9);   setpixel(w5, h9);   
+		return 6;
+	}
+	if(c=='M') {
+		                    setpixel(w1, h1);   setpixel(w2, h1);                                                                                                       setpixel(w8, h1);   setpixel(w9, h1);                       
+		                    setpixel(w1, h2);   setpixel(w2, h2);                                                                                                       setpixel(w8, h2);   setpixel(w9, h2);                       
+		                    setpixel(w1, h3);                       setpixel(w3, h3);                                                               setpixel(w7, h3);                       setpixel(w9, h3);                       
+		                    setpixel(w1, h4);                       setpixel(w3, h4);                                                               setpixel(w7, h4);                       setpixel(w9, h4);                       
+		                    setpixel(w1, h5);                       setpixel(w3, h5);                                           setpixel(w6, h5);                                           setpixel(w9, h5);                       
+		                    setpixel(w1, h6);                                           setpixel(w4, h6);                       setpixel(w6, h6);                                           setpixel(w9, h6);                       
+		                    setpixel(w1, h7);                                           setpixel(w4, h7);                       setpixel(w6, h7);                                           setpixel(w9, h7);                       
+		                    setpixel(w1, h8);                                           setpixel(w4, h8);   setpixel(w5, h8);                                                               setpixel(w9, h8);                       
+		                    setpixel(w1, h9);                                                               setpixel(w5, h9);                                                               setpixel(w9, h9);                       
+		return 11;
+	}
+	if(c=='N') {
+		                    setpixel(w1, h1);   setpixel(w2, h1);                                                                                   setpixel(w7, h1);                       
+		                    setpixel(w1, h2);   setpixel(w2, h2);                                                                                   setpixel(w7, h2);                       
+		                    setpixel(w1, h3);                       setpixel(w3, h3);                                                               setpixel(w7, h3);                       
+		                    setpixel(w1, h4);                       setpixel(w3, h4);   setpixel(w4, h4);                                           setpixel(w7, h4);                       
+		                    setpixel(w1, h5);                                           setpixel(w4, h5);                                           setpixel(w7, h5);                       
+		                    setpixel(w1, h6);                                                               setpixel(w5, h6);                       setpixel(w7, h6);                       
+		                    setpixel(w1, h7);                                                               setpixel(w5, h7);   setpixel(w6, h7);   setpixel(w7, h7);                       
+		                    setpixel(w1, h8);                                                                                   setpixel(w6, h8);   setpixel(w7, h8);                       
+		                    setpixel(w1, h9);                                                                                   setpixel(w6, h9);   setpixel(w7, h9);                       
+		return 9;
+	}
+	if(c=='O') {
+		                                                            setpixel(w3, h1);   setpixel(w4, h1);   setpixel(w5, h1);   setpixel(w6, h1);                                           
+		                                        setpixel(w2, h2);                                                               setpixel(w6, h2);   setpixel(w7, h2);                       
+		                    setpixel(w1, h3);                                                                                                       setpixel(w7, h3);                       
+		                    setpixel(w1, h4);                                                                                                       setpixel(w7, h4);   setpixel(w8, h4);   
+		                    setpixel(w1, h5);                                                                                                       setpixel(w7, h5);   setpixel(w8, h5);   
+		                    setpixel(w1, h6);                                                                                                       setpixel(w7, h6);   setpixel(w8, h6);   
+		                    setpixel(w1, h7);                                                                                                       setpixel(w7, h7);                       
+		                                        setpixel(w2, h8);                                                               setpixel(w6, h8);   setpixel(w7, h8);                       
+		                                                            setpixel(w3, h9);   setpixel(w4, h9);   setpixel(w5, h9);   setpixel(w6, h9);                                           
+		return 9;
+	}
+	if(c=='P') {
+		                    setpixel(w1, h1);   setpixel(w2, h1);   setpixel(w3, h1);   setpixel(w4, h1);   setpixel(w5, h1);                       
+		                    setpixel(w1, h2);                                                               setpixel(w5, h2);                       
+		                    setpixel(w1, h3);                                                                                   setpixel(w6, h3);   
+		                    setpixel(w1, h4);                                                               setpixel(w5, h4);                       
+		                    setpixel(w1, h5);   setpixel(w2, h5);   setpixel(w3, h5);   setpixel(w4, h5);                                           
+		                    setpixel(w1, h6);                                                                                                       
+		                    setpixel(w1, h7);                                                                                                       
+		                    setpixel(w1, h8);                                                                                                       
+		                    setpixel(w1, h9);                                                                                                       
+		return 7;
+	}
+	if(c=='Q') {
+		                                                            setpixel(w3, h1);   setpixel(w4, h1);   setpixel(w5, h1);   setpixel(w6, h1);                                           
+		                                        setpixel(w2, h2);                                                               setpixel(w6, h2);   setpixel(w7, h2);                       
+		                    setpixel(w1, h3);                                                                                                       setpixel(w7, h3);                       
+		                    setpixel(w1, h4);                                                                                                       setpixel(w7, h4);   setpixel(w8, h4);   
+		                    setpixel(w1, h5);                                                                                                       setpixel(w7, h5);   setpixel(w8, h5);   
+		                    setpixel(w1, h6);                                                                                                       setpixel(w7, h6);   setpixel(w8, h6);   
+		                    setpixel(w1, h7);                                                                                                       setpixel(w7, h7);                       
+		                                        setpixel(w2, h8);                                                               setpixel(w6, h8);   setpixel(w7, h8);                       
+		                                                            setpixel(w3, h9);   setpixel(w4, h9);   setpixel(w5, h9);   setpixel(w6, h9);                                           
+		                                                                                                    setpixel(w5, h10);  setpixel(w6, h10);                                          
+		                                                                                                                        setpixel(w6, h11);  setpixel(w7, h11);                      
+		return 9;
+	}
+	if(c=='R') {
+		                    setpixel(w1, h1);   setpixel(w2, h1);   setpixel(w3, h1);   setpixel(w4, h1);   setpixel(w5, h1);                       
+		                    setpixel(w1, h2);                                                               setpixel(w5, h2);   setpixel(w6, h2);   
+		                    setpixel(w1, h3);                                                                                   setpixel(w6, h3);   
+		                    setpixel(w1, h4);                                                               setpixel(w5, h4);                       
+		                    setpixel(w1, h5);   setpixel(w2, h5);   setpixel(w3, h5);   setpixel(w4, h5);                                           
+		                    setpixel(w1, h6);                                           setpixel(w4, h6);                                           
+		                    setpixel(w1, h7);                                                               setpixel(w5, h7);                       
+		                    setpixel(w1, h8);                                                               setpixel(w5, h8);                       
+		                    setpixel(w1, h9);                                                                                   setpixel(w6, h9);   
+		return 7;
+	}
+	if(c=='S') {
+		                                        setpixel(w2, h1);   setpixel(w3, h1);   setpixel(w4, h1);   setpixel(w5, h1);                       
+		                    setpixel(w1, h2);                                                                                                       
+		                    setpixel(w1, h3);                                                                                                       
+		                    setpixel(w1, h4);   setpixel(w2, h4);                                                                                   
+		                                        setpixel(w2, h5);   setpixel(w3, h5);   setpixel(w4, h5);                                           
+		                                                                                setpixel(w4, h6);   setpixel(w5, h6);                       
+		                                                                                                    setpixel(w5, h7);                       
+		                                                                                                    setpixel(w5, h8);                       
+		                    setpixel(w1, h9);   setpixel(w2, h9);   setpixel(w3, h9);   setpixel(w4, h9);                                           
+		return 7;
+	}
+	if(c=='T') {
+		setpixel(w0, h1);   setpixel(w1, h1);   setpixel(w2, h1);   setpixel(w3, h1);   setpixel(w4, h1);   setpixel(w5, h1);   setpixel(w6, h1);   
+		                                                            setpixel(w3, h2);                                                               
+		                                                            setpixel(w3, h3);                                                               
+		                                                            setpixel(w3, h4);                                                               
+		                                                            setpixel(w3, h5);                                                               
+		                                                            setpixel(w3, h6);                                                               
+		                                                            setpixel(w3, h7);                                                               
+		                                                            setpixel(w3, h8);                                                               
+		                                                            setpixel(w3, h9);                                                               
+		return 7;
+	}
+	if(c=='U') {
+		                    setpixel(w1, h1);                                                                                                       setpixel(w7, h1);                       
+		                    setpixel(w1, h2);                                                                                                       setpixel(w7, h2);                       
+		                    setpixel(w1, h3);                                                                                                       setpixel(w7, h3);                       
+		                    setpixel(w1, h4);                                                                                                       setpixel(w7, h4);                       
+		                    setpixel(w1, h5);                                                                                                       setpixel(w7, h5);                       
+		                    setpixel(w1, h6);                                                                                                       setpixel(w7, h6);                       
+		                    setpixel(w1, h7);                                                                                                       setpixel(w7, h7);                       
+		                    setpixel(w1, h8);   setpixel(w2, h8);                                                               setpixel(w6, h8);                                           
+		                                        setpixel(w2, h9);   setpixel(w3, h9);   setpixel(w4, h9);   setpixel(w5, h9);                                                               
+		return 9;
+	}
+	if(c=='V') {
+		setpixel(w0, h1);                                                                                                       setpixel(w6, h1);   
+		                    setpixel(w1, h2);                                                                                   setpixel(w6, h2);   
+		                    setpixel(w1, h3);                                                               setpixel(w5, h3);                       
+		                    setpixel(w1, h4);                                                               setpixel(w5, h4);                       
+		                                        setpixel(w2, h5);                                           setpixel(w5, h5);                       
+		                                        setpixel(w2, h6);                       setpixel(w4, h6);                                           
+		                                        setpixel(w2, h7);                       setpixel(w4, h7);                                           
+		                                                            setpixel(w3, h8);   setpixel(w4, h8);                                           
+		                                                            setpixel(w3, h9);                                                               
+		return 7;
+	}
+	if(c=='W') {
+		setpixel(w0, h1);                                                                                   setpixel(w5, h1);                                                                                   setpixel(w10, h1);  
+		                    setpixel(w1, h2);                                                               setpixel(w5, h2);   setpixel(w6, h2);                                                               setpixel(w10, h2);  
+		                    setpixel(w1, h3);                                           setpixel(w4, h3);                       setpixel(w6, h3);                                           setpixel(w9, h3);                       
+		                    setpixel(w1, h4);                                           setpixel(w4, h4);                       setpixel(w6, h4);                                           setpixel(w9, h4);                       
+		                    setpixel(w1, h5);                                           setpixel(w4, h5);                       setpixel(w6, h5);                                           setpixel(w9, h5);                       
+		                                        setpixel(w2, h6);   setpixel(w3, h6);                                                               setpixel(w7, h6);                       setpixel(w9, h6);                       
+		                                        setpixel(w2, h7);   setpixel(w3, h7);                                                               setpixel(w7, h7);   setpixel(w8, h7);                                           
+		                                        setpixel(w2, h8);   setpixel(w3, h8);                                                               setpixel(w7, h8);   setpixel(w8, h8);                                           
+		                                        setpixel(w2, h9);   setpixel(w3, h9);                                                               setpixel(w7, h9);   setpixel(w8, h9);                                           
+		return 11;
+	}
+	if(c=='X') {
+		setpixel(w0, h1);   setpixel(w1, h1);                                                               setpixel(w5, h1);   setpixel(w6, h1);   
+		                    setpixel(w1, h2);                                                               setpixel(w5, h2);                       
+		                                        setpixel(w2, h3);                       setpixel(w4, h3);                                           
+		                                        setpixel(w2, h4);   setpixel(w3, h4);   setpixel(w4, h4);                                           
+		                                                            setpixel(w3, h5);                                                               
+		                                        setpixel(w2, h6);                       setpixel(w4, h6);                                           
+		                                        setpixel(w2, h7);                       setpixel(w4, h7);                                           
+		                    setpixel(w1, h8);                                                               setpixel(w5, h8);                       
+		setpixel(w0, h9);                                                                                   setpixel(w5, h9);   setpixel(w6, h9);   
+		return 7;
+	}
+	if(c=='Y') {
+		setpixel(w0, h1);                                                                                   setpixel(w5, h1);   setpixel(w6, h1);   
+		                    setpixel(w1, h2);                                                               setpixel(w5, h2);                       
+		                    setpixel(w1, h3);                                           setpixel(w4, h3);   setpixel(w5, h3);                       
+		                                        setpixel(w2, h4);                       setpixel(w4, h4);                                           
+		                                        setpixel(w2, h5);   setpixel(w3, h5);                                                               
+		                                                            setpixel(w3, h6);                                                               
+		                                                            setpixel(w3, h7);                                                               
+		                                                            setpixel(w3, h8);                                                               
+		                                                            setpixel(w3, h9);                                                               
+		return 7;
+	}
+	if(c=='Z') {
+		                    setpixel(w1, h1);   setpixel(w2, h1);   setpixel(w3, h1);   setpixel(w4, h1);   setpixel(w5, h1);                       
+		                                                                                                    setpixel(w5, h2);                       
+		                                                                                setpixel(w4, h3);                                           
+		                                                            setpixel(w3, h4);   setpixel(w4, h4);                                           
+		                                                            setpixel(w3, h5);                                                               
+		                                        setpixel(w2, h6);                                                                                   
+		                                        setpixel(w2, h7);                                                                                   
+		                    setpixel(w1, h8);                                                                                                       
+		setpixel(w0, h9);   setpixel(w1, h9);   setpixel(w2, h9);   setpixel(w3, h9);   setpixel(w4, h9);   setpixel(w5, h9);                       
+		return 7;
+	}
+	if(c=='[') {
+		                    setpixel(w1, h1);   setpixel(w2, h1);   setpixel(w3, h1);   
+		                    setpixel(w1, h2);                                           
+		                    setpixel(w1, h3);                                           
+		                    setpixel(w1, h4);                                           
+		                    setpixel(w1, h5);                                           
+		                    setpixel(w1, h6);                                           
+		                    setpixel(w1, h7);                                           
+		                    setpixel(w1, h8);                                           
+		                    setpixel(w1, h9);                                           
+		                    setpixel(w1, h10);                                          
+		                    setpixel(w1, h11);  setpixel(w2, h11);  setpixel(w3, h11);  
+		return 4;
+	}
+	if(c=='\') {
+		setpixel(w0, h1);                                                               
+		                    setpixel(w1, h2);                                           
+		                    setpixel(w1, h3);                                           
+		                    setpixel(w1, h4);                                           
+		                                        setpixel(w2, h5);                       
+		                                        setpixel(w2, h6);                       
+		                                        setpixel(w2, h7);                       
+		                                                            setpixel(w3, h8);   
+		                                                            setpixel(w3, h9);   
+		return 4;
+	}
+	if(c==']') {
+		setpixel(w0, h1);   setpixel(w1, h1);   setpixel(w2, h1);                       
+		                                        setpixel(w2, h2);                       
+		                                        setpixel(w2, h3);                       
+		                                        setpixel(w2, h4);                       
+		                                        setpixel(w2, h5);                       
+		                                        setpixel(w2, h6);                       
+		                                        setpixel(w2, h7);                       
+		                                        setpixel(w2, h8);                       
+		                                        setpixel(w2, h9);                       
+		                                        setpixel(w2, h10);                      
+		setpixel(w0, h11);  setpixel(w1, h11);  setpixel(w2, h11);                      
+		return 4;
+	}
+	if(c=='^') {
+		                                                            setpixel(w3, h1);                                                               
+		                                        setpixel(w2, h2);   setpixel(w3, h2);                                                               
+		                                        setpixel(w2, h3);                       setpixel(w4, h3);                                           
+		                    setpixel(w1, h4);                                           setpixel(w4, h4);                                           
+		                    setpixel(w1, h5);                                                               setpixel(w5, h5);                       
+		setpixel(w0, h6);   setpixel(w1, h6);                                                               setpixel(w5, h6);                       
+		return 7;
+	}
+	if(c=='_') {
+		setpixel(w0, h11);  setpixel(w1, h11);  setpixel(w2, h11);  setpixel(w3, h11);  setpixel(w4, h11);  
+		return 5;
+	}
+	if(c=='`') {
+		setpixel(w0, h0);   setpixel(w1, h0);                       
+		                                        setpixel(w2, h1);   
+		return 3;
+	}
+	if(c=='a') {
+		                    setpixel(w1, h3);   setpixel(w2, h3);   setpixel(w3, h3);   setpixel(w4, h3);                                           
+		                                                                                                    setpixel(w5, h4);                       
+		                                                                                                    setpixel(w5, h5);                       
+		                    setpixel(w1, h6);   setpixel(w2, h6);   setpixel(w3, h6);   setpixel(w4, h6);   setpixel(w5, h6);                       
+		                    setpixel(w1, h7);                                                               setpixel(w5, h7);                       
+		                    setpixel(w1, h8);                                           setpixel(w4, h8);   setpixel(w5, h8);                       
+		                    setpixel(w1, h9);   setpixel(w2, h9);   setpixel(w3, h9);                       setpixel(w5, h9);                       
+		return 7;
+	}
+	if(c=='b') {
+		                    setpixel(w1, h0);                                                                                                       
+		                    setpixel(w1, h1);                                                                                                       
+		                    setpixel(w1, h2);                                                                                                       
+		                    setpixel(w1, h3);                       setpixel(w3, h3);   setpixel(w4, h3);   setpixel(w5, h3);                       
+		                    setpixel(w1, h4);   setpixel(w2, h4);                                           setpixel(w5, h4);                       
+		                    setpixel(w1, h5);                                                                                   setpixel(w6, h5);   
+		                    setpixel(w1, h6);                                                                                   setpixel(w6, h6);   
+		                    setpixel(w1, h7);                                                                                   setpixel(w6, h7);   
+		                    setpixel(w1, h8);   setpixel(w2, h8);                                           setpixel(w5, h8);                       
+		                    setpixel(w1, h9);                       setpixel(w3, h9);   setpixel(w4, h9);   setpixel(w5, h9);                       
+		return 7;
+	}
+	if(c=='c') {
+		                                        setpixel(w2, h3);   setpixel(w3, h3);   setpixel(w4, h3);                       
+		                    setpixel(w1, h4);                                                                                   
+		                    setpixel(w1, h5);                                                                                   
+		                    setpixel(w1, h6);                                                                                   
+		                    setpixel(w1, h7);                                                                                   
+		                    setpixel(w1, h8);                                                                                   
+		                                        setpixel(w2, h9);   setpixel(w3, h9);   setpixel(w4, h9);                       
+		return 6;
+	}
+	if(c=='d') {
+		                                                                                                    setpixel(w5, h0);                       
+		                                                                                                    setpixel(w5, h1);                       
+		                                                                                                    setpixel(w5, h2);                       
+		                                        setpixel(w2, h3);   setpixel(w3, h3);   setpixel(w4, h3);   setpixel(w5, h3);                       
+		                    setpixel(w1, h4);                                                               setpixel(w5, h4);                       
+		                    setpixel(w1, h5);                                                               setpixel(w5, h5);                       
+		                    setpixel(w1, h6);                                                               setpixel(w5, h6);                       
+		                    setpixel(w1, h7);                                                               setpixel(w5, h7);                       
+		                    setpixel(w1, h8);                                                               setpixel(w5, h8);                       
+		                                        setpixel(w2, h9);   setpixel(w3, h9);   setpixel(w4, h9);   setpixel(w5, h9);                       
+		return 7;
+	}
+	if(c=='e') {
+		                                        setpixel(w2, h3);   setpixel(w3, h3);   setpixel(w4, h3);                                           
+		                    setpixel(w1, h4);                                                               setpixel(w5, h4);                       
+		                    setpixel(w1, h5);                                                               setpixel(w5, h5);                       
+		                    setpixel(w1, h6);   setpixel(w2, h6);   setpixel(w3, h6);   setpixel(w4, h6);   setpixel(w5, h6);                       
+		                    setpixel(w1, h7);                                                                                                       
+		                    setpixel(w1, h8);                                                                                                       
+		                                        setpixel(w2, h9);   setpixel(w3, h9);   setpixel(w4, h9);   setpixel(w5, h9);                       
+		return 7;
+	}
+	if(c=='f') {
+		                                        setpixel(w2, h0);   setpixel(w3, h0);   
+		                    setpixel(w1, h1);   setpixel(w2, h1);                       
+		                    setpixel(w1, h2);                                           
+		setpixel(w0, h3);   setpixel(w1, h3);   setpixel(w2, h3);   setpixel(w3, h3);   
+		                    setpixel(w1, h4);                                           
+		                    setpixel(w1, h5);                                           
+		                    setpixel(w1, h6);                                           
+		                    setpixel(w1, h7);                                           
+		                    setpixel(w1, h8);                                           
+		                    setpixel(w1, h9);                                           
+		return 4;
+	}
+	if(c=='g') {
+		                                        setpixel(w2, h3);   setpixel(w3, h3);   setpixel(w4, h3);   setpixel(w5, h3);                       
+		                    setpixel(w1, h4);                                                               setpixel(w5, h4);                       
+		                    setpixel(w1, h5);                                                               setpixel(w5, h5);                       
+		                    setpixel(w1, h6);                                                               setpixel(w5, h6);                       
+		                    setpixel(w1, h7);                                                               setpixel(w5, h7);                       
+		                    setpixel(w1, h8);                                                               setpixel(w5, h8);                       
+		                                        setpixel(w2, h9);   setpixel(w3, h9);   setpixel(w4, h9);   setpixel(w5, h9);                       
+		                                                                                                    setpixel(w5, h10);                      
+		                                                                                                    setpixel(w5, h11);                      
+		                    setpixel(w1, h12);  setpixel(w2, h12);  setpixel(w3, h12);  setpixel(w4, h12);                                          
+		return 7;
+	}
+	if(c=='h') {
+		                    setpixel(w1, h0);                                                                                                       
+		                    setpixel(w1, h1);                                                                                                       
+		                    setpixel(w1, h2);                                                                                                       
+		                    setpixel(w1, h3);                       setpixel(w3, h3);   setpixel(w4, h3);   setpixel(w5, h3);                       
+		                    setpixel(w1, h4);   setpixel(w2, h4);                                           setpixel(w5, h4);                       
+		                    setpixel(w1, h5);                                                               setpixel(w5, h5);                       
+		                    setpixel(w1, h6);                                                               setpixel(w5, h6);                       
+		                    setpixel(w1, h7);                                                               setpixel(w5, h7);                       
+		                    setpixel(w1, h8);                                                               setpixel(w5, h8);                       
+		                    setpixel(w1, h9);                                                               setpixel(w5, h9);                       
+		return 7;
+	}
+	if(c=='i') {
+		                    setpixel(w1, h0);                       
+		                    setpixel(w1, h3);                       
+		                    setpixel(w1, h4);                       
+		                    setpixel(w1, h5);                       
+		                    setpixel(w1, h6);                       
+		                    setpixel(w1, h7);                       
+		                    setpixel(w1, h8);                       
+		                    setpixel(w1, h9);                       
+		return 3;
+	}
+	if(c=='j') {
+		                    setpixel(w1, h0);                       
+		                    setpixel(w1, h3);                       
+		                    setpixel(w1, h4);                       
+		                    setpixel(w1, h5);                       
+		                    setpixel(w1, h6);                       
+		                    setpixel(w1, h7);                       
+		                    setpixel(w1, h8);                       
+		                    setpixel(w1, h9);                       
+		                    setpixel(w1, h10);                      
+		                    setpixel(w1, h11);                      
+		setpixel(w0, h12);  setpixel(w1, h12);                      
+		return 3;
+	}
+	if(c=='k') {
+		                    setpixel(w1, h0);                                                                                   
+		                    setpixel(w1, h1);                                                                                   
+		                    setpixel(w1, h2);                                                                                   
+		                    setpixel(w1, h3);                                           setpixel(w4, h3);   setpixel(w5, h3);   
+		                    setpixel(w1, h4);                                           setpixel(w4, h4);                       
+		                    setpixel(w1, h5);                       setpixel(w3, h5);                                           
+		                    setpixel(w1, h6);   setpixel(w2, h6);   setpixel(w3, h6);                                           
+		                    setpixel(w1, h7);                       setpixel(w3, h7);   setpixel(w4, h7);                       
+		                    setpixel(w1, h8);                                           setpixel(w4, h8);                       
+		                    setpixel(w1, h9);                                                               setpixel(w5, h9);   
+		return 6;
+	}
+	if(c=='l') {
+		                    setpixel(w1, h0);                       
+		                    setpixel(w1, h1);                       
+		                    setpixel(w1, h2);                       
+		                    setpixel(w1, h3);                       
+		                    setpixel(w1, h4);                       
+		                    setpixel(w1, h5);                       
+		                    setpixel(w1, h6);                       
+		                    setpixel(w1, h7);                       
+		                    setpixel(w1, h8);                       
+		                    setpixel(w1, h9);                       
+		return 3;
+	}
+	if(c=='m') {
+		                    setpixel(w1, h3);                       setpixel(w3, h3);   setpixel(w4, h3);   setpixel(w5, h3);                       setpixel(w7, h3);   setpixel(w8, h3);   setpixel(w9, h3);                       
+		                    setpixel(w1, h4);   setpixel(w2, h4);                                           setpixel(w5, h4);   setpixel(w6, h4);                                           setpixel(w9, h4);                       
+		                    setpixel(w1, h5);                                                               setpixel(w5, h5);                                                               setpixel(w9, h5);                       
+		                    setpixel(w1, h6);                                                               setpixel(w5, h6);                                                               setpixel(w9, h6);                       
+		                    setpixel(w1, h7);                                                               setpixel(w5, h7);                                                               setpixel(w9, h7);                       
+		                    setpixel(w1, h8);                                                               setpixel(w5, h8);                                                               setpixel(w9, h8);                       
+		                    setpixel(w1, h9);                                                               setpixel(w5, h9);                                                               setpixel(w9, h9);                       
+		return 11;
+	}
+	if(c=='n') {
+		                    setpixel(w1, h3);                       setpixel(w3, h3);   setpixel(w4, h3);   setpixel(w5, h3);                       
+		                    setpixel(w1, h4);   setpixel(w2, h4);                                           setpixel(w5, h4);                       
+		                    setpixel(w1, h5);                                                               setpixel(w5, h5);                       
+		                    setpixel(w1, h6);                                                               setpixel(w5, h6);                       
+		                    setpixel(w1, h7);                                                               setpixel(w5, h7);                       
+		                    setpixel(w1, h8);                                                               setpixel(w5, h8);                       
+		                    setpixel(w1, h9);                                                               setpixel(w5, h9);                       
+		return 7;
+	}
+	if(c=='o') {
+		                                        setpixel(w2, h3);   setpixel(w3, h3);   setpixel(w4, h3);                                           
+		                    setpixel(w1, h4);                                                               setpixel(w5, h4);                       
+		                    setpixel(w1, h5);                                                               setpixel(w5, h5);   setpixel(w6, h5);   
+		                    setpixel(w1, h6);                                                                                   setpixel(w6, h6);   
+		                    setpixel(w1, h7);                                                               setpixel(w5, h7);   setpixel(w6, h7);   
+		                    setpixel(w1, h8);                                                               setpixel(w5, h8);                       
+		                                        setpixel(w2, h9);   setpixel(w3, h9);   setpixel(w4, h9);                                           
+		return 7;
+	}
+	if(c=='p') {
+		                    setpixel(w1, h3);                       setpixel(w3, h3);   setpixel(w4, h3);   setpixel(w5, h3);                       
+		                    setpixel(w1, h4);   setpixel(w2, h4);                                           setpixel(w5, h4);                       
+		                    setpixel(w1, h5);                                                                                   setpixel(w6, h5);   
+		                    setpixel(w1, h6);                                                                                   setpixel(w6, h6);   
+		                    setpixel(w1, h7);                                                                                   setpixel(w6, h7);   
+		                    setpixel(w1, h8);   setpixel(w2, h8);                                           setpixel(w5, h8);                       
+		                    setpixel(w1, h9);                       setpixel(w3, h9);   setpixel(w4, h9);   setpixel(w5, h9);                       
+		                    setpixel(w1, h10);                                                                                                      
+		                    setpixel(w1, h11);                                                                                                      
+		                    setpixel(w1, h12);                                                                                                      
+		return 7;
+	}
+	if(c=='q') {
+		                                        setpixel(w2, h3);   setpixel(w3, h3);   setpixel(w4, h3);   setpixel(w5, h3);                       
+		                    setpixel(w1, h4);                                                               setpixel(w5, h4);                       
+		                    setpixel(w1, h5);                                                               setpixel(w5, h5);                       
+		                    setpixel(w1, h6);                                                               setpixel(w5, h6);                       
+		                    setpixel(w1, h7);                                                               setpixel(w5, h7);                       
+		                    setpixel(w1, h8);                                                               setpixel(w5, h8);                       
+		                                        setpixel(w2, h9);   setpixel(w3, h9);   setpixel(w4, h9);   setpixel(w5, h9);                       
+		                                                                                                    setpixel(w5, h10);                      
+		                                                                                                    setpixel(w5, h11);                      
+		                                                                                                    setpixel(w5, h12);                      
+		return 7;
+	}
+	if(c=='r') {
+		                    setpixel(w1, h3);                       setpixel(w3, h3);   setpixel(w4, h3);   
+		                    setpixel(w1, h4);   setpixel(w2, h4);                                           
+		                    setpixel(w1, h5);                                                               
+		                    setpixel(w1, h6);                                                               
+		                    setpixel(w1, h7);                                                               
+		                    setpixel(w1, h8);                                                               
+		                    setpixel(w1, h9);                                                               
+		return 5;
+	}
+	if(c=='s') {
+		                    setpixel(w1, h3);   setpixel(w2, h3);   setpixel(w3, h3);   setpixel(w4, h3);                       
+		                    setpixel(w1, h4);                                                                                   
+		                    setpixel(w1, h5);                                                                                   
+		                                        setpixel(w2, h6);   setpixel(w3, h6);                                           
+		                                                                                setpixel(w4, h7);                       
+		                                                                                setpixel(w4, h8);                       
+		                    setpixel(w1, h9);   setpixel(w2, h9);   setpixel(w3, h9);   setpixel(w4, h9);                       
+		return 6;
+	}
+	if(c=='t') {
+		                    setpixel(w1, h1);                                           
+		                    setpixel(w1, h2);                                           
+		setpixel(w0, h3);   setpixel(w1, h3);   setpixel(w2, h3);   setpixel(w3, h3);   
+		                    setpixel(w1, h4);                                           
+		                    setpixel(w1, h5);                                           
+		                    setpixel(w1, h6);                                           
+		                    setpixel(w1, h7);                                           
+		                    setpixel(w1, h8);                                           
+		                                        setpixel(w2, h9);   setpixel(w3, h9);   
+		return 4;
+	}
+	if(c=='u') {
+		                    setpixel(w1, h3);                                                               setpixel(w5, h3);                       
+		                    setpixel(w1, h4);                                                               setpixel(w5, h4);                       
+		                    setpixel(w1, h5);                                                               setpixel(w5, h5);                       
+		                    setpixel(w1, h6);                                                               setpixel(w5, h6);                       
+		                    setpixel(w1, h7);                                                               setpixel(w5, h7);                       
+		                    setpixel(w1, h8);                                                               setpixel(w5, h8);                       
+		                                        setpixel(w2, h9);   setpixel(w3, h9);   setpixel(w4, h9);   setpixel(w5, h9);                       
+		return 7;
+	}
+	if(c=='v') {
+		setpixel(w0, h3);                                                                                   setpixel(w5, h3);   
+		                    setpixel(w1, h4);                                           setpixel(w4, h4);   setpixel(w5, h4);   
+		                    setpixel(w1, h5);                                           setpixel(w4, h5);                       
+		                    setpixel(w1, h6);                                           setpixel(w4, h6);                       
+		                                        setpixel(w2, h7);   setpixel(w3, h7);   setpixel(w4, h7);                       
+		                                        setpixel(w2, h8);   setpixel(w3, h8);                                           
+		                                        setpixel(w2, h9);   setpixel(w3, h9);                                           
+		return 6;
+	}
+	if(c=='w') {
+		setpixel(w0, h3);                                                               setpixel(w4, h3);                                                               setpixel(w8, h3);   
+		                    setpixel(w1, h4);                                           setpixel(w4, h4);   setpixel(w5, h4);                                           setpixel(w8, h4);   
+		                    setpixel(w1, h5);                       setpixel(w3, h5);                       setpixel(w5, h5);                                           setpixel(w8, h5);   
+		                    setpixel(w1, h6);                       setpixel(w3, h6);                       setpixel(w5, h6);                       setpixel(w7, h6);                       
+		                    setpixel(w1, h7);                       setpixel(w3, h7);                                           setpixel(w6, h7);   setpixel(w7, h7);                       
+		                    setpixel(w1, h8);                       setpixel(w3, h8);                                           setpixel(w6, h8);   setpixel(w7, h8);                       
+		                                        setpixel(w2, h9);                                                               setpixel(w6, h9);   setpixel(w7, h9);                       
+		return 9;
+	}
+	if(c=='x') {
+		setpixel(w0, h3);   setpixel(w1, h3);                                                               setpixel(w5, h3);   
+		                    setpixel(w1, h4);                                           setpixel(w4, h4);                       
+		                                        setpixel(w2, h5);   setpixel(w3, h5);                                           
+		                                        setpixel(w2, h6);   setpixel(w3, h6);                                           
+		                                        setpixel(w2, h7);   setpixel(w3, h7);                                           
+		                    setpixel(w1, h8);                                           setpixel(w4, h8);                       
+		setpixel(w0, h9);   setpixel(w1, h9);                                                               setpixel(w5, h9);   
+		return 6;
+	}
+	if(c=='y') {
+		setpixel(w0, h3);                                                                                   setpixel(w5, h3);   
+		                    setpixel(w1, h4);                                           setpixel(w4, h4);   setpixel(w5, h4);   
+		                    setpixel(w1, h5);                                           setpixel(w4, h5);                       
+		                    setpixel(w1, h6);                                           setpixel(w4, h6);                       
+		                                        setpixel(w2, h7);                       setpixel(w4, h7);                       
+		                                        setpixel(w2, h8);   setpixel(w3, h8);                                           
+		                                        setpixel(w2, h9);   setpixel(w3, h9);                                           
+		                                        setpixel(w2, h10);                                                              
+		                                        setpixel(w2, h11);                                                              
+		setpixel(w0, h12);  setpixel(w1, h12);                                                                                  
+		return 6;
+	}
+	if(c=='z') {
+		                    setpixel(w1, h3);   setpixel(w2, h3);   setpixel(w3, h3);   setpixel(w4, h3);                       
+		                                                                                setpixel(w4, h4);                       
+		                                                            setpixel(w3, h5);                                           
+		                                        setpixel(w2, h6);                                                               
+		                                        setpixel(w2, h7);                                                               
+		                    setpixel(w1, h8);                                                                                   
+		setpixel(w0, h9);   setpixel(w1, h9);   setpixel(w2, h9);   setpixel(w3, h9);   setpixel(w4, h9);                       
+		return 6;
+	}
+	if(c=='{') {
+		                                        setpixel(w2, h1);   setpixel(w3, h1);                       
+		                                        setpixel(w2, h2);                                           
+		                                        setpixel(w2, h3);                                           
+		                                        setpixel(w2, h4);                                           
+		                                        setpixel(w2, h5);                                           
+		setpixel(w0, h6);   setpixel(w1, h6);                                                               
+		                                        setpixel(w2, h7);                                           
+		                                        setpixel(w2, h8);                                           
+		                                        setpixel(w2, h9);                                           
+		                                        setpixel(w2, h10);                                          
+		                                        setpixel(w2, h11);  setpixel(w3, h11);                      
+		return 5;
+	}
+	if(c=='|') {
+		                                                            setpixel(w3, h0);                                                               
+		                                                            setpixel(w3, h1);                                                               
+		                                                            setpixel(w3, h2);                                                               
+		                                                            setpixel(w3, h3);                                                               
+		                                                            setpixel(w3, h4);                                                               
+		                                                            setpixel(w3, h5);                                                               
+		                                                            setpixel(w3, h6);                                                               
+		                                                            setpixel(w3, h7);                                                               
+		                                                            setpixel(w3, h8);                                                               
+		                                                            setpixel(w3, h9);                                                               
+		                                                            setpixel(w3, h10);                                                              
+		                                                            setpixel(w3, h11);                                                              
+		                                                            setpixel(w3, h12);                                                              
+		return 7;
+	}
+	if(c=='}') {
+		setpixel(w0, h1);   setpixel(w1, h1);                                                               
+		                                        setpixel(w2, h2);                                           
+		                                        setpixel(w2, h3);                                           
+		                                        setpixel(w2, h4);                                           
+		                                        setpixel(w2, h5);                                           
+		                                                            setpixel(w3, h6);                       
+		                                        setpixel(w2, h7);                                           
+		                                        setpixel(w2, h8);                                           
+		                                        setpixel(w2, h9);                                           
+		                                        setpixel(w2, h10);                                          
+		setpixel(w0, h11);  setpixel(w1, h11);                                                              
+		return 5;
+	}
+	if(c=='~') {
+		                    setpixel(w1, h4);   setpixel(w2, h4);   setpixel(w3, h4);                       setpixel(w5, h4);                       
+		                    setpixel(w1, h5);                       setpixel(w3, h5);   setpixel(w4, h5);   setpixel(w5, h5);                       
+		return 7;
+	}
+}

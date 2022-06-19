@@ -16,6 +16,15 @@ import me.krypek.utils.Utils;
 
 public class IGB_CL2 {
 
+	public static int toStringTabs = -1;
+
+	public static String getTabs() {
+		StringBuilder sb = new StringBuilder();
+		for (int i = 0; i < toStringTabs; i++)
+			sb.append("\t");
+		return sb.toString();
+	}
+
 	public static void main(String[] args) {
 		//@f:off
 		ParsedData data = new ParserBuilder()
@@ -61,25 +70,11 @@ public class IGB_CL2 {
 	public int file;
 	public int line;
 
-	private Functions functions;
-	private RAM ram;
-	private EqSolver eqsolver;
-	private VarSolver varsolver;
-	private ControlSolver cntrlsolver;
-
-	public Functions getFunctions() { return functions; }
-
-	public RAM getRAM() { return ram; }
-
-	public EqSolver getEqSolver() { return eqsolver; }
-
-	public VarSolver getVarSolver() { return varsolver; }
-
 	public IGB_CL2() {}
 
 	public IGB_L1[] compile(String mainPath, boolean quiet) {
 		Precompilation prec = new Precompilation(mainPath, quiet);
-		functions = prec.functions;
+		Functions functions = prec.functions;
 		precfA = prec.precfA;
 
 		IGB_L1[] arr = new IGB_L1[precfA.length];
@@ -88,13 +83,13 @@ public class IGB_CL2 {
 			PrecompilationFile precf = precfA[file];
 
 			ArrayList<Instruction> instList = new ArrayList<>(precf.startInstructions);
-			ram = precf.ram;
-			eqsolver = new EqSolver(ram, functions);
-			varsolver = new VarSolver(eqsolver, ram);
-			cntrlsolver = new ControlSolver(functions, varsolver, eqsolver, ram, precf.cmd);
+			RAM ram = precf.ram;
+			EqSolver eqsolver = new EqSolver(ram, functions);
+			VarSolver varsolver = new VarSolver(eqsolver, ram);
+			ControlSolver cntrlsolver = new ControlSolver(functions, varsolver, eqsolver, ram, precf.cmd);
 			for (line = 0; line < precf.cmd.length; line++) {
 				String cmd = precf.cmd[line];
-				ArrayList<Instruction> out = cmd(cmd);
+				ArrayList<Instruction> out = cmd(cmd, varsolver, cntrlsolver);
 				// System.out.println("cmd: " + cmd + " -> " + out);
 				if(out == null)
 					throw Err.normal("Unknown command: \"" + cmd + "\".");
@@ -110,16 +105,20 @@ public class IGB_CL2 {
 
 		if(!quiet)
 			for (file = 0; file < arr.length; file++) {
+				if(arr[file].path.startsWith("$res"))
+					continue;
 				Instruction[] code = arr[file].code;
+
 				System.out.println("File: " + precfA[file].fileName + " ->");
 				for (Instruction element : code)
 					System.out.println(element);
 				System.out.println("\n");
 			}
+		System.out.println(this);
 		return arr;
 	}
 
-	private ArrayList<Instruction> cmd(String cmd) {
+	private ArrayList<Instruction> cmd(String cmd, VarSolver varsolver, ControlSolver cntrlsolver) {
 		if(cmd.length() > 0 && cmd.charAt(0) == '$' || cmd.startsWith("final"))
 			return new ArrayList<>();
 
@@ -135,6 +134,20 @@ public class IGB_CL2 {
 		}
 
 		return null;
+	}
+
+	@Override
+	public String toString() {
+		IGB_CL2.toStringTabs++;
+		StringBuilder sb = new StringBuilder("IGB_CL2: {\n");
+		for (PrecompilationFile precf : precfA) {
+			if(precf.path.startsWith("$res"))
+				continue;
+			sb.append(precf.toString() + "\n");
+		}
+		sb.append("\n}");
+		IGB_CL2.toStringTabs--;
+		return sb.toString();
 	}
 
 }

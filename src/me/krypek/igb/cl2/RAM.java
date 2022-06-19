@@ -9,10 +9,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
 
+import me.krypek.igb.cl1.IGB_CL1;
 import me.krypek.igb.cl1.IGB_MA;
 import me.krypek.igb.cl2.IGB_CL2_Exception.Err;
 import me.krypek.igb.cl2.datatypes.Array;
 import me.krypek.igb.cl2.datatypes.Variable;
+import me.krypek.utils.Pair;
 import me.krypek.utils.Utils;
 import net.objecthunter.exp4j.Expression;
 import net.objecthunter.exp4j.ExpressionBuilder;
@@ -28,38 +30,20 @@ public class RAM {
 	private final Stack<Map<String, Variable>> variableStack;
 	private final Stack<Map<String, Array>> arrayStack;
 
-	private final int allocStart;
+	private final int ramcell;
 	private int thread;
 
-	public RAM(int ramSize, int allocStart, int thread) {
+	public RAM(int ramlimit, int ramcell, int thread) {
 		this.thread = thread;
-		this.allocStart = allocStart;
+		this.ramcell = ramcell;
 		finalVars = getDefaultFinalVars();
-		allocationArray = new boolean[ramSize];
-		variableStack = new Stack<>();
+		allocationArray = new boolean[ramlimit];
+		variableStack = getDefaultVariables();
 		arrayStack = new Stack<>();
 		next();
-		addCompilerVariables();
 	}
-
-	@Override
-	public String toString() { return "RAM: {\n  " + variableStack + "\n  " + arrayStack + "\n  " + finalVars + "\n}"; }
 
 	public void setFinalVariables(HashMap<String, Double> finalVars) { this.finalVars = finalVars; }
-
-	private void addCompilerVariables() {
-		newVar("keyboard", new Variable(IGB_MA.KEYBOARD_INPUT));
-		newVar("width", new Variable(IGB_MA.SCREEN_WIDTH));
-		newVar("height", new Variable(IGB_MA.SCREEN_HEIGHT));
-		newVar("stype", new Variable(IGB_MA.SCREEN_TYPE, str -> {
-			String str1 = str.toLowerCase().strip();
-			if(str1.equals("rgb") || str1.equals("1"))
-				return Utils.listOf(Init(1, IGB_MA.SCREEN_TYPE), Device_ScreenUpdate());
-			if(str1.equals("16c") || str1.equals("0"))
-				return Utils.listOf(Init(0, IGB_MA.SCREEN_TYPE), Device_ScreenUpdate());
-			throw Err.normal("Invalid value: \"" + str + "\" screenType can be only \"rgb\", \"16c\", \"0\" or \"1\".");
-		}));
-	}
 
 	private int allocateSpace(int size) {
 		for1: for (int i = 0; i < allocationArray.length; i++) {
@@ -74,21 +58,32 @@ public class RAM {
 			for (int h = startI; h < startI + size; h++)
 				allocationArray[h] = true;
 
-			return startI + allocStart;
+			return startI + ramcell;
 		}
 
 		throw Err.normal("Ran out of space in RAM!");
 	}
 
-	public int checkName(String name) {
-		int val = -1;
+	public int checkName(String name, int size) {
+		int cell = -1;
 		if(name.endsWith("|")) {
 			String[] split1 = name.split("\\|");
 			if(split1.length != 2)
 				throw Err.normal("Variable cell syntax Error.");
-			val = (int) solveFinalEq(split1[1]);
-			if(val < 0)
+
+			boolean doAllocateSetCell = false;
+
+			if(split1[1].startsWith("!")) {
+				split1[1] = split1[1].substring(1);
+				doAllocateSetCell = true;
+			}
+			cell = (int) solveFinalEq(split1[1]);
+			if(cell < 0)
 				throw Err.normal("Variable cell cannot be negative.");
+
+			if(doAllocateSetCell)
+				allocateSetCell(cell, size);
+
 		}
 		if(finalVars.containsKey(name))
 			throw Err.normal("Cannot create a variable that is named the same as a final variable.");
@@ -97,10 +92,10 @@ public class RAM {
 			throw Err.normal("Illegal variable name: \"" + name + "\".");
 
 		for (String c : illegalCharacters)
-			if(name.contains(c) && (!c.equals("" + '|') || val == -1))
+			if(name.contains(c) && (!c.equals("" + '|') || cell == -1))
 				throw Err.normal("Variable name \"" + name + "\" contains illegal character: \"" + c + "\".");
 
-		return val;
+		return cell;
 	}
 
 	public int[] reserve(int amount) {
@@ -111,21 +106,38 @@ public class RAM {
 	}
 
 	public int newVar(String name) {
-		int cell1 = checkName(name);
+		var pair = preNewVar(name);
+
+		variableStack.peek().put(pair.getFirst(), new Variable(pair.getSecond()));
+		return pair.getSecond();
+	}
+
+	private void allocateSetCell(int cell1, int size) {
+		int cellInArray = cell1 - ramcell;
+		if(cellInArray < 0 || cellInArray >= allocationArray.length)
+			throw Err.normal("Cannot allocate outside of allocation array.");
+		if(allocationArray[cellInArray])
+			throw Err.normal("Cell already allocated.");
+
+		for (int cell = cellInArray; cell < cellInArray + size; cell++)
+			allocationArray[cell] = true;
+	}
+
+	public Pair<String, Integer> preNewVar(String name) {
+		int cell1 = checkName(name, 1);
 		final int cell;
 		if(cell1 == -1)
 			cell = allocateSpace(1);
 		else {
-			name = name.substring(0, name.indexOf('|'));
+			name = name.substring(0, name.indexOf('|')).strip();
 			cell = cell1;
 		}
-
-		variableStack.peek().put(name, new Variable(cell));
-		return cell;
+		return new Pair<>(name, cell);
 	}
 
 	public int newVar(String name, Variable var) {
-		checkName(name);
+		int cell = checkName(name, 1);
+		assert cell == -1;
 		variableStack.peek().put(name, var);
 		return var.cell;
 	}
@@ -133,7 +145,7 @@ public class RAM {
 	public int newArray(String name, int[] size) {
 		int totalSize = calcArraySize(size);
 
-		int cell1 = checkName(name);
+		int cell1 = checkName(name, totalSize);
 		final int cell;
 		if(cell1 == -1)
 			cell = allocateSpace(totalSize);
@@ -157,14 +169,14 @@ public class RAM {
 	public void pop() {
 		Map<String, Variable> t1 = variableStack.pop();
 		for (Variable var : t1.values()) {
-			int cell = var.cell - allocStart;
+			int cell = var.cell - ramcell;
 			if(cell < 0 || cell >= allocationArray.length)
 				continue;
 			allocationArray[cell] = false;
 		}
 		Map<String, Array> t2 = arrayStack.pop();
 		for (Array array : t2.values()) {
-			int from = array.cell - allocStart;
+			int from = array.cell - ramcell;
 			int to = from + array.totalSize;
 
 			if(from < 0 || from >= allocationArray.length || to < 0 || to >= allocationArray.length)
@@ -211,7 +223,7 @@ public class RAM {
 			if(var != null)
 				return var;
 		}
-		throw Err.normal("Variable \"" + name + "\" doesn't exist.");
+		throw Err.normal("Array \"" + name + "\" doesn't exist.");
 	}
 
 	public void next() {
@@ -247,31 +259,175 @@ public class RAM {
 	public double solveFinalEq(String eq) { return solveFinalEq(eq, finalVars); }
 
 
-	private static double getMCRGBValue(int r, int g, int b) { return (r << 16) + (g << 8) + b; }
+	private final Map<String, Double> DEFAULT_FINAL_VARIABLES = Map.ofEntries(
+            new AbstractMap.SimpleEntry<>("rgb_white",		IGB_CL1.getMCRGBValueD(249, 255, 255)),
+            new AbstractMap.SimpleEntry<>("rgb_yellow", 	IGB_CL1.getMCRGBValueD(255, 216, 61)),
+            new AbstractMap.SimpleEntry<>("rgb_orange", 	IGB_CL1.getMCRGBValueD(249, 128, 29)),
+            new AbstractMap.SimpleEntry<>("rgb_red", 		IGB_CL1.getMCRGBValueD(176, 46, 38)),
+            new AbstractMap.SimpleEntry<>("rgb_magenta", 	IGB_CL1.getMCRGBValueD(198, 79, 189)),
+            new AbstractMap.SimpleEntry<>("rgb_purple", 	IGB_CL1.getMCRGBValueD(137, 50, 183)),
+            new AbstractMap.SimpleEntry<>("rgb_blue", 		IGB_CL1.getMCRGBValueD(60, 68, 169)),
+            new AbstractMap.SimpleEntry<>("rgb_lightBlue", 	IGB_CL1.getMCRGBValueD(58, 179, 218)),
+            new AbstractMap.SimpleEntry<>("rgb_lime", 		IGB_CL1.getMCRGBValueD(128, 199, 31)),
+            new AbstractMap.SimpleEntry<>("rgb_green",		IGB_CL1.getMCRGBValueD(93, 124, 21)),
+            new AbstractMap.SimpleEntry<>("rgb_brown", 		IGB_CL1.getMCRGBValueD(130, 84, 50)),
+            new AbstractMap.SimpleEntry<>("rgb_cyan", 		IGB_CL1.getMCRGBValueD(22, 156, 157)),
+            new AbstractMap.SimpleEntry<>("rgb_lightGray",  IGB_CL1.getMCRGBValueD(156, 157, 151)),
+            new AbstractMap.SimpleEntry<>("rgb_pink", 		IGB_CL1.getMCRGBValueD(172, 81, 114)),
+            new AbstractMap.SimpleEntry<>("rgb_gray", 		IGB_CL1.getMCRGBValueD(71, 79, 82)),
+            new AbstractMap.SimpleEntry<>("rgb_black", 		IGB_CL1.getMCRGBValueD(29, 28, 33)) );
 
-	//@f:off
-	private final Map<String, Double> color_map = Map.ofEntries(
-            new AbstractMap.SimpleEntry<>("rgb_white",		getMCRGBValue(249, 255, 255)),
-            new AbstractMap.SimpleEntry<>("rgb_yellow", 	getMCRGBValue(255, 216, 61)),
-            new AbstractMap.SimpleEntry<>("rgb_orange", 	getMCRGBValue(249, 128, 29)),
-            new AbstractMap.SimpleEntry<>("rgb_red", 		getMCRGBValue(176, 46, 38)),
-            new AbstractMap.SimpleEntry<>("rgb_magenta", 	getMCRGBValue(198, 79, 189)),
-            new AbstractMap.SimpleEntry<>("rgb_purple", 	getMCRGBValue(137, 50, 183)),
-            new AbstractMap.SimpleEntry<>("rgb_blue", 		getMCRGBValue(60, 68, 169)),
-            new AbstractMap.SimpleEntry<>("rgb_lightBlue", 	getMCRGBValue(58, 179, 218)),
-            new AbstractMap.SimpleEntry<>("rgb_lime", 		getMCRGBValue(128, 199, 31)),
-            new AbstractMap.SimpleEntry<>("rgb_green",		getMCRGBValue(93, 124, 21)),
-            new AbstractMap.SimpleEntry<>("rgb_brown", 		getMCRGBValue(130, 84, 50)),
-            new AbstractMap.SimpleEntry<>("rgb_cyan", 		getMCRGBValue(22, 156, 157)),
-            new AbstractMap.SimpleEntry<>("rgb_lightGray", 	getMCRGBValue(156, 157, 151)),
-            new AbstractMap.SimpleEntry<>("rgb_pink", 		getMCRGBValue(172, 81, 114)),
-            new AbstractMap.SimpleEntry<>("rgb_gray", 		getMCRGBValue(71, 79, 82)),
-            new AbstractMap.SimpleEntry<>("rgb_black", 		getMCRGBValue(29, 28, 33)) );
-    //@f:on
 
-	public HashMap<String, Double> getDefaultFinalVars() {
-		HashMap<String, Double> fvars = new HashMap<>(color_map);
-		return fvars;
+	public HashMap<String, Double> getDefaultFinalVars() { return new HashMap<>(DEFAULT_FINAL_VARIABLES); }
+
+	
+	private final Map<String, Variable> DEFAULT_VARIABLES = Map.ofEntries(
+            new AbstractMap.SimpleEntry<>("keyboard",	new Variable(IGB_MA.KEYBOARD_INPUT)),
+            new AbstractMap.SimpleEntry<>("width",		new Variable(IGB_MA.SCREEN_WIDTH)),
+            new AbstractMap.SimpleEntry<>("height",		new Variable(IGB_MA.SCREEN_HEIGHT)),
+            new AbstractMap.SimpleEntry<>("stype",		new Variable(IGB_MA.SCREEN_TYPE, str -> {
+    			String str1 = str.toLowerCase().strip();
+    			if(str1.equals("rgb") || str1.equals("1"))
+    				return Utils.listOf(Init(1, IGB_MA.SCREEN_TYPE), Device_ScreenUpdate());
+    			if(str1.equals("16c") || str1.equals("0"))
+    				return Utils.listOf(Init(0, IGB_MA.SCREEN_TYPE), Device_ScreenUpdate());
+    			throw Err.normal("Invalid value: \"" + str + "\" screenType can be only \"rgb\", \"16c\", \"0\" or \"1\".");
+    		}))
+            );
+	
+	private Stack<Map<String, Variable>> getDefaultVariables() {
+		Stack<Map<String, Variable>> stack = new Stack<>();
+		stack.add(new HashMap<>(DEFAULT_VARIABLES));
+		return stack;
 	}
+	
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		sb.append(IGB_CL2.getTabs() + "RAM: {\n");
+		IGB_CL2.toStringTabs++;
+		sb.append(
+				IGB_CL2.getTabs()+"ramcell: " + ramcell + "\n" +
+				IGB_CL2.getTabs()+"ramlimit: " + allocationArray.length + "\n" +
+				IGB_CL2.getTabs()+"thread: " + thread + "\n" +
+				finalVariablesToString()+
+				variableStackToString()+
+				arrayStackToString()+
+				allocationArrayToString()
+				);
+		
+		IGB_CL2.toStringTabs--;
+		sb.append(IGB_CL2.getTabs() + "}");
+		return sb.toString();
+	}
+	
+	public String finalVariablesToString() {	
+		StringBuilder sb = new StringBuilder(IGB_CL2.getTabs()+"final variables: {");
+		IGB_CL2.toStringTabs++;
+		
+		boolean newlineAdded = false;
+		
+		var defFinalVarSet = DEFAULT_FINAL_VARIABLES.entrySet();
+		for(var entry : finalVars.entrySet()) {
+			if(defFinalVarSet.contains(entry)) 
+				continue;
+			if(!newlineAdded) { 
+				sb.append("\n"); 
+				newlineAdded = true;
+			}
+			sb.append(IGB_CL2.getTabs()+entry.getKey()+" = "+entry.getValue()+"\n");
+		}
+		
+		IGB_CL2.toStringTabs--;
+		if(newlineAdded) 
+			sb.append(IGB_CL2.getTabs());
+		sb.append("}\n");
+		return sb.toString();
+	}
+	
+	public String variableStackToString() {
+		StringBuilder sb = new StringBuilder(IGB_CL2.getTabs()+"variable stack: {");
+		
+		int starting = IGB_CL2.toStringTabs;
+		IGB_CL2.toStringTabs--;
+		boolean newlineAdded = false;
+		
+		var defVarSet = DEFAULT_VARIABLES.entrySet();
+		for(Map<String, Variable> map : variableStack) {
+			IGB_CL2.toStringTabs++;
+			for(var entry : map.entrySet()) {
+				if(defVarSet.contains(entry)) 
+					continue;
+				if(!newlineAdded) { 
+					sb.append("\n"); 
+					newlineAdded = true;
+				}
+				sb.append(IGB_CL2.getTabs() + entry.getKey() + "|" + entry.getValue() + "|\n");
+			}
+			
+		}
+		IGB_CL2.toStringTabs = starting;
+		if(newlineAdded) 
+			sb.append(IGB_CL2.getTabs());
+		sb.append("}\n");
+		return sb.toString();
+	}
+	
+	public String arrayStackToString() {
+		StringBuilder sb = new StringBuilder(IGB_CL2.getTabs()+"array stack: {");
+		
+		int starting = IGB_CL2.toStringTabs;
+		
+		boolean newlineAdded = false;
+		
+		for(Map<String, Array> map : arrayStack) {
+			IGB_CL2.toStringTabs++;
+			for(var entry : map.entrySet()) {
+				if(!newlineAdded) { 
+					sb.append('\n'); 
+					newlineAdded = true;
+				}
+				sb.append(IGB_CL2.getTabs() + entry.getKey() + entry.getValue().toString() + "\n");
+			}
+		}
+		IGB_CL2.toStringTabs = starting;
+		if(newlineAdded) 
+			sb.append(IGB_CL2.getTabs());
+		sb.append("}\n");
+		return sb.toString();
+	}
+	
+	public String allocationArrayToString() {
+		StringBuilder sb = new StringBuilder(IGB_CL2.getTabs() + "allocation array (" + ramcell + " - " + (ramcell + allocationArray.length) + "): {");
+		IGB_CL2.toStringTabs++;
+		boolean newlineAdded = false;
+		for(int i = 0, cell = ramcell; i < allocationArray.length; i++, cell++) {
+			char c = allocationArray[i] ? '#' : 'o';
+			if(i % 10 == 0) {
+				if(!newlineAdded) { 
+					sb.append("\n"); 
+					newlineAdded = true;
+				}
+				String cellStr = cell + "";
+				final int spacesToAdd = 6 - cellStr.length();
+				
+				sb.append(IGB_CL2.getTabs() + cell + ":");
+				for(int h=0; h<spacesToAdd; h++) 
+					sb.append(' ');
+			}
+			sb.append(c);
+			if(i % 10 == 9) {
+				sb.append('\n');
+			}
+		}
+		
+		IGB_CL2.toStringTabs--;
+		if(newlineAdded) 
+			sb.append(IGB_CL2.getTabs());
+		sb.append("}\n");
+		return sb.toString();
+	}
+	
+	//@f:on
 
 }
