@@ -3,16 +3,13 @@ package me.krypek.igb.cl2;
 import static me.krypek.igb.cl1.Instruction.Cell_Call;
 import static me.krypek.igb.cl1.Instruction.Cell_Jump;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import me.krypek.igb.cl1.Instruction;
 import me.krypek.igb.cl2.IGB_CL2_Exception.Err;
@@ -26,7 +23,7 @@ public class PrecompilationFile {
 	private static int DEFAULT_RAMLIMIT = 100;
 	private static int DEFAULT_THREAD = 0;
 
-	private static final Map<String, String> libMap = Map.of("charlib", "$res charlib.igb_l2");
+	private static final Map<String, String> libMap = Map.of("charlib", "$res charlib.bin");
 
 	private final Functions functions;
 	private final String mainParentPath;
@@ -54,21 +51,22 @@ public class PrecompilationFile {
 		startInstructions = new ArrayList<>();
 
 		Err.updateFile(fileName, path);
-		String contents;
+		String contents = null;
+		Pair<String[], int[]> formatPair = null;
 		if(path.startsWith("$res")) {
 			path = path.substring(5);
 			InputStream is = getClass().getClassLoader().getResourceAsStream(path);
 			try {
-				BufferedReader r = new BufferedReader(new InputStreamReader(is, "UTF-8"));
-				contents = r.lines().collect(Collectors.joining("\n"));
+				formatPair = Utils.deserialize(is);
 			} catch (Exception e) {
 				e.printStackTrace();
 				contents = null;
 			}
 		} else
 			contents = readFromFile(path);
+		if(contents != null && formatPair == null)
+			formatPair = format(contents);
 
-		var formatPair = format(contents);
 		cmd = formatPair.getFirst();
 		lines = formatPair.getSecond();
 
@@ -279,7 +277,7 @@ public class PrecompilationFile {
 		}
 	}
 
-	private Pair<String[], int[]> format(String input) {
+	public static Pair<String[], int[]> format(String input) {
 		final int stringBuilderSize = 30;
 		List<String> list = new ArrayList<>();
 		List<Integer> lineList = new ArrayList<>();
@@ -348,8 +346,7 @@ public class PrecompilationFile {
 				sb = new StringBuilder(stringBuilderSize);
 			} else if(c == '}') {
 				// sb = new StringBuilder(stringBuilderSize);
-				if(!sb.isEmpty())
-					throw Err.normal("Sytnax Error (DEBUG INFO: \"" + sb.toString() + "\")");
+				assert sb.isEmpty();
 				list.add("}");
 				lineList.add(line);
 			} else if(c == ';') {

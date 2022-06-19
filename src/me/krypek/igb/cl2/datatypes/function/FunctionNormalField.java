@@ -3,7 +3,6 @@ package me.krypek.igb.cl2.datatypes.function;
 import me.krypek.igb.cl2.IGB_CL2_Exception.Err;
 import me.krypek.igb.cl2.RAM;
 import me.krypek.igb.cl2.datatypes.Field;
-import me.krypek.igb.cl2.datatypes.function.FunctionCompilerField.FunctionCallCompilerField;
 import me.krypek.igb.cl2.solvers.EqSolver;
 
 public class FunctionNormalField implements FunctionField {
@@ -29,7 +28,7 @@ public class FunctionNormalField implements FunctionField {
 	@Override
 	public FunctionCallField get(String str, EqSolver eqsolver) {
 		Field field = eqsolver.stringToField(str, false);
-		return new FunctionCallCompilerField(field);
+		return new FunctionCallNormalField(field);
 	}
 
 	public static class FunctionCallNormalField implements FunctionCallField {

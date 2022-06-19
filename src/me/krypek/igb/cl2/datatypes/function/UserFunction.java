@@ -43,7 +43,7 @@ public class UserFunction extends Function {
 		}
 		list.add(Cell_Call(startPointer));
 
-		if(returnType)
+		if(returnType && call.outputCell != -1)
 			list.add(Copy(IGB_MA.FUNC_RETURN, call.outputCell));
 		return list;
 	}

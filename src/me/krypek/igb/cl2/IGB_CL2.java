@@ -105,8 +105,8 @@ public class IGB_CL2 {
 
 		if(!quiet)
 			for (file = 0; file < arr.length; file++) {
-				if(arr[file].path.startsWith("$res"))
-					continue;
+				//if(arr[file].path.startsWith("$res"))
+				//	continue;
 				Instruction[] code = arr[file].code;
 
 				System.out.println("File: " + precfA[file].fileName + " ->");

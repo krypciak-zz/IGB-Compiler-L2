@@ -205,19 +205,19 @@ public class Functions {
 						list.addAll(numcell2.getFirst());
 
 					int cell1 = switch (f3.fieldType) {
-					case Val -> (int) f3.value;
-					case Var -> f3.cell;
-					default -> throw Err.normal("Getpixel rgb arg 3: R output cell has to be an integer or a variable.");
+						case Val -> (int) f3.value;
+						case Var -> f3.cell;
+						default -> throw Err.normal("Getpixel rgb arg 3: R output cell has to be an integer or a variable.");
 					};
 					int cell2 = switch (f4.fieldType) {
-					case Val -> (int) f4.value;
-					case Var -> f4.cell;
-					default -> throw Err.normal("Getpixel rgb arg 4: R output cell has to be an integer or a variable.");
+						case Val -> (int) f4.value;
+						case Var -> f4.cell;
+						default -> throw Err.normal("Getpixel rgb arg 4: R output cell has to be an integer or a variable.");
 					};
 					int cell3 = switch (f5.fieldType) {
-					case Val -> (int) f5.value;
-					case Var -> f5.cell;
-					default -> throw Err.normal("Getpixel rgb arg 5: B output cell has to be an integer or a variable.");
+						case Val -> (int) f5.value;
+						case Var -> f5.cell;
+						default -> throw Err.normal("Getpixel rgb arg 5: B output cell has to be an integer or a variable.");
 					};
 
 					int outCell = cell1 == cell2 - 1 && cell1 == cell3 - 2 ? cell1 : IGB_MA.CHARLIB_TEMP_START + 15;
@@ -230,9 +230,6 @@ public class Functions {
 					}
 					return list;
 				}));
-
-		addFunction(new CompilerFunction("drawchar", true,
-				Function.fieldsOf(new FunctionCompilerField(), new FunctionCompilerField(), new FunctionCompilerField()), call -> null));
 
 		/*
 		 * addFunction(new Function("comment", obj -> { FunctionActionInputString faif =
