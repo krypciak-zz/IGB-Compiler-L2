@@ -9,7 +9,7 @@ public class PointerNames {
 
 	public static String bracketStart(int index) { return ":bracket_" + index + "_start"; }
 
-	public static String bracketEnd(int index) { return ":bracket_" + index + "end"; }
+	public static String bracketEnd(int index) { return ":bracket_" + index + "_end"; }
 
 	public static String forStart(int index) { return ":for_" + index + "_start"; }
 

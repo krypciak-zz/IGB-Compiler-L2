@@ -15,7 +15,7 @@ public class IGB_CL2_Exception extends RuntimeException {
 			Err.path = path;
 		}
 
-		public static void updateLine(int line) { Err.line = line; }
+		public static void updateLine(int line) { Err.line = line + 2; }
 
 		private static String getFile() { return showFilePath ? path : fileName; }
 

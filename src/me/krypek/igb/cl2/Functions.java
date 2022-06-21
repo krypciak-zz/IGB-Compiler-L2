@@ -4,6 +4,7 @@ import static me.krypek.igb.cl1.Instruction.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 import me.krypek.igb.cl1.IGB_MA;
 import me.krypek.igb.cl1.Instruction;
@@ -15,15 +16,18 @@ import me.krypek.igb.cl2.datatypes.function.FunctionCall;
 import me.krypek.igb.cl2.datatypes.function.FunctionCallField;
 import me.krypek.igb.cl2.datatypes.function.FunctionCompilerField;
 import me.krypek.igb.cl2.datatypes.function.FunctionCompilerField.FunctionCallCompilerField;
+import me.krypek.igb.cl2.datatypes.function.FunctionNormalField.FunctionCallNormalField;
+import me.krypek.igb.cl2.datatypes.function.FunctionStringField;
+import me.krypek.igb.cl2.datatypes.function.FunctionStringField.FunctionCallStringField;
 import me.krypek.utils.Pair;
 import me.krypek.utils.Utils;
 
 public class Functions {
 
-	public final HashMap<String, HashMap<Integer, Function>> functionMap;
+	public final LinkedHashMap<String, LinkedHashMap<Integer, Function>> functionMap;
 
 	public Functions() {
-		functionMap = new HashMap<>();
+		functionMap = new LinkedHashMap<>();
 		initCompilerFunctions();
 	}
 
@@ -40,9 +44,9 @@ public class Functions {
 	}
 
 	public void addFunction(Function func) {
-		HashMap<Integer, Function> map = functionMap.get(func.name);
+		LinkedHashMap<Integer, Function> map = functionMap.get(func.name);
 		if(map == null) {
-			map = new HashMap<>();
+			map = new LinkedHashMap<>();
 			functionMap.put(func.name, map);
 		}
 
@@ -56,6 +60,8 @@ public class Functions {
 		FunctionCallField f1 = call.fields[index];
 		if(f1 instanceof FunctionCallCompilerField)
 			return ((FunctionCallCompilerField) f1).field;
+		else if(f1 instanceof FunctionCallNormalField)
+			return ((FunctionCallNormalField) f1).field;
 		throw Err.notPossible();
 	}
 
@@ -231,6 +237,72 @@ public class Functions {
 					return list;
 				}));
 
+		addFunction(new CompilerFunction("drawstring", true, Function.fieldsOf(new FunctionCompilerField(), new FunctionCompilerField(),
+				new FunctionStringField(), new FunctionStringField(), new FunctionCompilerField()), call -> {
+
+					Field f1 = getFieldFromCall(call, 0), f2 = getFieldFromCall(call, 1), f5 = getFieldFromCall(call, 4);
+
+					String str = ((FunctionCallStringField) call.fields[2]).str;
+					System.out.println(str);
+					char[] charA = str.toCharArray();
+					if(charA.length == 0)
+						return new ArrayList<>();
+
+					String name = ((FunctionCallStringField) call.fields[3]).str;
+
+					ArrayList<Instruction> list = new ArrayList<>();
+
+					var pair1 = call.eqsolver.getInstructionsFromField(f1, IGB_MA.CHARLIB_X);
+					list.addAll(pair1.getSecond());
+
+					var pair2 = call.eqsolver.getInstructionsFromField(f2, IGB_MA.CHARLIB_Y);
+					list.addAll(pair2.getSecond());
+
+					var numcell4 = call.eqsolver.getNumCell(f5, IGB_MA.CHARLIB_SPACING);
+					boolean isCell4 = numcell4.getFirst() != null;
+
+					if(isCell4)
+						list.addAll(numcell4.getFirst());
+
+					list.add(Init(charA[0], IGB_MA.CHARLIB_CHAR));
+					list.add(Cell_Call(":f_" + name + "drawchar_3_start"));
+
+					if(charA.length == 1)
+						return list;
+
+					list.add(Add(IGB_MA.CHARLIB_X, true, IGB_MA.FUNC_RETURN, IGB_MA.CHARLIB_X));
+					list.add(Add(IGB_MA.CHARLIB_X, isCell4, (int) (double) numcell4.getSecond(), IGB_MA.CHARLIB_X));
+
+					for (int i = 1; i < charA.length; i++) {
+						char c = charA[i];
+						list.add(Init(c, IGB_MA.CHARLIB_CHAR));
+						list.add(Cell_Call(":f_" + name + "drawchar_3_start"));
+						if(i != charA.length - 1) {
+							list.add(Add(IGB_MA.CHARLIB_X, true, IGB_MA.FUNC_RETURN, IGB_MA.CHARLIB_X));
+							list.add(Add(IGB_MA.CHARLIB_X, isCell4, (int) (double) numcell4.getSecond(), IGB_MA.CHARLIB_X));
+						}
+					}
+
+					return list;
+				}));
+
+		addFunction(new CompilerFunction("random", true, Function.fieldsOf(new FunctionCompilerField(), new FunctionCompilerField()), call -> {
+			Field f1 = getFieldFromCall(call, 0), f2 = getFieldFromCall(call, 1);
+
+			if(!f1.isVal() || !f2.isVal())
+				throw Err.normal("random() arguments have to be integers.");
+
+			double min = f1.value;
+			double max = f2.value;
+
+			if(min % 1 != 0 || max % 1 != 0)
+				throw Err.normal("random() arguments have to be integers.");
+
+			final int outputcell = call.outputCell == -1 ? 0 : call.outputCell;
+
+			return Utils.listOf(Math_Random((int) min, (int) max, outputcell));
+		}));
+
 		/*
 		 * addFunction(new Function("comment", obj -> { FunctionActionInputString faif =
 		 * (FunctionActionInputString) obj; String comment = faif.str;
@@ -246,19 +318,21 @@ public class Functions {
 	@Override
 	public String toString() {
 		if(functionMap.size() == 0)
-			return "Functions: {}";
-		StringBuilder sb = new StringBuilder("Functions: {\n");
+			return IGB_CL2.getTabs() + "Functions: {}";
+		StringBuilder sb = new StringBuilder(IGB_CL2.getTabs() + "Functions: {\n");
+		IGB_CL2.toStringTabs++;
 		functionMap.forEach((k, v) -> {
 			v.forEach((k1, v1) -> {
 				if(!(v1 instanceof CompilerFunction)) {
-					sb.append("\t");
+					sb.append(IGB_CL2.getTabs());
 					sb.append(v1.toString());
 					sb.append("\n");
 				}
 
 			});
 		});
-		sb.append("}");
+		IGB_CL2.toStringTabs--;
+		sb.append(IGB_CL2.getTabs() + "}\n");
 		return sb.toString();
 	}
 }

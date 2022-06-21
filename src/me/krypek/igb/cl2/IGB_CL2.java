@@ -16,7 +16,7 @@ import me.krypek.utils.Utils;
 
 public class IGB_CL2 {
 
-	public static int toStringTabs = -1;
+	public static int toStringTabs = 0;
 
 	public static String getTabs() {
 		StringBuilder sb = new StringBuilder();
@@ -88,12 +88,21 @@ public class IGB_CL2 {
 			VarSolver varsolver = new VarSolver(eqsolver, ram);
 			ControlSolver cntrlsolver = new ControlSolver(functions, varsolver, eqsolver, ram, precf.cmd);
 			for (line = 0; line < precf.cmd.length; line++) {
+				Err.updateLine(precf.lines[line]);
+
 				String cmd = precf.cmd[line];
-				ArrayList<Instruction> out = cmd(cmd, varsolver, cntrlsolver);
+				//try {
+					ArrayList<Instruction> out = cmd(cmd, varsolver, cntrlsolver);
+					if(out == null)
+						throw Err.normal("Unknown command: \"" + cmd + "\".");
+					instList.addAll(out);
+				//} catch (Exception e) {
+				//	System.out.println(this);
+				//	throw e;
+				//}
+
 				// System.out.println("cmd: " + cmd + " -> " + out);
-				if(out == null)
-					throw Err.normal("Unknown command: \"" + cmd + "\".");
-				instList.addAll(out);
+
 			}
 			cntrlsolver.checkStack();
 
@@ -105,15 +114,19 @@ public class IGB_CL2 {
 
 		if(!quiet)
 			for (file = 0; file < arr.length; file++) {
-				//if(arr[file].path.startsWith("$res"))
-				//	continue;
-				Instruction[] code = arr[file].code;
 
-				System.out.println("File: " + precfA[file].fileName + " ->");
+				Instruction[] code = arr[file].code;
+				if(arr[file].path.startsWith("$res")) {
+					System.out.println("Library: " + precfA[file].fileName + "   len: " + code.length);
+					continue;
+				}
+				System.out.println("File: " + precfA[file].fileName + "   len: " + code.length + " ->");
+
 				for (Instruction element : code)
 					System.out.println(element);
 				System.out.println("\n");
 			}
+		System.out.println("\n");
 		System.out.println(this);
 		return arr;
 	}
@@ -138,15 +151,16 @@ public class IGB_CL2 {
 
 	@Override
 	public String toString() {
+		StringBuilder sb = new StringBuilder(IGB_CL2.getTabs() + "IGB_CL2: {\n");
 		IGB_CL2.toStringTabs++;
-		StringBuilder sb = new StringBuilder("IGB_CL2: {\n");
+		sb.append(precfA[0].functions.toString());
 		for (PrecompilationFile precf : precfA) {
 			if(precf.path.startsWith("$res"))
 				continue;
 			sb.append(precf.toString() + "\n");
 		}
-		sb.append("\n}");
 		IGB_CL2.toStringTabs--;
+		sb.append(IGB_CL2.getTabs() + "\n}");
 		return sb.toString();
 	}
 

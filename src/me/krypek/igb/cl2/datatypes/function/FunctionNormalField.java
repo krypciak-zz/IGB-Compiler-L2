@@ -26,6 +26,9 @@ public class FunctionNormalField implements FunctionField {
 	}
 
 	@Override
+	public String toString() { return name + "|" + cell + "|"; }
+
+	@Override
 	public FunctionCallField get(String str, EqSolver eqsolver) {
 		Field field = eqsolver.stringToField(str, false);
 		return new FunctionCallNormalField(field);

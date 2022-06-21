@@ -7,8 +7,9 @@ public class FunctionStringField implements FunctionField {
 
 	@Override
 	public FunctionCallStringField get(String str, EqSolver eqsolver) {
+		str = str.strip();
 		if(str.length() < 2 || str.charAt(0) != '\"' || str.charAt(str.length() - 1) != '\"')
-			throw Err.normal("Comment has to start and end with \".");
+			throw Err.normal("String has to start and end with \".");
 		return new FunctionCallStringField(str.substring(1, str.length() - 1));
 	}
 

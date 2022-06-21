@@ -149,11 +149,16 @@ public class ControlSolver {
 
 	private ArrayList<Instruction> _functionCall(String cmd) {
 		String functionName = cmd.substring(0, cmd.indexOf('(')).strip();
-		String args = cmd.substring(cmd.indexOf('(') + 1, cmd.lastIndexOf(')')).strip();
-		String[] split = args.split(",");
-		Function func = functions.getFunction(functionName, split.length);
-		FunctionCallField[] fields = new FunctionCallField[split.length];
-		for (int i = 0; i < split.length; i++)
+		String args = cmd.substring(cmd.indexOf('('), cmd.lastIndexOf(')') + 1).strip();
+
+		String[] split = Utils.getArrayElementsFromStringIgnoreBrackets(args, '(', ')', ',');
+		int len = split.length;
+		if(args.isBlank())
+			len = 0;
+
+		Function func = functions.getFunction(functionName, len);
+		FunctionCallField[] fields = new FunctionCallField[len];
+		for (int i = 0; i < len; i++)
 			fields[i] = func.fields[i].get(split[i], eqsolver);
 
 		FunctionCall call = new FunctionCall(fields, func, eqsolver);
@@ -232,6 +237,8 @@ public class ControlSolver {
 		nextAdd.startList.add(nextAdd.loopPointer);
 		nextAdd.endList.add(nextAdd.checkPointer);
 		nextAdd.endList.addAll(solveIfEq(rest, nextAdd.loopPointer.arg[0].str(), true));
+		if(nextAdd.endList.size() == 1)
+			nextAdd.endList.add(Cell_Jump(nextAdd.startPointer.arg[0].str()));
 		return new ArrayList<>();
 	}
 
@@ -265,11 +272,11 @@ public class ControlSolver {
 		if(index == -1)
 			throw Err.normal("Unknown boolean operator in: \"" + eq + "\".");
 
-		if(revertOperator)
-			ope = revertOperator(ope);
-
 		String f1 = eq.substring(0, index).strip();
 		String f2 = eq.substring(index + ope.length()).strip();
+
+		if(revertOperator)
+			ope = revertOperator(ope);
 
 		var t1 = eqsolver.solve(f1);
 		boolean nc1 = t1.getValue1() == null;
@@ -287,13 +294,13 @@ public class ControlSolver {
 			double val1 = t1.getValue1();
 			double val2 = t2.getValue1();
 			if(switch (ope) {
-			case "==" -> val1 == val2;
-			case "!=" -> val1 != val2;
-			case ">=" -> val1 >= val2;
-			case "<=" -> val1 <= val2;
-			case ">" -> val1 > val2;
-			case "<" -> val1 < val2;
-			default -> throw Err.notPossible();
+				case "==" -> val1 == val2;
+				case "!=" -> val1 != val2;
+				case ">=" -> val1 >= val2;
+				case "<=" -> val1 <= val2;
+				case ">" -> val1 > val2;
+				case "<" -> val1 < val2;
+				default -> throw Err.notPossible();
 			})
 				return new ArrayList<>();
 			return Utils.listOf(Cell_Jump(pointerToJump));
@@ -387,13 +394,13 @@ public class ControlSolver {
 			double val1 = t1.getValue1();
 			double val2 = t2.getValue1();
 			if(switch (ope) {
-			case "==" -> val1 == val2;
-			case "!=" -> val1 != val2;
-			case ">=" -> val1 >= val2;
-			case "<=" -> val1 <= val2;
-			case ">" -> val1 > val2;
-			case "<" -> val1 < val2;
-			default -> throw Err.notPossible();
+				case "==" -> val1 == val2;
+				case "!=" -> val1 != val2;
+				case ">=" -> val1 >= val2;
+				case "<=" -> val1 <= val2;
+				case ">" -> val1 > val2;
+				case "<" -> val1 < val2;
+				default -> throw Err.notPossible();
 			}) {
 				returnFromIfEqElse(isElse, new ArrayList<>(), null);
 				return;
@@ -411,12 +418,12 @@ public class ControlSolver {
 
 	private String revertOperator(String ope) {
 		return switch (ope) {
-		case "==", "!=" -> ope;
-		case ">" -> "<=";
-		case "<" -> ">=";
-		case ">=" -> "<";
-		case "<=" -> ">";
-		default -> throw Err.notPossible();
+			case "==", "!=" -> ope;
+			case ">" -> "<=";
+			case "<" -> ">=";
+			case ">=" -> "<";
+			case "<=" -> ">";
+			default -> throw Err.notPossible();
 		};
 	}
 

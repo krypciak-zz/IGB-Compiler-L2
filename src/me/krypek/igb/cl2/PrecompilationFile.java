@@ -25,7 +25,7 @@ public class PrecompilationFile {
 
 	private static final Map<String, String> libMap = Map.of("charlib", "$res charlib.bin");
 
-	private final Functions functions;
+	public final Functions functions;
 	private final String mainParentPath;
 	private UserFunction main;
 	public RAM ram;
@@ -70,7 +70,7 @@ public class PrecompilationFile {
 		cmd = formatPair.getFirst();
 		lines = formatPair.getSecond();
 
-		for (int i = 0; i < cmd.length; i++) { Err.updateLine(i); cmd(cmd[i]); }
+		for (int i = 0; i < cmd.length; i++) { Err.updateLine(lines[i]); cmd(cmd[i]); }
 	}
 
 	private String readFromFile(String path) {
@@ -249,31 +249,31 @@ public class PrecompilationFile {
 			throw Err.normal("Compiler variable value cannot be negative.");
 
 		switch (name.toLowerCase()) {
-		case "startline" -> {
-			if(startline != -1)
-				throw Err.normal("Cannot set startline twice.");
-			startline = val;
-		}
-		case "lenlimit" -> {
-			if(lenlimit != -1)
-				throw Err.normal("Cannot set lenlimit twice.");
-			lenlimit = val;
-		}
-		case "ramlimit" -> {
-			if(ramlimit != -1)
-				throw Err.normal("Cannot set ramlimit twice.");
-			ramlimit = val;
-		}
-		case "ramcell" -> {
-			if(ramcell != -1)
-				throw Err.normal("Cannot set ramcell twice.");
-			ramcell = val;
-		}
-		case "thread" -> {
-			if(thread > 1)
-				throw Err.normal("Thread can be only 0 or 1.");
-		}
-		default -> throw Err.normal("Unknown compiler variable: \"" + name + "\".");
+			case "startline" -> {
+				if(startline != -1)
+					throw Err.normal("Cannot set startline twice.");
+				startline = val;
+			}
+			case "lenlimit" -> {
+				if(lenlimit != -1)
+					throw Err.normal("Cannot set lenlimit twice.");
+				lenlimit = val;
+			}
+			case "ramlimit" -> {
+				if(ramlimit != -1)
+					throw Err.normal("Cannot set ramlimit twice.");
+				ramlimit = val;
+			}
+			case "ramcell" -> {
+				if(ramcell != -1)
+					throw Err.normal("Cannot set ramcell twice.");
+				ramcell = val;
+			}
+			case "thread" -> {
+				if(thread > 1)
+					throw Err.normal("Thread can be only 0 or 1.");
+			}
+			default -> throw Err.normal("Unknown compiler variable: \"" + name + "\".");
 		}
 	}
 
@@ -287,8 +287,6 @@ public class PrecompilationFile {
 
 		boolean isQuote = false, wasLastSemi = false, ignore = false;
 		int bracket = 0, line = 0;
-
-		Err.updateLine(0);
 
 		for (int i = 0; i < charA.length; i++) {
 			char c = charA[i];
@@ -346,7 +344,8 @@ public class PrecompilationFile {
 				sb = new StringBuilder(stringBuilderSize);
 			} else if(c == '}') {
 				// sb = new StringBuilder(stringBuilderSize);
-				assert sb.isEmpty();
+				if(!sb.isEmpty())
+					throw Err.normal("Syntax error.");
 				list.add("}");
 				lineList.add(line);
 			} else if(c == ';') {
@@ -365,14 +364,12 @@ public class PrecompilationFile {
 
 			wasLastSemi = false;
 		}
-
 		return new Pair<>(list.toArray(String[]::new), lineList.stream().mapToInt(i -> i).toArray());
 	}
 
 	@Override
 	//@f:off
 	public String toString() {
-		IGB_CL2.toStringTabs++;
 		StringBuilder sb = new StringBuilder();
 		sb.append(IGB_CL2.getTabs()+"PrecompilationFile: {\n");
 		IGB_CL2.toStringTabs++;
@@ -387,7 +384,6 @@ public class PrecompilationFile {
 				);
 		IGB_CL2.toStringTabs--;
 		sb.append("\n"+IGB_CL2.getTabs()+"}");
-		IGB_CL2.toStringTabs--;
 		return sb.toString();
 	}
 	//@f:on

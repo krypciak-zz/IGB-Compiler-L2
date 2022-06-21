@@ -10,7 +10,6 @@ import java.util.Set;
 import me.krypek.igb.cl1.IGB_MA;
 import me.krypek.igb.cl1.Instruction;
 import me.krypek.igb.cl2.Functions;
-import me.krypek.igb.cl2.IGB_CL2_Exception;
 import me.krypek.igb.cl2.IGB_CL2_Exception.Err;
 import me.krypek.igb.cl2.RAM;
 import me.krypek.igb.cl2.datatypes.Array;
@@ -72,7 +71,7 @@ public class EqSolver {
 	public final int temp3;
 	private int tempCell1;
 
-	private ArrayList<Instruction> getInstructionListFromEq(Equation eq, int outCell) {
+	public ArrayList<Instruction> getInstructionListFromEq(Equation eq, int outCell) {
 		Field[] fields = eq.fields;
 		char[] opes = eq.operators;
 		ArrayList<Instruction> list = new ArrayList<>();
@@ -181,26 +180,26 @@ public class EqSolver {
 	private ArrayList<Instruction> revertOperation(double v1, int v2, char ope, int outCell) {
 		ArrayList<Instruction> list = new ArrayList<>();
 		switch (ope) {
-		case '+', '*' -> {
-			list.add(Math(ope, v2, false, v1, outCell));
-		}
-		case '-', '/', '%' -> {
-			list.add(Init(v1, outCell));
-			list.add(Math(ope, outCell, true, v2, outCell));
-		}
-		default -> throw new IllegalArgumentException("Unexpected value: " + ope);
+			case '+', '*' -> {
+				list.add(Math(ope, v2, false, v1, outCell));
+			}
+			case '-', '/', '%' -> {
+				list.add(Init(v1, outCell));
+				list.add(Math(ope, outCell, true, v2, outCell));
+			}
+			default -> throw new IllegalArgumentException("Unexpected value: " + ope);
 		}
 		return list;
 	}
 
 	private static double getVal(double v1, double v2, char ope) {
 		return switch (ope) {
-		case '+' -> v1 + v2;
-		case '-' -> v1 - v2;
-		case '*' -> v1 * v2;
-		case '/' -> v1 / v2;
-		case '%' -> v1 % v2;
-		default -> throw new IllegalArgumentException("Unexpected value: " + ope);
+			case '+' -> v1 + v2;
+			case '-' -> v1 - v2;
+			case '*' -> v1 * v2;
+			case '/' -> v1 / v2;
+			case '%' -> v1 % v2;
+			default -> throw new IllegalArgumentException("Unexpected value: " + ope);
 		};
 	}
 
@@ -221,52 +220,51 @@ public class EqSolver {
 	public Pair<Integer, ArrayList<Instruction>> getInstructionsFromField(Field f, int directCell) {
 		ArrayList<Instruction> list = new ArrayList<>();
 		switch (f.fieldType) {
-		case Val -> {
-			final int outCell;
-			if(directCell == -1)
-				outCell = IGB_MA.TEMP_CELL_1;
-			else
-				outCell = directCell;
-			return new Pair<>(outCell, Utils.listOf(Init(f.value, outCell)));
-		}
-		case Var -> {
-			if(f.cell == directCell)
-				return new Pair<>(directCell, new ArrayList<>());
+			case Val -> {
+				if(directCell == -1)
+					directCell = IGB_MA.TEMP_CELL_1;
 
-			if(directCell == -1)
-				return new Pair<>(f.cell, new ArrayList<>());
-			return new Pair<>(directCell, Utils.listOf(Copy(f.cell, directCell)));
-		}
-		case Array -> {
-			ArrayAccess aa = f.arrAccess;
-			Field[] args = aa.dims;
-			Array arr = aa.array;
-			final int outCell;
-			if(directCell == -1)
-				outCell = IGB_MA.TEMP_CELL_1;
-			else
-				outCell = directCell;
-
-			return arr.getAccess(eqs, outCell, args);
-		}
-		case Eq -> {
-			final int cell1;
-			if(directCell == -1) {
-				ArrayList<Instruction> list1 = getInstructionListFromEq(f.eq, ram.EQ_TEMP1);
-				return new Pair<>(ram.EQ_TEMP1, list1);
+				return new Pair<>(directCell, Utils.listOf(Init(f.value, directCell)));
 			}
-			cell1 = directCell;
-			list.addAll(getInstructionListFromEq(f.eq, cell1));
-			return new Pair<>(cell1, list);
-		}
-		case Func -> {
-			FunctionCall fc = f.funcCall;
-			final int outCell = directCell == -1 ? IGB_MA.FUNC_RETURN : directCell;
-			fc = fc.cloneWithOutputCell(outCell);
-			list.addAll(fc.call());
+			case Var -> {
+				if(f.cell == directCell)
+					return new Pair<>(directCell, new ArrayList<>());
 
-			return new Pair<>(outCell, list);
-		}
+				if(directCell == -1)
+					return new Pair<>(f.cell, new ArrayList<>());
+				return new Pair<>(directCell, Utils.listOf(Copy(f.cell, directCell)));
+			}
+			case Array -> {
+				ArrayAccess aa = f.arrAccess;
+				Field[] args = aa.dims;
+				Array arr = aa.array;
+				if(directCell == -1)
+					directCell = IGB_MA.TEMP_CELL_1;
+
+				ArrayList<Instruction> list1 = arr.getAccess(eqs, args, directCell);
+
+				return new Pair<>(directCell, list1);
+			}
+			case Eq -> {
+				final int cell1;
+				if(directCell == -1) {
+					ArrayList<Instruction> list1 = getInstructionListFromEq(f.eq, ram.EQ_TEMP1);
+					return new Pair<>(ram.EQ_TEMP1, list1);
+				}
+				cell1 = directCell;
+				list.addAll(getInstructionListFromEq(f.eq, cell1));
+				return new Pair<>(cell1, list);
+			}
+			case Func -> {
+				FunctionCall fc = f.funcCall;
+				if(directCell == -1)
+					directCell = IGB_MA.FUNC_RETURN;
+
+				fc = fc.cloneWithOutputCell(directCell);
+				list.addAll(fc.call());
+
+				return new Pair<>(directCell, list);
+			}
 		}
 		return null;
 	}
@@ -297,8 +295,10 @@ public class EqSolver {
 					canBeNegative = true;
 					fieldStringList.add(sb.toString());
 					sb = new StringBuilder(32);
-				} else if(!Character.isWhitespace(c))
+				} else if(!Character.isWhitespace(c)) {
+					canBeNegative = false;
 					sb.append(c);
+				}
 			}
 			if(!sb.isEmpty())
 				fieldStringList.add(sb.toString());
@@ -364,11 +364,8 @@ public class EqSolver {
 			return new Field(cell);
 
 		if(!epicFail)
-			try {
-				return new Field(getEqFromString(str, true));
-			} catch (IGB_CL2_Exception e) {
-				throw e;
-			}
+			// often throws exceptions
+			return new Field(getEqFromString(str, true));
 
 		throw Err.normal("Unknown variable: \"" + str + "\".");
 	}
