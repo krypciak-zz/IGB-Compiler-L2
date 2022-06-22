@@ -144,7 +144,7 @@ public class ControlSolver {
 	}
 
 	private ArrayList<Instruction> _raw(String cmd) {
-		return Utils.listOf(Instruction.stringToInstruction(cmd, str -> Err.normal("Raw instruction syntax Error.")));
+		return Utils.listOf(Instruction.stringToInstruction(cmd.strip(), str -> Err.normal("Raw instruction syntax Error.")));
 	}
 
 	private ArrayList<Instruction> _functionCall(String cmd) {
@@ -208,10 +208,13 @@ public class ControlSolver {
 		String addi = split[2].strip();
 		nextAdd = Bracket._for();
 		ArrayList<Instruction> startList = nextAdd.startList;
-		ArrayList<Instruction> initSolved = varsolver.cmd(init, false);
-		if(initSolved == null)
-			throw Err.normal("Syntax Error at for init field.");
-		startList.addAll(initSolved);
+
+		if(!init.isBlank()) {
+			ArrayList<Instruction> initSolved = varsolver.cmd(init, false);
+			if(initSolved == null)
+				throw Err.normal("Syntax Error at for init field.");
+			startList.addAll(initSolved);
+		}
 		startList.addAll(solveIfEq(condi, nextAdd.endPointer.arg[0].str(), false));
 		startList.add(nextAdd.loopPointer);
 

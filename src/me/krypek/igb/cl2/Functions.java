@@ -243,7 +243,6 @@ public class Functions {
 					Field f1 = getFieldFromCall(call, 0), f2 = getFieldFromCall(call, 1), f5 = getFieldFromCall(call, 4);
 
 					String str = ((FunctionCallStringField) call.fields[2]).str;
-					System.out.println(str);
 					char[] charA = str.toCharArray();
 					if(charA.length == 0)
 						return new ArrayList<>();

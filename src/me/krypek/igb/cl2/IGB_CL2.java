@@ -91,15 +91,15 @@ public class IGB_CL2 {
 				Err.updateLine(precf.lines[line]);
 
 				String cmd = precf.cmd[line];
-				//try {
+				try {
 					ArrayList<Instruction> out = cmd(cmd, varsolver, cntrlsolver);
 					if(out == null)
 						throw Err.normal("Unknown command: \"" + cmd + "\".");
 					instList.addAll(out);
-				//} catch (Exception e) {
-				//	System.out.println(this);
-				//	throw e;
-				//}
+				} catch (Exception e) {
+					System.out.println(this);
+					throw e;
+				}
 
 				// System.out.println("cmd: " + cmd + " -> " + out);
 

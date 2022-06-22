@@ -166,25 +166,23 @@ public class RAM {
 		return totalSize;
 	}
 
+	@SuppressWarnings("unused")
 	public void pop() {
 		Map<String, Variable> t1 = variableStack.pop();
-		for (Variable var : t1.values()) {
-			int cell = var.cell - ramcell;
-			if(cell < 0 || cell >= allocationArray.length)
-				continue;
-			allocationArray[cell] = false;
-		}
+		/*
+		 * for (Variable var : t1.values()) { int cell = var.cell - ramcell; if(cell < 0
+		 * || cell >= allocationArray.length) continue; allocationArray[cell] = false; }
+		 */
 		Map<String, Array> t2 = arrayStack.pop();
-		for (Array array : t2.values()) {
-			int from = array.cell - ramcell;
-			int to = from + array.totalSize;
-
-			if(from < 0 || from >= allocationArray.length || to < 0 || to >= allocationArray.length)
-				continue;
-
-			for (int i = from; i < to; i++)
-				allocationArray[i] = false;
-		}
+		/*
+		 * for (Array array : t2.values()) { int from = array.cell - ramcell; int to =
+		 * from + array.totalSize;
+		 * 
+		 * if(from < 0 || from >= allocationArray.length || to < 0 || to >=
+		 * allocationArray.length) continue;
+		 * 
+		 * for (int i = from; i < to; i++) allocationArray[i] = false; }
+		 */
 	}
 
 	public int getVariableCell(String name) {
