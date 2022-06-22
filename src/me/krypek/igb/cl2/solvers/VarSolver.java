@@ -1,7 +1,6 @@
 package me.krypek.igb.cl2.solvers;
 
 import static me.krypek.igb.cl1.Instruction.Add;
-import static me.krypek.igb.cl1.Instruction.Init;
 import static me.krypek.igb.cl1.Instruction.Math_CW;
 
 import java.util.ArrayList;
@@ -123,17 +122,10 @@ public class VarSolver {
 				list.addAll(eqsolver.solve(eq, obj.getValue2()));
 				return list;
 			}
-			var obj1 = eqsolver.solve(eq);
-			final int cell;
-			if(obj1.getValue1() == null) {
-				list.addAll(obj1.getValue3());
-				cell = obj1.getValue2();
-			} else {
-				list.add(Init(obj1.getValue1(), eqsolver.temp3));
-				cell = eqsolver.temp3;
-			}
+			ArrayList<Instruction> list1 = eqsolver.solve(eq, eqsolver.temp3);
+			list.addAll(list1);
 
-			list.add(Math_CW(cell, obj.getValue2()));
+			list.add(Math_CW(eqsolver.temp3, obj.getValue2()));
 			return list;
 		}
 		Variable var = ram.getVariable(name);
