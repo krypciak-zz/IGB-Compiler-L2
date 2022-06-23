@@ -2,14 +2,14 @@
 <classpath>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="src" path="resources"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/Utils"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/FreeArgParser-Java"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/IGB-Compiler-L1"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER">
 		<attributes>
 			<attribute name="module" value="true"/>
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="lib" path="/home/krypek/Programming/Java/exp4j-0.4.8.jar" sourcepath="/home/krypek/Programming/Java/exp4j-0.4.8-sources.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/IGB-Compiler-L1"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/Utils"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/freeargparser"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
