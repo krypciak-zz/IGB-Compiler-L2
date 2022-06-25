@@ -17,7 +17,7 @@ import me.krypek.utils.Utils;
 
 public class VarSolver {
 
-	public static final Set<String> typeSet = Set.of("float", "double", "int");
+	public static final Set<String> typeSet = Set.of("var");
 
 	private final EqSolver eqsolver;
 	private final RAM ram;
