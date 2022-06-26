@@ -20,6 +20,7 @@ IGB Compiler L2 compiles **IGB L2 code** into [**IGB L1 code**](https://github.c
 - dynamic variable allocation (more explained [here]())
 - variables in recursion
 - switch statements
+- dynamic array size (array size has to be known at compile-time)
 - there is only one value type (float), so no int casting
 
 <br />
@@ -30,7 +31,7 @@ You can also run it on your desktop using [IGB VM](https://github.com/krypciak/I
 
 ## Hello world wrriten in IGB L2
 This code displays the string "Hello world!" on the canvas.
-```java
+```javascript
 $ramcell = 70;
 $startLine = 15000;
 
@@ -46,7 +47,7 @@ void main() {
 ```
 
 ## Line by line explanation  
-```java
+```javascript
 $ramcell = 70;
 $startLine = 15000;
 ```
@@ -67,15 +68,50 @@ If your code after compilation to IGB L1 is larger than this number, an error is
 - `$thread` (optional, default=0) It's working but has no use since threads aren't implemented yet (and probably won't be).  
 Diffrent temporary cells for variable and if statement solving are chosen for values 0 or 1.  
 
+___
+
+### Defining variables
+It's not in the Hello World, but some things are important to understand.  
+Here's a simple variable declaration with initial value:
+```javascript
+var a = 5;
+```
+You don't need to provide a value:
+```javascript
+var a;
+```  
+**IMPORTANT!** the `| |` thingy specifies a cell.  
+`a|70|` means that `a` is going is at cell `70`
+
+Example:
+```javascript
+var a|75| = 5;
+```
+However, the code above didn't allocate any memory. Here's how you can allocate it:
+```javascript
+var a|!75| = 5;
+```
+If you use the `!` sign with a value outside of your allocation array (from `$ramcell` to `$ramcell` + `$ramlimit`) the compiler will cry.
+
+The same with arrays.
+```javascript
+var[][] arr1 = new var[7][4];
+var[][][] arr2|!80| = new var[16][16];
+```
+
+More about variables [here NOOOOOOOOOOO]().
+
+___
+
 ### Dependencies
-```java
+```javascript
 $import <charlib>;
 ```
 That's not a compiler variable, that's a dependency.  
 For example, the code above imported library named [charLib](https://github.com/krypciak/IGB-charLib), which draws chars on the screen.  
 If you import a file/library, all of it's functions are shared and can be used as if they were in the same file.  
 Here are some examples:
-```java
+```
 $import myfile // it's the same as the line below
 $import myfile.igb_l2 
 $import mydirectory/myfile1
@@ -85,20 +121,24 @@ $import /home/krypek/myfile2.igb_l2
 
 <br />
 
-```java
+___
+
+### Functions
+
+```javascript
 void main() {
 ```
 Defines the main function. There can only be 1 main function in a file, it has to return void and it cannot have any arguments.  
 To define a function with a return type, replece `void` with `var`
-```java
+```javascript
 var myfuncthatreturns() {
 ```
 Add arguments to the function:
-```java
+```javascript
 var myfuncthatreturns(var a) {
 ```
 You can have multiple functions with the same name with diffrent amount of arguments:
-```java
+```javascript
 var myfuncthatreturns() {}
 var myfuncthatreturns(var a) {}
 void myfuncthatreturns(var a, var b) {}
@@ -107,9 +147,11 @@ You don't need to type `return;` at the end of every function, also it the compi
 
 <br />
 
+___
+
 ### Built-in variables
 
-```java
+```javascript
 width = 100;
 height = 30;
 stype = rgb;
@@ -124,8 +166,10 @@ Setting it will resize on `width` and `height`, set it's type based on `stype` a
 
 <br />
 
+___
+
 #### drawstring()
-```java
+```javascript
 drawstring(0, 0, "Hello world!", "big", 0);
 ```
 Here a compiler function is called.  
@@ -143,6 +187,7 @@ Third argument is text, the forth is what type of text is it.
 
 The fifth argument is the text spacing. &nbsp;Y o u r &nbsp;t e x t &nbsp;c a n &nbsp;b e &nbsp;l i k e &nbsp;t h i s .
 
+___
 
 ## Here's a list of all compiler functions:
 (If the variable type is `int`, only ints can be provided, same with `string`)  
@@ -161,3 +206,33 @@ The fifth argument is the text spacing. &nbsp;Y o u r &nbsp;t e x t &nbsp;c a n 
 - `getpixel(var x, var y, cell r, cell g, cell b)` Saves the rgb value to cells `r`, `g` and `b` at `x` `y`
 
 See theirs implementation [here](/src/me/krypek/igb/cl2/Functions.java).
+
+That's the hello world!
+
+___
+
+## Variable operations and equations  
+Here's a list of supported math operations:
+- `+`
+- `-`
+- `*`
+- `/`
+- `%`
+
+Examples:
+```javascript
+var a = 2;
+var b = 3;
+
+a++; // a is now 3
+b--; // b is now 2
+
+a += b; // a is now 5
+
+b = a * b + b / a;
+//    10  +  0.4
+// b is now 10.4
+
+b -= b % 1; // manual int casting, b is now 10
+```
+
