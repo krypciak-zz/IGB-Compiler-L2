@@ -13,7 +13,7 @@ IGB Compiler L2 compiles **IGB L2 code** into [**IGB L1 code**](https://github.c
 - multi-file support
 - sqrt
 
-### Here is a list of stuff the language does not support:
+### Here is a list of stuff the language does NOT support:
 - objects
 - strings, lists, maps, etc.
 - file IO
@@ -104,6 +104,23 @@ var myfuncthatreturns(var a) {}
 void myfuncthatreturns(var a, var b) {}
 ```
 You don't need to type `return;` at the end of every function, also it the compiler doesn't cry if you don't return any value at all (100% feature).  
+
+<br />
+
+### Built-in variables
+
+```java
+width = 100;
+height = 30;
+stype = rgb;
+```
+Those are built-in variables. They work like a normal variables.  
+##### Here's a list of them:
+- `width`|1| Screen width
+- `height`|2| Screen height
+- `stype` |3| Can be only set to `16c` or `rgb`.  
+Setting it will resize on `width` and `height`, set it's type based on `stype` and fill with #FFFFFF.
+- `keyboard` |4| Keyboard input  
 
 <br />
 
