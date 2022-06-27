@@ -7,7 +7,7 @@ IGB Compiler L2 compiles **IGB L2 code** into [**IGB L1 code**](https://github.c
 - arrays
 - functions (including returning values and function arguments)
 - floating point values up to 3 decimal places (0.001)
-- complex equation solving (`var d = a*b/c+1;` works just fine)
+- complex expression solving (`var d = a*b/c+1;` works just fine)
 - an built-in easy to draw canvas
 - easy keyboard input checking
 - multi-file support
@@ -99,7 +99,7 @@ var[][] arr1 = new var[7][4];
 var[][][] arr2|!80| = new var[16][16];
 ```
 
-More about variables [here](https://github.com/krypciak/IGB-Compiler-L2/blob/main/README.md#variable-operations-and-equations).
+More about variables [here](https://github.com/krypciak/IGB-Compiler-L2/blob/main/README.md#variable-operations-and-expressions).
 
 ___
 
@@ -191,18 +191,18 @@ ___
 
 ## Here's a list of all compiler functions:
 (If the variable type is `int`, only ints can be provided, same with `string`)  
-(If the variable type is `cell`, only variables or integers can be provided, no equations)
+(If the variable type is `cell`, only variables or integers can be provided, no expressions)
 - `exit()` Jumps to cell -2
 - `wait(int tick)` Waits `tick` ticks
 - `screenUpdate()` Updates screen properties based on cells [1, 2 and 3](https://github.com/krypciak/IGB-Compiler-L1#memory-cells)
 - `dlog(var value)` Logs `value` to the terminal/chat
-- [`drawstring(var x, var y, string text, string type, var spacing)`](https://github.com/krypciak/IGB-Compiler-L2/edit/main/README.md#drawstring)
+- [`drawstring(var x, var y, string text, string type, var spacing)`](https://github.com/krypciak/IGB-Compiler-L2#drawstring)
 - `sqrt(var variable)` Returns the square root of `variable`
 - `random(int from, int to)` Returns a random integer in range of `from` and `to`
-- `pixelcache(var cache)` Sets the [pixel cache](https://github.com/krypciak/IGB-VM/blob/main/README.md#pixel-cache) to `cache`
+- `pixelcache(var cache)` Sets the [pixel cache](https://github.com/krypciak/IGB-VM#pixel-cache) to `cache`
 - `pixelcache(var r, var g, var b)` Sets the pixel cache to `r`, `g`, `b`
 - `setpixel(var x, var y)` Sets the pixel color at `x` `y` to pixel cache.
-- `getpixel(var x, var y)` Returns the [16c](https://github.com/krypciak/IGB-VM/edit/main/README.md#screen-types) pixel type at `x` `y`
+- `getpixel(var x, var y)` Returns the [16c](https://github.com/krypciak/IGB-VM#screen-types) pixel type at `x` `y`
 - `getpixel(var x, var y, cell r, cell g, cell b)` Saves the rgb value to cells `r`, `g` and `b` at `x` `y`
 
 See theirs implementation [here](/src/me/krypek/igb/cl2/Functions.java).
@@ -211,7 +211,7 @@ That's the hello world!
 
 ___
 
-## Variable operations and equations  
+## Variable operations and expressions
 Here's a list of supported math operations:
 - `+`
 - `-`
@@ -235,4 +235,137 @@ b = a * b + b / a;
 
 b -= b % 1; // manual int casting, b is now 10
 ```
+
+## Arrays
+```javascript
+var[][] arr1 = new arr1[6][7];
+
+arr1[6][2] = 4; // Index of of bounds error
+
+var t1 = 7;
+arr1[t1][4] = 6; // No error
+
+t1 = arr1[1][2]; // t1 is now 0
+
+var[][] arr2 = new var[t1][4]; // No dynamic size arrays error
+```
+
+## Final variables  
+```javascript
+final var a = 5;
+
+var[] arr = new arr[a]; // No error becouse array size is known at compile-time
+
+var b = a*a/a+a; // b is set to 10; It's only 1 operation, becouse the expression can be solved at compile-time.
+```
+
+## If
+```javascript
+var a = 5;
+var b = 7;
+
+if(a > b) {
+  // dead code
+} else if(a == b) {
+  // dead code
+} else {
+  // a < b
+  // will always execute
+}
+
+// 12  < 35
+if(a+b < b*a) {}
+```
+
+## For and while loops
+```javascript
+for(var i=0; i<3; i++) { dlog(i); } // will print out 0, 1, 2
+
+var a = 1;
+for(;a<3; a++) { dlog(i); } // will print out 1, 2
+
+for(int i=0;; i++) { dlog(i); } // infinite loop
+
+for(;;) {} // same as while(true)
+
+while(false) { /*dead code*/ }
+
+while(true) { /* infinite loop*/ }
+
+var a = 0;
+while(a < 5) {
+  a++;
+  dlog(a);
+} // will print out 1, 2, 3, 4, 5
+
+for(int i=0; i<10; i++) {
+  if(i%2==1) { continue; }
+  if(i==6) { break; }
+  
+  dlog(i);
+} // will print out 0, 2, 4
+```
+
+## IGB L2 exclusive statements  
+You can break twice in a for loop.  
+```javascript
+for(int y=0; y<10; y++) {
+  for(int x=0; x<10; x++) {
+    if(x+y == 15) {
+      break 2; // exits both loops
+    }
+  }
+}
+```
+`break 1` is the same as `break`.  
+The same thing with `continue`.  
+<br />
+
+Break can be used outside of loops.
+```javascript
+if(true) {
+  break;
+  dlog(1); // dead code
+}
+```
+
+#### New statenent: `redo`
+```javascript
+void a() {
+  dlog(1);
+  
+  redo; // jumps to function start
+} // will print a lot of 1's; infinite loop
+```
+```javascript
+{ redo; } // infinite loop
+
+var a = 5;
+if(a == 5) {
+  // ...
+  redo;
+} // will loop as long a == 5; same as while(a==5)
+
+{
+  dlog(1);
+  { redo 2; }
+} // will print a lot of 1's; infinite loop
+```
+
+
+#### New statement `raw`
+`raw` is used to insert [IGB L1](https://github.com/krypciak/IGB-Compiler-L1) code to IGB L2 code.
+```javascript
+raw Init 5.3 70;
+```
+
+<br /><br /><br />
+## Dependencies:
+- [FreeArgParser-Java](https://github.com/krypciak/FreeArgParser-Java)
+- [IGB-Compiler-L1](https://github.com/krypciak/IGB-Compiler-L1)
+- [Utils](https://github.com/krypciak/Utils)
+
+
+# License
+Licensed under GNU GPLv3 or later
 
