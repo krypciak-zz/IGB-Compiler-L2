@@ -165,7 +165,6 @@ Setting it will resize on `width` and `height`, set it's type based on `stype` a
 - `keyboard` |4| Keyboard input  
 
 <br />
-
 ___
 
 #### drawstring()
