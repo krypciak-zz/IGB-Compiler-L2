@@ -99,7 +99,7 @@ var[][] arr1 = new var[7][4];
 var[][][] arr2|!80| = new var[16][16];
 ```
 
-More about variables [here](https://github.com/krypciak/IGB-Compiler-L2/blob/main/README.md#variable-operations-and-expressions).
+More about variables [here](https://github.com/krypciak/IGB-Compiler-L2#variable-operations-and-expressions).
 
 ___
 
