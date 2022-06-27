@@ -157,7 +157,7 @@ height = 30;
 stype = rgb;
 ```
 Those are built-in variables. They work like a normal variables.  
-##### Here's a list of them:
+List of built-in variables:
 - `width`|1| Screen width
 - `height`|2| Screen height
 - `stype` |3| Can be only set to `16c` or `rgb`.  
