@@ -1,6 +1,6 @@
 IGB Compiler L2 compiles **IGB L2 code** into [**IGB L1 code**](https://github.com/krypciak/IGB-Compiler-L1).  
 
-### IGB L2 is a C-like "high" level language with support for:
+### IGB L2 language supports:
 - for and while loops (including break; continue;)
 - else if statements
 - automaticly allocated variables
@@ -14,7 +14,7 @@ IGB Compiler L2 compiles **IGB L2 code** into [**IGB L1 code**](https://github.c
 - sqrt
 - nested for breaks and continues
 
-### Here is a list of stuff the language does NOT support:
+### The language does NOT support:
 - objects
 - strings, lists, maps, etc.
 - file IO
