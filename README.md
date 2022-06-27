@@ -57,7 +57,6 @@ They are called "compiler variables", and are used by the compiler.
 They cannot be accessed in any way in the rest of your code.  
 You can set them only once.  
 
-
 ### Here's a list of compiler variables:
 - `$startline` (required) This where your code is meant to be placed.  
 Startlines are only allowed to be >= 15000, since [charLib](https://github.com/krypciak/IGB-charLib) is taking all the previous space.
@@ -354,7 +353,7 @@ if(a == 5) {
 ```
 
 
-#### New statement `raw`
+#### New statement: `raw`
 `raw` is used to insert [IGB L1](https://github.com/krypciak/IGB-Compiler-L1) code to IGB L2 code.
 ```javascript
 raw Init 5.3 70;
