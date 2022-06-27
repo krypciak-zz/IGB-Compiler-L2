@@ -12,6 +12,7 @@ IGB Compiler L2 compiles **IGB L2 code** into [**IGB L1 code**](https://github.c
 - easy keyboard input checking
 - multi-file support
 - sqrt
+- nested for breaks and continues
 
 ### Here is a list of stuff the language does NOT support:
 - objects
