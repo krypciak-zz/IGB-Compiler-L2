@@ -164,7 +164,6 @@ List of built-in variables:
 Setting it will resize on `width` and `height`, set it's type based on `stype` and fill with #FFFFFF.
 - `keyboard` |4| Keyboard input  
 
-<br />
 ___
 
 #### drawstring()
@@ -209,6 +208,7 @@ See theirs implementation [here](/src/me/krypek/igb/cl2/Functions.java).
 That's the hello world!
 
 ___
+
 
 ## Variable operations and expressions
 Here's a list of supported math operations:
