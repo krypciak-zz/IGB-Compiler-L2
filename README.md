@@ -175,7 +175,7 @@ Compiler functions can have arguments like strings since they are processed at c
 For this function to work [charLib](https://github.com/krypciak/IGB-charLib) has to be imported.  
 The first 2 arguments specify the x & y of the text.  
 Third argument is text, the forth is what type of text is it.  
-#### Here's a list of text types:
+Text types:
 - `small` (plain, size=14)
 - `smallitalic` (italic, size=14)
 - `big` (plain, size=20)
@@ -187,7 +187,7 @@ The fifth argument is the text spacing. &nbsp;Y o u r &nbsp;t e x t &nbsp;c a n 
 
 ___
 
-## Here's a list of all compiler functions:
+## Compiler functions
 (If the variable type is `int`, only ints can be provided, same with `string`)  
 (If the variable type is `cell`, only variables or integers can be provided, no expressions)
 - `exit()` Jumps to cell -2
