@@ -200,7 +200,7 @@ public class ControlSolver {
 
 		rest = rest.substring(1, rest.length() - 1).strip();
 
-		String[] split = rest.split(";");
+		String[] split = rest.split(";", -1);
 		if(split.length != 3)
 			throw Err.normal("For requires 3 fields.");
 		String init = split[0].strip();
@@ -215,16 +215,24 @@ public class ControlSolver {
 				throw Err.normal("Syntax Error at for init field.");
 			startList.addAll(initSolved);
 		}
-		startList.addAll(solveIfEq(condi, nextAdd.endPointer.arg[0].str(), false));
+		if(!condi.isBlank())
+			startList.addAll(solveIfEq(condi, nextAdd.endPointer.arg[0].str(), false));
 		startList.add(nextAdd.loopPointer);
 
 		ArrayList<Instruction> endList = nextAdd.endList;
 		endList.add(nextAdd.checkPointer);
-		ArrayList<Instruction> addiSolved = varsolver.cmd(addi, true);
-		if(addiSolved == null)
-			throw Err.normal("Syntax Error at for addition field.");
-		endList.addAll(addiSolved);
-		endList.addAll(solveIfEq(condi, nextAdd.loopPointer.arg[0].str(), true));
+
+		if(!addi.isBlank()) {
+			ArrayList<Instruction> addiSolved = varsolver.cmd(addi, true);
+			if(addiSolved == null)
+				throw Err.normal("Syntax Error at for addition field.");
+			endList.addAll(addiSolved);
+		}
+		
+		if(condi.isBlank()) {
+			endList.addAll(Utils.listOf(Cell_Jump(nextAdd.loopPointer.arg[0].str())));
+		} else
+			endList.addAll(solveIfEq(condi, nextAdd.loopPointer.arg[0].str(), true));
 
 		return new ArrayList<>();
 	}
@@ -263,6 +271,7 @@ public class ControlSolver {
 			return new ArrayList<>();
 
 		ArrayList<Instruction> list = new ArrayList<>();
+
 		int index = -1;
 		String ope = null;
 		for (String ope1 : booleanOperators) {
