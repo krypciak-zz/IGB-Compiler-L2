@@ -32,6 +32,8 @@ public class Functions {
 	}
 
 	public Function getFunction(String name, int argLength) {
+		name = name.strip();
+
 		HashMap<Integer, Function> map = functionMap.get(name);
 
 		if(map == null)
