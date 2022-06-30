@@ -186,7 +186,8 @@ public class Functions {
 			if(isCell2)
 				list.addAll(numcell2.getFirst());
 
-			list.add(Pixel_Get(isCell1, numcell1.getSecond().intValue(), isCell2, numcell2.getSecond().intValue(), call.outputCell));
+			list.add(Pixel_Get(isCell1, numcell1.getSecond().intValue(), isCell2, numcell2.getSecond().intValue(),
+					call.outputCell == -1 ? IGB_MA.FUNC_RETURN : call.outputCell));
 			return list;
 		}));
 
