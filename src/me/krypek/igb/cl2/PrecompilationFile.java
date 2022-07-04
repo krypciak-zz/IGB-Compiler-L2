@@ -1,7 +1,7 @@
 package me.krypek.igb.cl2;
 
-import static me.krypek.igb.cl1.Instruction.Cell_Call;
-import static me.krypek.igb.cl1.Instruction.Cell_Jump;
+import static me.krypek.igb.cl1.datatypes.Instruction.Cell_Call;
+import static me.krypek.igb.cl1.datatypes.Instruction.Cell_Jump;
 
 import java.io.File;
 import java.io.InputStream;
@@ -11,7 +11,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 
-import me.krypek.igb.cl1.Instruction;
+import me.krypek.igb.cl1.datatypes.Instruction;
 import me.krypek.igb.cl2.IGB_CL2_Exception.Err;
 import me.krypek.igb.cl2.datatypes.function.FunctionNormalField;
 import me.krypek.igb.cl2.datatypes.function.UserFunction;

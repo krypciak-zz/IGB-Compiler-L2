@@ -1,13 +1,13 @@
 package me.krypek.igb.cl2;
 
-import static me.krypek.igb.cl1.Instruction.*;
+import static me.krypek.igb.cl1.datatypes.Instruction.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 
 import me.krypek.igb.cl1.IGB_MA;
-import me.krypek.igb.cl1.Instruction;
+import me.krypek.igb.cl1.datatypes.Instruction;
 import me.krypek.igb.cl2.IGB_CL2_Exception.Err;
 import me.krypek.igb.cl2.datatypes.Field;
 import me.krypek.igb.cl2.datatypes.function.CompilerFunction;

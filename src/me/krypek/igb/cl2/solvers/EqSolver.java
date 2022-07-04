@@ -1,14 +1,14 @@
 package me.krypek.igb.cl2.solvers;
 
-import static me.krypek.igb.cl1.Instruction.Copy;
-import static me.krypek.igb.cl1.Instruction.Init;
-import static me.krypek.igb.cl1.Instruction.Math;
+import static me.krypek.igb.cl1.datatypes.Instruction.Copy;
+import static me.krypek.igb.cl1.datatypes.Instruction.Init;
+import static me.krypek.igb.cl1.datatypes.Instruction.Math;
 
 import java.util.ArrayList;
 import java.util.Set;
 
 import me.krypek.igb.cl1.IGB_MA;
-import me.krypek.igb.cl1.Instruction;
+import me.krypek.igb.cl1.datatypes.Instruction;
 import me.krypek.igb.cl2.Functions;
 import me.krypek.igb.cl2.IGB_CL2_Exception.Err;
 import me.krypek.igb.cl2.RAM;

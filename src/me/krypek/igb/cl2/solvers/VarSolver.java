@@ -1,14 +1,14 @@
 package me.krypek.igb.cl2.solvers;
 
-import static me.krypek.igb.cl1.Instruction.Add;
-import static me.krypek.igb.cl1.Instruction.Math_CW;
+import static me.krypek.igb.cl1.datatypes.Instruction.Add;
+import static me.krypek.igb.cl1.datatypes.Instruction.Math_CW;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Set;
 
-import me.krypek.igb.cl1.Instruction;
 import me.krypek.igb.cl2.IGB_CL2_Exception.Err;
+import me.krypek.igb.cl1.datatypes.Instruction;
 import me.krypek.igb.cl2.RAM;
 import me.krypek.igb.cl2.datatypes.Array;
 import me.krypek.igb.cl2.datatypes.Field;
@@ -130,7 +130,7 @@ public class VarSolver {
 		}
 		Variable var = ram.getVariable(name);
 		if(var.action != null)
-			return var.action.get(eq);
+			return var.action.apply(eq);
 
 		return eqsolver.solve(eq, var.cell);
 	}

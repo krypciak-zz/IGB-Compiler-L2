@@ -6,8 +6,8 @@ import java.util.ArrayList;
 import me.krypek.freeargparser.ArgType;
 import me.krypek.freeargparser.ParsedData;
 import me.krypek.freeargparser.ParserBuilder;
-import me.krypek.igb.cl1.IGB_L1;
-import me.krypek.igb.cl1.Instruction;
+import me.krypek.igb.cl1.datatypes.IGB_L1;
+import me.krypek.igb.cl1.datatypes.Instruction;
 import me.krypek.igb.cl2.IGB_CL2_Exception.Err;
 import me.krypek.igb.cl2.solvers.ControlSolver;
 import me.krypek.igb.cl2.solvers.EqSolver;
@@ -57,7 +57,7 @@ public class IGB_CL2 {
 			outDir.mkdirs();
 			for (int i = 0; i < compiled.length; i++) {
 				IGB_L1 l1 = compiled[i];
-				String fileName = Utils.getFileNameWithoutExtension(compiled[i].path);
+				String fileName = Utils.getFileNameWithoutExtension(compiled[i].path());
 				Utils.serialize(l1, outputPath + File.separator + fileName + ".igb_l1");
 				if(readableOutput)
 					Utils.writeIntoFile(outputPath + File.separator + fileName + ".igb_l1_readable", l1.toString());
@@ -109,14 +109,14 @@ public class IGB_CL2 {
 			if(instList.size() > precf.lenlimit)
 				throw Err.noLine("Instruction length limit reached: " + instList.size() + " out of " + precf.lenlimit + ".");
 
-			arr[file] = new IGB_L1(precf.startline, instList.toArray(Instruction[]::new), precf.path);
+			arr[file] = new IGB_L1(precf.startline, instList.toArray(Instruction[]::new), precf.fileName, precf.path);
 		}
 
 		if(!quiet)
 			for (file = 0; file < arr.length; file++) {
 
-				Instruction[] code = arr[file].code;
-				if(arr[file].path.startsWith("$res")) {
+				Instruction[] code = arr[file].code();
+				if(arr[file].path().startsWith("$res")) {
 					System.out.println("Library: " + precfA[file].fileName + "   len: " + code.length);
 					continue;
 				}

@@ -1,13 +1,13 @@
 package me.krypek.igb.cl2.datatypes;
 
-import static me.krypek.igb.cl1.Instruction.Cell_Return;
-import static me.krypek.igb.cl1.Instruction.Pointer;
+import static me.krypek.igb.cl1.datatypes.Instruction.Cell_Return;
+import static me.krypek.igb.cl1.datatypes.Instruction.Pointer;
 import static me.krypek.igb.cl2.datatypes.BracketType.*;
 
 import java.util.ArrayList;
 
-import me.krypek.igb.cl1.Instruction;
 import me.krypek.igb.cl2.IGB_CL2_Exception.Err;
+import me.krypek.igb.cl1.datatypes.Instruction;
 import me.krypek.igb.cl2.PointerNames;
 import me.krypek.igb.cl2.datatypes.function.UserFunction;
 import me.krypek.utils.Utils;

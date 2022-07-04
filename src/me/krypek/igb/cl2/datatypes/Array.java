@@ -1,13 +1,13 @@
 package me.krypek.igb.cl2.datatypes;
 
-import static me.krypek.igb.cl1.Instruction.Add;
-import static me.krypek.igb.cl1.Instruction.Copy;
-import static me.krypek.igb.cl1.Instruction.Math;
-import static me.krypek.igb.cl1.Instruction.Math_CC;
+import static me.krypek.igb.cl1.datatypes.Instruction.Add;
+import static me.krypek.igb.cl1.datatypes.Instruction.Copy;
+import static me.krypek.igb.cl1.datatypes.Instruction.Math;
+import static me.krypek.igb.cl1.datatypes.Instruction.Math_CC;
 
 import java.util.ArrayList;
 
-import me.krypek.igb.cl1.Instruction;
+import me.krypek.igb.cl1.datatypes.Instruction;
 import me.krypek.igb.cl2.IGB_CL2_Exception.Err;
 import me.krypek.igb.cl2.solvers.EqSolver;
 import me.krypek.utils.Pair;

@@ -2,8 +2,8 @@ package me.krypek.igb.cl2.datatypes.function;
 
 import java.util.ArrayList;
 
-import me.krypek.igb.cl1.Instruction;
 import me.krypek.igb.cl2.IGB_CL2_Exception.Err;
+import me.krypek.igb.cl1.datatypes.Instruction;
 import me.krypek.igb.cl2.RAM;
 import me.krypek.utils.Utils;
 

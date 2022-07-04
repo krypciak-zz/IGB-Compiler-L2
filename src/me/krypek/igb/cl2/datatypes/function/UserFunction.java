@@ -1,12 +1,12 @@
 package me.krypek.igb.cl2.datatypes.function;
 
-import static me.krypek.igb.cl1.Instruction.Cell_Call;
-import static me.krypek.igb.cl1.Instruction.Copy;
+import static me.krypek.igb.cl1.datatypes.Instruction.Cell_Call;
+import static me.krypek.igb.cl1.datatypes.Instruction.Copy;
 
 import java.util.ArrayList;
 
 import me.krypek.igb.cl1.IGB_MA;
-import me.krypek.igb.cl1.Instruction;
+import me.krypek.igb.cl1.datatypes.Instruction;
 import me.krypek.igb.cl2.IGB_CL2_Exception.Err;
 import me.krypek.igb.cl2.RAM;
 import me.krypek.igb.cl2.datatypes.Variable;

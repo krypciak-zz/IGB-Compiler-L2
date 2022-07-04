@@ -1,7 +1,7 @@
 package me.krypek.igb.cl2;
 
-import static me.krypek.igb.cl1.Instruction.Device_ScreenUpdate;
-import static me.krypek.igb.cl1.Instruction.Init;
+import static me.krypek.igb.cl1.datatypes.Instruction.Device_ScreenUpdate;
+import static me.krypek.igb.cl1.datatypes.Instruction.Init;
 
 import java.util.AbstractMap;
 import java.util.HashMap;

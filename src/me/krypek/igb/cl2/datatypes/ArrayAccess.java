@@ -2,7 +2,7 @@ package me.krypek.igb.cl2.datatypes;
 
 import java.util.ArrayList;
 
-import me.krypek.igb.cl1.Instruction;
+import me.krypek.igb.cl1.datatypes.Instruction;
 import me.krypek.igb.cl2.solvers.EqSolver;
 import me.krypek.utils.Utils;
 
