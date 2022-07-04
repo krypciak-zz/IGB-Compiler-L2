@@ -40,17 +40,8 @@ public class IGB_CL2 {
 		final boolean readableOutput = data.has("ro");
 		final boolean quiet = data.has("q");
 
-		/*
-		 * for (int i = 0; i < inputs.length; i++) { String readden =
-		 * Utils.readFromFile(codePaths[i], "\n"); if(readden == null) throw new
-		 * IGB_CL2_Exception("Error reading file: \"" + codePaths[i] + "\"."); inputs[i]
-		 * = readden;
-		 *
-		 * fileNames[i] = new File(codePaths[i]).getName(); }
-		 */
-
-		IGB_CL2 igb_cl2 = new IGB_CL2();
-		IGB_L1[] compiled = igb_cl2.compile(mainPath, quiet);
+		IGB_CL2 igb_cl2 = new IGB_CL2(quiet);
+		IGB_L1[] compiled = igb_cl2.compile(mainPath);
 
 		if(outputPath != null) {
 			File outDir = new File(outputPath);
@@ -66,14 +57,18 @@ public class IGB_CL2 {
 
 	}
 
+	private final boolean quiet;
+
 	public PrecompilationFile[] precfA;
 	public int file;
 	public int line;
 
-	public IGB_CL2() {}
+	public IGB_CL2(boolean quiet) { this.quiet = quiet; }
 
-	public IGB_L1[] compile(String mainPath, boolean quiet) {
-		Precompilation prec = new Precompilation(mainPath, quiet);
+	public IGB_L1[] compile(String mainPath) {
+		System.out.println("\n-----IGB CL2----------------------------------------------------------\n");
+
+		Precompilation prec = new Precompilation(mainPath);
 		Functions functions = prec.functions;
 		precfA = prec.precfA;
 

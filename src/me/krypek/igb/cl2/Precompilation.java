@@ -13,7 +13,7 @@ public class Precompilation {
 	private final HashSet<String> processed;
 	private final String mainPath;
 
-	public Precompilation(String mainPath, boolean quiet) {
+	public Precompilation(String mainPath) {
 		this.mainPath = mainPath;
 
 		functions = new Functions();
