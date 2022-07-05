@@ -46,7 +46,7 @@ public class PrecompilationFile {
 		this.functions = functions;
 		this.path = path;
 		mainParentPath = new File(mainPath).getParent() + "/";
-		fileName = Utils.getFileName(path);
+		fileName = Utils.getFileNameWithoutExtension(Utils.getFileName(path));
 		dependencies = new LinkedHashSet<>();
 		startInstructions = new ArrayList<>();
 
