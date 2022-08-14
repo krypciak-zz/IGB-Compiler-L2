@@ -62,6 +62,8 @@ public class IGB_CL2 {
 	public PrecompilationFile[] precfA;
 	public int file;
 	public int line;
+	private boolean befFirstCtrlInstructionsAppended;
+	private ArrayList<Instruction> befFirstFuncInstructions;
 
 	public IGB_CL2(boolean quiet) { this.quiet = quiet; }
 
@@ -76,16 +78,20 @@ public class IGB_CL2 {
 
 		for (file = 0; file < precfA.length; file++) {
 			PrecompilationFile precf = precfA[file];
+			befFirstFuncInstructions = precf.befFirstFuncInstructions;
+			befFirstCtrlInstructionsAppended = false;
 
-			ArrayList<Instruction> instList = new ArrayList<>(precf.startInstructions);
+			ArrayList<Instruction> instList = new ArrayList<>();
 			RAM ram = precf.ram;
 			EqSolver eqsolver = new EqSolver(ram, functions);
 			VarSolver varsolver = new VarSolver(eqsolver, ram);
 			ControlSolver cntrlsolver = new ControlSolver(functions, varsolver, eqsolver, ram, precf.cmd);
+
 			for (line = 0; line < precf.cmd.length; line++) {
 				Err.updateLine(precf.lines[line]);
 
 				String cmd = precf.cmd[line];
+
 				try {
 					ArrayList<Instruction> out = cmd(cmd, varsolver, cntrlsolver);
 					if(out == null)
@@ -138,8 +144,15 @@ public class IGB_CL2 {
 		}
 		{
 			ArrayList<Instruction> cntrl = cntrlsolver.cmd(cmd, line);
-			if(cntrl != null)
+			if(cntrl != null) {
+				if(!befFirstCtrlInstructionsAppended) {
+					befFirstCtrlInstructionsAppended = true;
+					ArrayList<Instruction> t0 = new ArrayList<>(befFirstFuncInstructions);
+					t0.addAll(cntrl);
+					return t0;
+				}
 				return cntrl;
+			}
 		}
 
 		return null;

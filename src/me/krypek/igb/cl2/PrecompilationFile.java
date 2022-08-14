@@ -35,7 +35,7 @@ public class PrecompilationFile {
 	public int ramlimit = -1;
 	public int thread = -1;
 	public LinkedHashSet<String> dependencies;
-	public ArrayList<Instruction> startInstructions;
+	public ArrayList<Instruction> befFirstFuncInstructions;
 
 	public final String[] cmd;
 	public final int[] lines;
@@ -48,7 +48,7 @@ public class PrecompilationFile {
 		mainParentPath = new File(mainPath).getParent() + "/";
 		fileName = Utils.getFileNameWithoutExtension(Utils.getFileName(path));
 		dependencies = new LinkedHashSet<>();
-		startInstructions = new ArrayList<>();
+		befFirstFuncInstructions = new ArrayList<>();
 
 		Err.updateFile(fileName, path);
 		String contents = null;
@@ -162,8 +162,8 @@ public class PrecompilationFile {
 			if(argsLen != 0)
 				throw Err.normal("Main function has to have 0 arguments.");
 			main = func;
-			startInstructions.add(Cell_Call(main.startPointer));
-			startInstructions.add(Cell_Jump(-2));
+			befFirstFuncInstructions.add(Cell_Call(main.startPointer));
+			befFirstFuncInstructions.add(Cell_Jump(-2));
 		}
 	}
 
