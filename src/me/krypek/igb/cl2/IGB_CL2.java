@@ -91,6 +91,7 @@ public class IGB_CL2 {
 					if(out == null)
 						throw Err.normal("Unknown command: \"" + cmd + "\".");
 					instList.addAll(out);
+
 				} catch (Exception e) {
 					System.out.println(this);
 					throw e;

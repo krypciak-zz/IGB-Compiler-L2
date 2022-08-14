@@ -34,7 +34,7 @@ public class ControlSolver {
 
 	Stack<Bracket> bracketStack;
 
-	private boolean isInElseIfChain = false;
+	Stack<Boolean> isInElseIfChainStack;
 
 	private int line;
 
@@ -46,6 +46,7 @@ public class ControlSolver {
 		this.varsolver = varsolver;
 		bracketStack = new Stack<>();
 		bracketStack.push(Bracket._default());
+		isInElseIfChainStack = new Stack<>();
 	}
 
 	private Bracket pop() {
@@ -104,6 +105,9 @@ public class ControlSolver {
 		if(cmd.equals("}")) {
 			ram.pop();
 			Bracket b = pop();
+			if(b.type == If)
+				isInElseIfChainStack.pop();
+
 			if(b.type == Function)
 				b.endList.add(0, b.endPointer);
 			else
@@ -111,6 +115,7 @@ public class ControlSolver {
 
 			return b.endList;
 		}
+
 		if(cmd.startsWith("break"))
 			return _break(cmd.substring(5).stripTrailing());
 		if(cmd.startsWith("redo"))
@@ -166,11 +171,11 @@ public class ControlSolver {
 	}
 
 	private ArrayList<Instruction> _else(String rest) {
-		if(!isInElseIfChain)
+		if(isInElseIfChainStack.isEmpty() || !isInElseIfChainStack.peek())
 			throw Err.normal("Cannot use else in non if chains.");
 
 		if(rest.isBlank()) {
-			isInElseIfChain = false;
+			isInElseIfChainStack.pop();
 			nextAdd = Bracket._none(new ArrayList<>(), Utils.listOf(Instruction.Pointer(Bracket.getElseIfPointer())));
 			Bracket.elseIfIndex++;
 			return new ArrayList<>();
@@ -228,7 +233,7 @@ public class ControlSolver {
 				throw Err.normal("Syntax Error at for addition field.");
 			endList.addAll(addiSolved);
 		}
-		
+
 		if(condi.isBlank()) {
 			endList.addAll(Utils.listOf(Cell_Jump(nextAdd.loopPointer.arg[0].str())));
 		} else
@@ -341,8 +346,8 @@ public class ControlSolver {
 
 	private void returnFromIfEqElse(boolean isElse, ArrayList<Instruction> startList, ArrayList<Instruction> endList) {
 		if(!isElse) {
-			if(isInElseIfChain) {
-				isInElseIfChain = false;
+			if(!isInElseIfChainStack.isEmpty() && isInElseIfChainStack.peek()) {
+				isInElseIfChainStack.pop();
 				endList.add(Instruction.Pointer(Bracket.getElseIfPointer()));
 				Bracket.elseIfIndex++;
 				nextAdd.startList.addAll(startList);
@@ -351,8 +356,10 @@ public class ControlSolver {
 				nextAdd.startList.addAll(startList);
 				nextAdd.endList.addAll(endList);
 			}
+			isInElseIfChainStack.push(false);
 		} else {
-			isInElseIfChain = true;
+			isInElseIfChainStack.push(true);
+			isInElseIfChainStack.push(false);
 			endList.add(0, Instruction.Cell_Jump(Bracket.getElseIfPointer()));
 			nextAdd.startList.addAll(startList);
 			nextAdd.endList.addAll(endList);
@@ -414,10 +421,10 @@ public class ControlSolver {
 				case "<" -> val1 < val2;
 				default -> throw Err.notPossible();
 			}) {
-				returnFromIfEqElse(isElse, new ArrayList<>(), null);
+				returnFromIfEqElse(isElse, new ArrayList<>(), new ArrayList<>());
 				return;
 			}
-			returnFromIfEqElse(isElse, Utils.listOf(Cell_Jump(pointerToJump)), null);
+			returnFromIfEqElse(isElse, Utils.listOf(Cell_Jump(pointerToJump)), new ArrayList<>());
 			return;
 		}
 
