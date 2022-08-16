@@ -357,7 +357,7 @@ if(a == 5) {
 
 
 #### New statement: `raw`
-`raw` is used to insert [IGB L1](https://github.com/krypciak/IGB-Compiler-L1) code to IGB L2 code.
+`raw` is used to insert [IGB L1](https://github.com/krypciak/IGB-Compiler-L1) code
 ```javascript
 raw Init 5.3 70;
 ```
