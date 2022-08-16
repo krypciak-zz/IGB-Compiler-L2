@@ -30,8 +30,9 @@ The whole IGB language was designed to be executed in Minecraft ([MCMPCv7](https
 You can also run it on your desktop using [IGB VM](https://github.com/krypciak/IGB-VM) created for easy program testing.  
 
 # Examples
-### Tetris
-![Tetris](https://github.com/krypciak/IGB-VM/blob/b64f60ca37c46084d1f73dc4afad122fadf33648/IGB/screenshots/tetris0.png)
+## [Tetris](https://github.com/krypciak/IGB-VM/tree/main/IGB/L2/tetris)
+![Tetris](https://github.com/krypciak/IGB-VM/blob/main/IGB/L2/tetris/tetris0.png)
+<br>  
 
 ## Hello world wrriten in IGB L2
 This code displays the string "Hello world!" on the canvas.
@@ -49,7 +50,6 @@ void main() {
   drawstring(3, 0, "Hello world!", "big", 0);
 }
 ```
-Output:  
 ![Hello world!](https://github.com/krypciak/IGB-VM/blob/b64f60ca37c46084d1f73dc4afad122fadf33648/IGB/screenshots/hello_world.png)
 
 ## Line by line explanation  
