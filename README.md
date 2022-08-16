@@ -27,8 +27,11 @@ IGB Compiler L2 compiles **IGB L2 code** into [**IGB L1 code**](https://github.c
 <br />
 
 The whole IGB language was designed to be executed in Minecraft ([MCMPCv7](https://github.com/krypciak/MCMPCv7)).  
-You can also run it on your desktop using [IGB VM](https://github.com/krypciak/IGB-VM) created for easier program testing.  
+You can also run it on your desktop using [IGB VM](https://github.com/krypciak/IGB-VM) created for easy program testing.  
 
+# Examples
+### Tetris
+![Tetris](https://github.com/krypciak/IGB-VM/blob/b64f60ca37c46084d1f73dc4afad122fadf33648/IGB/screenshots/tetris0.png)
 
 ## Hello world wrriten in IGB L2
 This code displays the string "Hello world!" on the canvas.
@@ -39,13 +42,15 @@ $startLine = 15000;
 $import <charlib>;
 
 void main() {
-  width = 100;
-  height = 30;
+  width = 72;
+  height = 21;
   stype = rgb;
   
-  drawstring(0, 0, "Hello world!", "big", 0);
+  drawstring(3, 0, "Hello world!", "big", 0);
 }
 ```
+Output:  
+![Hello world!](https://github.com/krypciak/IGB-VM/blob/b64f60ca37c46084d1f73dc4afad122fadf33648/IGB/screenshots/hello_world.png)
 
 ## Line by line explanation  
 ```javascript
